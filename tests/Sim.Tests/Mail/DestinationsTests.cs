@@ -139,7 +139,7 @@ internal sealed class DeliveryFixture
     public MailId RegisterCargo(AddressId address)
     {
         var id = new MailId(_nextMail++);
-        Assert.True(Mail.Register(new MailItem(id, MailKinds.Cargo, address, value: 600, spawnShift: 1, deadlineShift: 2)));
+        Assert.True(Mail.Register(new MailItem(id, MailKinds.Cargo, address, 600, 1, 2)));
         return id;
     }
 }
