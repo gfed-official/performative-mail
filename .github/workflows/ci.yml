@@ -1,0 +1,23 @@
+name: ci
+
+on:
+  push:
+    branches: [main, "cursor/**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Restore
+        run: dotnet restore PerformativeMail.sln
+      - name: Build
+        run: dotnet build PerformativeMail.sln --no-restore --configuration Release
+      - name: Test
+        run: dotnet test PerformativeMail.sln --no-build --configuration Release --verbosity minimal
+      - name: ContentValidator
+        run: dotnet run --project tools/ContentValidator --configuration Release --no-build -- content
