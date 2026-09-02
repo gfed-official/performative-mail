@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime;
 using PerformativeMail.BotClient;
 using PerformativeMail.Client;
 using PerformativeMail.Server;
@@ -140,21 +141,27 @@ public sealed class SoakSession
     {
         var mismatches = new List<HashWitness>();
         int connected = CountConnected();
-        for (uint tick = 0; tick < Config.DurationTicks; tick++)
+        var watch = new Stopwatch();
+
+        if (Config.PrimeTicks > 0)
+            PrepareHarness();
+
+        Pump(Config.PrimeTicks, mismatches, watch, recordCpu: false, ref connected);
+        if (Config.PrimeTicks > 0)
+            CollectHarnessGarbage();
+
+        var previousLatency = GCSettings.LatencyMode;
+        try
         {
-            DriveSeats();
-            var watch = Stopwatch.StartNew();
-            Server.TickOnce();
-            watch.Stop();
-            Ticks.Add(new TickSample(Server.World.CurrentTick, watch.Elapsed.TotalMilliseconds));
-            for (int i = 0; i < Roster.Seats.Count; i++)
-                Roster.Seats[i].Client.Receive();
+            if (Config.PrimeTicks > 0)
+                GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 
-            int now = CountConnected();
-            if (now < connected)
-                connected = now;
-
-            WitnessFlushed(mismatches);
+            Pump(Config.DurationTicks, mismatches, watch, recordCpu: true, ref connected);
+        }
+        finally
+        {
+            if (GCSettings.LatencyMode != GCLatencyMode.NoGCRegion)
+                GCSettings.LatencyMode = previousLatency;
         }
 
         var witnesses = Hashes.Witnesses;
@@ -185,6 +192,56 @@ public sealed class SoakSession
             Criterion1 = criterion1,
             Criterion5 = tickBudget.Pass,
         };
+    }
+
+    private void Pump(
+        uint ticks,
+        List<HashWitness> mismatches,
+        Stopwatch watch,
+        bool recordCpu,
+        ref int connected)
+    {
+        for (uint tick = 0; tick < ticks; tick++)
+        {
+            DriveSeats();
+            if (recordCpu)
+            {
+                watch.Restart();
+                Server.TickOnce();
+                watch.Stop();
+                Ticks.Add(new TickSample(Server.World.CurrentTick, watch.Elapsed.TotalMilliseconds));
+            }
+            else
+            {
+                Server.TickOnce();
+            }
+
+            for (int i = 0; i < Roster.Seats.Count; i++)
+                Roster.Seats[i].Client.Receive();
+
+            int now = CountConnected();
+            if (now < connected)
+                connected = now;
+
+            WitnessFlushed(mismatches);
+        }
+    }
+
+    private static void PrepareHarness()
+    {
+        ThreadPool.GetMinThreads(out int workers, out int iocp);
+        int want = Math.Max(workers, Environment.ProcessorCount * 2);
+        if (want > workers)
+            ThreadPool.SetMinThreads(want, iocp);
+    }
+
+    private static void CollectHarnessGarbage()
+    {
+        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+        GC.WaitForPendingFinalizers();
+        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
     }
 
     private void DriveSeats()
