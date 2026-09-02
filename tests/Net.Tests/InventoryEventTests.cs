@@ -196,7 +196,7 @@ public sealed class InventoryEventTests
     }
 
     [Fact]
-    public void TwoClients_OpenAndDeposit_ReplicasMatchServerHashAndVersion()
+    public void ContainerDeltaEvent_TwoClients_OpenAndDeposit_ReplicasMatchServerHashAndVersion()
     {
         var catalog = EventCatalog.Instance;
         var hub = LoopbackHub.ForSeats(2);
@@ -240,6 +240,65 @@ public sealed class InventoryEventTests
         AssertReplica(second, chest, authoritative);
         Assert.True(first.InventoryEventCount >= 2);
         Assert.True(second.InventoryEventCount >= 2);
+    }
+
+    [Fact]
+    public void ContainerDeltaEvent_TwoClients_TakeFromIntake_ReplicasMatchServerHashAndVersion()
+    {
+        var catalog = EventCatalog.Instance;
+        var hub = LoopbackHub.ForSeats(2);
+        var world = new SimWorld(catalog);
+        var server = new ServerRuntime(hub.ServerEnds[0], world);
+        server.Attach(hub.ServerEnds[1]);
+
+        var first = new ClientRuntime(catalog);
+        var second = new ClientRuntime(catalog);
+        first.Connect(hub.ClientEnds[0]);
+        second.Connect(hub.ClientEnds[1]);
+
+        server.TickOnce();
+        first.Receive();
+        second.Receive();
+
+        Assert.True(first.LocalPlayer.HasValue);
+        Assert.True(second.LocalPlayer.HasValue);
+
+        var inv = world.Inventory!;
+        var intake = inv.CreateContainer(ContainerSpec.Intake);
+        var bag = inv.CreateContainer(ContainerSpec.BaseInventory, first.LocalPlayer.Value);
+        Assert.IsType<Accepted>(inv.Open(first.LocalPlayer.Value, intake));
+        Assert.IsType<Accepted>(inv.Open(second.LocalPlayer.Value, intake));
+        Assert.IsType<Accepted>(inv.Apply(
+            Actor.System,
+            new Deposit(intake, MailStack.Single(MailKinds.Letter, new AddressId(1, 4, 13, 0), new MailId(7)))));
+
+        server.TickOnce();
+        first.Receive();
+        second.Receive();
+
+        var entry = FirstEntry(inv, intake);
+        Assert.IsType<Accepted>(inv.Apply(
+            Actor.Player(first.LocalPlayer.Value),
+            new QuickMove(intake, entry, bag)));
+
+        server.TickOnce();
+        first.Receive();
+        second.Receive();
+
+        Assert.True(inv.TryGetContainer(intake, out var intakeAuth));
+        Assert.True(intakeAuth.Version.Value > 0);
+        AssertReplica(first, intake, intakeAuth);
+        AssertReplica(second, intake, intakeAuth);
+        Assert.True(first.InventoryEventCount >= 2);
+        Assert.True(second.InventoryEventCount >= 2);
+    }
+
+    private static EntryId FirstEntry(InventorySystem inv, ContainerId container)
+    {
+        Assert.True(inv.TryGetContainer(container, out var grid));
+        foreach (var entry in grid.Entries)
+            return entry.Id;
+        throw new InvalidOperationException("Container has no entries.");
     }
 
     private static void AssertReplica(ClientRuntime client, ContainerId chest, GridContainer authoritative)
