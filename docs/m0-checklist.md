@@ -16,6 +16,15 @@ Check a box only when evidence exists.
 - [x] Hotbar hands cell blocked
 - [x] Version and hash bump on Apply
 
+## U2 InventorySystem
+
+- [x] Apply plans then privately commits
+- [x] Open / NotOpen authorization
+- [x] Sort first-fit-decreasing packer
+- [x] InventoryAudit conservation on commit
+- [x] Replica ApplyDelta matches authoritative hashes
+- [x] Concurrent 10 000-op chest fuzz conserves MailIds
+
 ## Later units
 
 See `docs/m0-frame.md`.

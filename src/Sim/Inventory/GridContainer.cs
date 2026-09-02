@@ -144,7 +144,25 @@ public sealed class GridContainer
     }
 
     internal bool TryRepack(SortKey key, out IReadOnlyList<Entry> packed)
-        => throw new NotImplementedException();
+    {
+        var merged = MergeCompatible();
+        OrderForPack(merged, key);
+        var occupancy = new uint[_cells.Length];
+        var result = new List<Entry>(merged.Count);
+        for (int i = 0; i < merged.Count; i++)
+        {
+            if (!TryPackOnEmpty(merged[i], occupancy, out var placed))
+            {
+                packed = Array.Empty<Entry>();
+                return false;
+            }
+
+            result.Add(placed);
+        }
+
+        packed = result;
+        return true;
+    }
 
     internal bool Apply(Change change)
     {
@@ -165,7 +183,151 @@ public sealed class GridContainer
 
     internal void SetVersion(ContainerVersion version) => Version = version;
 
-    internal GridContainer Clone() => throw new NotImplementedException();
+    internal GridContainer Clone()
+    {
+        var copy = new GridContainer(Id, Spec, _catalog);
+        foreach (var pair in _entries)
+            copy._entries[pair.Key] = pair.Value;
+        Array.Copy(_cells, copy._cells, _cells.Length);
+        copy.Version = Version;
+        copy.Hash = Hash;
+        return copy;
+    }
+
+    private List<Entry> MergeCompatible()
+    {
+        var groups = new Dictionary<StackKey, List<Entry>>();
+        foreach (var entry in _entries.Values)
+        {
+            if (!groups.TryGetValue(entry.Stack.Key, out var list))
+            {
+                list = new List<Entry>();
+                groups[entry.Stack.Key] = list;
+            }
+
+            list.Add(entry);
+        }
+
+        var merged = new List<Entry>(_entries.Count);
+        foreach (var group in groups.Values)
+        {
+            group.Sort((a, b) => a.Id.Value.CompareTo(b.Id.Value));
+            if (group[0].Stack is MailStack)
+                MergeMailGroup(group, merged);
+            else
+                MergeItemGroup(group, merged);
+        }
+
+        return merged;
+    }
+
+    private void MergeMailGroup(List<Entry> group, List<Entry> into)
+    {
+        var ids = new List<MailId>();
+        foreach (var entry in group)
+        {
+            var mail = (MailStack)entry.Stack;
+            for (int i = 0; i < mail.Ids.Count; i++)
+                ids.Add(mail.Ids[i]);
+        }
+
+        var first = (MailStack)group[0].Stack;
+        int max = _catalog.MaxStackOf(first.Key);
+        int offset = 0;
+        int idIndex = 0;
+        while (offset < ids.Count)
+        {
+            int take = Math.Min(max, ids.Count - offset);
+            var chunk = new MailId[take];
+            ids.CopyTo(offset, chunk, 0, take);
+            into.Add(new Entry(group[idIndex].Id, new MailStack(first.Kind, first.Address, chunk), Placement.Origin));
+            offset += take;
+            idIndex++;
+        }
+    }
+
+    private void MergeItemGroup(List<Entry> group, List<Entry> into)
+    {
+        int total = 0;
+        foreach (var entry in group)
+            total += entry.Stack.Count;
+        var first = (ItemStack)group[0].Stack;
+        int max = _catalog.MaxStackOf(first.Key);
+        int offset = 0;
+        int idIndex = 0;
+        while (offset < total)
+        {
+            int take = Math.Min(max, total - offset);
+            into.Add(new Entry(group[idIndex].Id, new ItemStack(first.Item, take), Placement.Origin));
+            offset += take;
+            idIndex++;
+        }
+    }
+
+    private void OrderForPack(List<Entry> entries, SortKey key)
+    {
+        entries.Sort((a, b) =>
+        {
+            int areaA = _catalog.FootprintOf(a.Stack.Key).Area;
+            int areaB = _catalog.FootprintOf(b.Stack.Key).Area;
+            if (key == SortKey.BySize)
+            {
+                int byArea = areaB.CompareTo(areaA);
+                if (byArea != 0) return byArea;
+            }
+
+            int byAddress = a.Stack.Key.Address.CompareTo(b.Stack.Key.Address);
+            if (byAddress != 0) return byAddress;
+            int byDef = a.Stack.Key.Def.CompareTo(b.Stack.Key.Def);
+            if (byDef != 0) return byDef;
+            if (key == SortKey.ByAddress)
+            {
+                int byArea = areaB.CompareTo(areaA);
+                if (byArea != 0) return byArea;
+            }
+
+            return a.Id.Value.CompareTo(b.Id.Value);
+        });
+    }
+
+    private bool TryPackOnEmpty(Entry entry, uint[] occupancy, out Entry placed)
+    {
+        var fp = _catalog.FootprintOf(entry.Stack.Key);
+        int passes = fp.IsSquare ? 1 : 2;
+        for (int pass = 0; pass < passes; pass++)
+        {
+            bool rotated = pass == 1;
+            for (byte y = 0; y < Spec.Shape.Rows; y++)
+            for (byte x = 0; x < Spec.Shape.Cols; x++)
+            {
+                var at = Placement.For(fp, x, y, rotated);
+                if (!TryRect(at, entry.Stack.Key, out var rect)) continue;
+                if (OccupancyBlocked(occupancy, rect)) continue;
+                OccupyBuffer(occupancy, rect, entry.Id);
+                placed = new Entry(entry.Id, entry.Stack, at);
+                return true;
+            }
+        }
+
+        placed = default;
+        return false;
+    }
+
+    private bool OccupancyBlocked(uint[] occupancy, CellRect rect)
+    {
+        foreach (var cell in rect.Cells())
+        {
+            if (occupancy[Index(cell)] != 0) return true;
+        }
+
+        return false;
+    }
+
+    private void OccupyBuffer(uint[] occupancy, CellRect rect, EntryId id)
+    {
+        foreach (var cell in rect.Cells())
+            occupancy[Index(cell)] = id.Value;
+    }
 
     private void TryPlaceRemaining(ref Stack? remaining, List<Change> changes, Func<EntryId> allocate)
     {
