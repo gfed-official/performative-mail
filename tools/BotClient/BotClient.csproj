@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\App\PerformativeMail.App.csproj" />
     <ProjectReference Include="..\..\src\Client\PerformativeMail.Client.csproj" />
     <ProjectReference Include="..\..\src\Sim\PerformativeMail.Sim.csproj" />
   </ItemGroup>

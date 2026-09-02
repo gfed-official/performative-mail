@@ -1,2 +1,3 @@
-﻿Console.WriteLine("BotClient is not implemented for M0 beyond scaffold.");
-return 0;
+﻿using PerformativeMail.BotClient;
+
+return BotCli.Run(args);
