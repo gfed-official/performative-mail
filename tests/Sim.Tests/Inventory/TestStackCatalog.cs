@@ -11,6 +11,7 @@ public sealed class TestStackCatalog : IStackCatalog
     public static readonly MailKindId Letter = MailKinds.Letter;
     public static readonly MailKindId Postcard = MailKinds.Postcard;
     public static readonly MailKindId SmallPackage = MailKinds.SmallPackage;
+    public static readonly MailKindId MediumPackage = MailKinds.MediumPackage;
     public static readonly ItemDefId Log = new(1);
 
     public Footprint FootprintOf(StackKey key)
@@ -19,6 +20,7 @@ public sealed class TestStackCatalog : IStackCatalog
         {
             if (key.Def == Letter.Value || key.Def == Postcard.Value) return new Footprint(1, 1);
             if (key.Def == SmallPackage.Value) return new Footprint(1, 2);
+            if (key.Def == MediumPackage.Value) return new Footprint(2, 2);
         }
         else if (key.Def == Log.Value)
         {
@@ -35,6 +37,7 @@ public sealed class TestStackCatalog : IStackCatalog
             if (key.Def == Letter.Value) return 20;
             if (key.Def == Postcard.Value) return 40;
             if (key.Def == SmallPackage.Value) return 1;
+            if (key.Def == MediumPackage.Value) return 1;
         }
         else if (key.Def == Log.Value)
         {
@@ -46,7 +49,13 @@ public sealed class TestStackCatalog : IStackCatalog
 
     public WeightClass WeightOf(StackKey key)
     {
-        if (key.IsMail || key.Def == Log.Value) return WeightClass.Light;
+        if (key.IsMail)
+        {
+            if (key.Def == MediumPackage.Value) return WeightClass.Medium;
+            return WeightClass.Light;
+        }
+
+        if (key.Def == Log.Value) return WeightClass.Light;
         throw new ArgumentException("Unknown stack key.", nameof(key));
     }
 
