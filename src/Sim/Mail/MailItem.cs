@@ -22,7 +22,34 @@ public static class MailKinds
     public static readonly MailKindId LargePackage = new(5);
     public static readonly MailKindId Cargo = new(6);
 
+    public const ushort PostcardBaseValue = 4;
     public const ushort LetterBaseValue = 8;
+    public const ushort SmallPackageBaseValue = 30;
+    public const ushort MediumPackageBaseValue = 70;
+    public const ushort LargePackageBaseValue = 160;
+    public const ushort CargoBaseValue = 600;
+
+    // chapter 03 §1.1
+    public static ushort BaseValue(MailKindId kind)
+    {
+        if (kind.Equals(Postcard)) return PostcardBaseValue;
+        if (kind.Equals(Letter)) return LetterBaseValue;
+        if (kind.Equals(SmallPackage)) return SmallPackageBaseValue;
+        if (kind.Equals(MediumPackage)) return MediumPackageBaseValue;
+        if (kind.Equals(LargePackage)) return LargePackageBaseValue;
+        if (kind.Equals(Cargo)) return CargoBaseValue;
+        throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+    }
+
+    // chapter 03 §1.1: value = base × (1 + 0.25 × (district − 1)) × (1 + 0.1 × (shift − 1))
+    public static ushort ValueAtSpawn(MailKindId kind, byte district, byte shift)
+    {
+        if (district < 1) throw new ArgumentOutOfRangeException(nameof(district));
+        if (shift < 1) throw new ArgumentOutOfRangeException(nameof(shift));
+        int distanceNumerator = 4 + (district - 1);
+        int shiftNumerator = 10 + (shift - 1);
+        return (ushort)(BaseValue(kind) * distanceNumerator / 4 * shiftNumerator / 10);
+    }
 
     public static bool Accepts(DestinationType type, MailKindId kind)
     {
@@ -55,12 +82,26 @@ public static class MailKinds
 public sealed class MailRegistry
 {
     private readonly Dictionary<MailId, MailItem> _items = new();
+    private uint _nextId = 1;
+
+    public IEnumerable<MailItem> Items => _items.Values;
+
+    public int Count => _items.Count;
+
+    public MailId Allocate()
+    {
+        while (_items.ContainsKey(new MailId(_nextId)))
+            _nextId++;
+        return new MailId(_nextId++);
+    }
 
     public bool Register(MailItem item)
     {
         if (_items.ContainsKey(item.Id))
             return false;
         _items[item.Id] = item;
+        if (item.Id.Value >= _nextId)
+            _nextId = item.Id.Value + 1;
         return true;
     }
 
