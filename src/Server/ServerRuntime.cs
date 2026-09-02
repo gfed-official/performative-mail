@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PerformativeMail.Sim;
 using PerformativeMail.Sim.Core;
@@ -18,9 +19,14 @@ public sealed class ServerRuntime
     public SimWorld World { get; }
 
     public ServerRuntime(ITransport transport)
+        : this(transport, new SimWorld())
+    {
+    }
+
+    public ServerRuntime(ITransport transport, SimWorld world)
     {
         _transport = transport;
-        World = new SimWorld();
+        World = world ?? throw new ArgumentNullException(nameof(world));
     }
 
     public void Start()
