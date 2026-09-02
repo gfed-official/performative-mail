@@ -1,0 +1,86 @@
+{
+  "id": "m0_test",
+  "districtId": 1,
+  "tileCm": 200,
+  "street": { "id": 1, "name": "Larch Lane" },
+  "postOffice": {
+    "tile": [0, 0],
+    "sizeTiles": [6, 6],
+    "spawnPadTile": [2, 2],
+    "intakeTile": [5, 2],
+    "intakeFace": "east"
+  },
+  "streetTiles": { "tile": [0, 6], "sizeTiles": [26, 2] },
+  "houses": [
+    {
+      "number": 1,
+      "lotTile": [0, 8],
+      "lotSizeTiles": [4, 4],
+      "mailboxCm": [200, 1600, 0],
+      "mailboxYaw": 180
+    },
+    {
+      "number": 2,
+      "lotTile": [6, 2],
+      "lotSizeTiles": [4, 4],
+      "mailboxCm": [1400, 1200, 0],
+      "mailboxYaw": 0
+    },
+    {
+      "number": 3,
+      "lotTile": [4, 8],
+      "lotSizeTiles": [4, 4],
+      "mailboxCm": [1000, 1600, 0],
+      "mailboxYaw": 180
+    },
+    {
+      "number": 4,
+      "lotTile": [10, 2],
+      "lotSizeTiles": [4, 4],
+      "mailboxCm": [2200, 1200, 0],
+      "mailboxYaw": 0
+    },
+    {
+      "number": 5,
+      "lotTile": [8, 8],
+      "lotSizeTiles": [4, 4],
+      "mailboxCm": [1800, 1600, 0],
+      "mailboxYaw": 180
+    },
+    {
+      "number": 6,
+      "lotTile": [14, 2],
+      "lotSizeTiles": [4, 4],
+      "mailboxCm": [3000, 1200, 0],
+      "mailboxYaw": 0
+    },
+    {
+      "number": 7,
+      "lotTile": [12, 8],
+      "lotSizeTiles": [4, 4],
+      "mailboxCm": [2600, 1600, 0],
+      "mailboxYaw": 180
+    },
+    {
+      "number": 8,
+      "lotTile": [18, 2],
+      "lotSizeTiles": [4, 4],
+      "mailboxCm": [3800, 1200, 0],
+      "mailboxYaw": 0
+    },
+    {
+      "number": 9,
+      "lotTile": [16, 8],
+      "lotSizeTiles": [4, 4],
+      "mailboxCm": [3400, 1600, 0],
+      "mailboxYaw": 180
+    },
+    {
+      "number": 10,
+      "lotTile": [22, 2],
+      "lotSizeTiles": [4, 4],
+      "mailboxCm": [4600, 1200, 0],
+      "mailboxYaw": 0
+    }
+  ]
+}
