@@ -20,12 +20,53 @@ public sealed class DestinationsTests
     }
 
     [Fact]
+    public void TryDeliver_OneShiftLateLetter_MatchingHouseMailbox_PaysFourCents()
+    {
+        var fx = new DeliveryFixture();
+        var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
+
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseOak, currentShift: 2, fx.Wallet);
+
+        var delivered = Assert.IsType<Delivered>(result);
+        Assert.Equal(new Cents(4), delivered.Paid);
+        Assert.Equal(new Cents(4), fx.Wallet.Balance);
+        Assert.False(fx.Mail.Contains(mailId));
+    }
+
+    [Fact]
+    public void TryDeliver_TwoShiftsLateLetter_MatchingHouseMailbox_PaysZeroCents()
+    {
+        var fx = new DeliveryFixture();
+        var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
+
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseOak, currentShift: 3, fx.Wallet);
+
+        var delivered = Assert.IsType<Delivered>(result);
+        Assert.Equal(new Cents(0), delivered.Paid);
+        Assert.Equal(new Cents(0), fx.Wallet.Balance);
+        Assert.False(fx.Mail.Contains(mailId));
+    }
+
+    [Fact]
     public void TryDeliver_CargoIntoHouseMailbox_RejectsKindNotAccepted()
     {
         var fx = new DeliveryFixture();
         var mailId = fx.RegisterCargo(fx.Oak);
 
         var result = fx.Destinations.TryDeliver(mailId, fx.HouseOak, currentShift: 1, fx.Wallet);
+
+        Assert.Equal(RejectReason.KindNotAccepted, Assert.IsType<Rejected>(result).Reason);
+        Assert.Equal(new Cents(0), fx.Wallet.Balance);
+        Assert.True(fx.Mail.Contains(mailId));
+    }
+
+    [Fact]
+    public void TryDeliver_KindRejectWhileLate_DoesNotConsumeOrChangeWallet()
+    {
+        var fx = new DeliveryFixture();
+        var mailId = fx.RegisterCargo(fx.Oak);
+
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseOak, currentShift: 3, fx.Wallet);
 
         Assert.Equal(RejectReason.KindNotAccepted, Assert.IsType<Rejected>(result).Reason);
         Assert.Equal(new Cents(0), fx.Wallet.Balance);
@@ -40,6 +81,20 @@ public sealed class DestinationsTests
 
         var ex = Assert.Throws<InvalidOperationException>(
             () => fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet));
+
+        Assert.Equal("U3.3 misdelivery", ex.Message);
+        Assert.Equal(new Cents(0), fx.Wallet.Balance);
+        Assert.True(fx.Mail.Contains(mailId));
+    }
+
+    [Fact]
+    public void TryDeliver_LetterAddressMismatchWhileLate_ThrowsU33Misdelivery()
+    {
+        var fx = new DeliveryFixture();
+        var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
+
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 3, fx.Wallet));
 
         Assert.Equal("U3.3 misdelivery", ex.Message);
         Assert.Equal(new Cents(0), fx.Wallet.Balance);
