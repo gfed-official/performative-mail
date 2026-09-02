@@ -19,6 +19,8 @@ public sealed class ServerRuntime
 
     public SimWorld World { get; }
 
+    public IReadOnlyList<ContainerDelta> LastFlushedDeltas { get; private set; } = Array.Empty<ContainerDelta>();
+
     public ServerRuntime(ITransport transport)
         : this(transport, new SimWorld())
     {
@@ -174,9 +176,13 @@ public sealed class ServerRuntime
     private void FlushInventoryEvents()
     {
         if (World.Inventory is not InventorySystem inventory)
+        {
+            LastFlushedDeltas = Array.Empty<ContainerDelta>();
             return;
+        }
 
         var deltas = inventory.DrainCommittedDeltas();
+        LastFlushedDeltas = deltas;
         for (int i = 0; i < deltas.Count; i++)
         {
             var delta = deltas[i];
