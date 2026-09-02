@@ -107,9 +107,9 @@ public sealed class TickBudgetTests
         };
 
         // Same-session prime covers four EmitBatch windows, then a blocking
-        // collect, then Stopwatch samples under SustainedLowLatency.
-        // WarmupTicks stays 30 inside TickLog. LimitMs stays 2.0 (spec/12).
-        // Gate u9-3-jit-after-warmup. Do not use chapter 07's 8 ms.
+        // collect. Each measured TickOnce runs in a NoGC region so gen0
+        // refills cannot land inside the Stopwatch. WarmupTicks stays 30
+        // inside TickLog. LimitMs stays 2.0 (spec/12). Gate u9-3-jit-after-warmup.
         var session = SoakSession.Start(config);
         var report = session.Run();
         var budget = report.TickBudget;

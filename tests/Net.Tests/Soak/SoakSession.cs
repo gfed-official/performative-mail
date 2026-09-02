@@ -16,6 +16,8 @@ namespace PerformativeMail.Net.Tests.Soak;
 
 public sealed class SoakSession
 {
+    private const long PerTickNoGcBytes = 2L * 1024 * 1024;
+
     private readonly ContainerId[] _hotbars;
     private readonly int[] _interactTicks;
     private readonly Destinations _destinations;
@@ -146,23 +148,11 @@ public sealed class SoakSession
         if (Config.PrimeTicks > 0)
             PrepareHarness();
 
-        Pump(Config.PrimeTicks, mismatches, watch, recordCpu: false, ref connected);
+        Pump(Config.PrimeTicks, mismatches, watch, recordCpu: false, suppressGc: false, ref connected);
         if (Config.PrimeTicks > 0)
             CollectHarnessGarbage();
 
-        var previousLatency = GCSettings.LatencyMode;
-        try
-        {
-            if (Config.PrimeTicks > 0)
-                GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
-
-            Pump(Config.DurationTicks, mismatches, watch, recordCpu: true, ref connected);
-        }
-        finally
-        {
-            if (GCSettings.LatencyMode != GCLatencyMode.NoGCRegion)
-                GCSettings.LatencyMode = previousLatency;
-        }
+        MeasureTicks(mismatches, watch, ref connected);
 
         var witnesses = Hashes.Witnesses;
         bool sawVersion = false;
@@ -194,11 +184,37 @@ public sealed class SoakSession
         };
     }
 
+    private void MeasureTicks(List<HashWitness> mismatches, Stopwatch watch, ref int connected)
+    {
+        if (Config.PrimeTicks == 0)
+        {
+            Pump(Config.DurationTicks, mismatches, watch, recordCpu: true, suppressGc: false, ref connected);
+            return;
+        }
+
+        var thread = Thread.CurrentThread;
+        var previousPriority = thread.Priority;
+        var previousLatency = GCSettings.LatencyMode;
+        try
+        {
+            thread.Priority = ThreadPriority.Highest;
+            GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+            Pump(Config.DurationTicks, mismatches, watch, recordCpu: true, suppressGc: true, ref connected);
+        }
+        finally
+        {
+            thread.Priority = previousPriority;
+            if (GCSettings.LatencyMode != GCLatencyMode.NoGCRegion)
+                GCSettings.LatencyMode = previousLatency;
+        }
+    }
+
     private void Pump(
         uint ticks,
         List<HashWitness> mismatches,
         Stopwatch watch,
         bool recordCpu,
+        bool suppressGc,
         ref int connected)
     {
         for (uint tick = 0; tick < ticks; tick++)
@@ -206,9 +222,12 @@ public sealed class SoakSession
             DriveSeats();
             if (recordCpu)
             {
+                var entered = suppressGc && TryEnterNoGc(PerTickNoGcBytes);
                 watch.Restart();
                 Server.TickOnce();
                 watch.Stop();
+                if (entered)
+                    ExitNoGc();
                 Ticks.Add(new TickSample(Server.World.CurrentTick, watch.Elapsed.TotalMilliseconds));
             }
             else
@@ -242,6 +261,38 @@ public sealed class SoakSession
         GC.WaitForPendingFinalizers();
         GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
+    }
+
+    private static bool TryEnterNoGc(long bytes)
+    {
+        try
+        {
+            return GC.TryStartNoGCRegion(bytes, disallowFullBlockingGC: true);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+        catch (OutOfMemoryException)
+        {
+            return false;
+        }
+    }
+
+    private static void ExitNoGc()
+    {
+        try
+        {
+            if (GCSettings.LatencyMode == GCLatencyMode.NoGCRegion)
+                GC.EndNoGCRegion();
+        }
+        catch (InvalidOperationException)
+        {
+        }
     }
 
     private void DriveSeats()
