@@ -7,3 +7,5 @@ ts	phase	decision	why	evidence	result
 2026-09-02T16:06:09Z	architect	Picked inventory candidate 1 as base	Only design with semantic conflicts, caller-proof Apply, shared Change reducer	docs/design/m0-inventory-cross-judge.md	accepted
 2026-09-02T16:06:09Z	architect	Graft Amount.All BeforeVersion conservation audit blocked hotbar mask	Cross-judge grafts from c2 c3 c4 into c1	docs/design/m0-inventory-cross-judge.md	open
 2026-09-02T16:13:19Z	u1	Landed GridContainer place rotate stack quick-move	U1 against candidate-1 synthesis; merge leftover uses TryMerge; PlanFit places remainder	dotnet test	tests green
+2026-09-02T16:16:44Z	u2	Landed InventorySystem Apply and 10k concurrent fuzz	M0 criterion 3; semantic conflicts; plan then private commit	dotnet test ConcurrentChestFuzz	tests green
+2026-09-02T16:30:00Z	u2	Completed sort packer, replica ApplyDelta, and stale-view fuzz	First U2 commit stubbed TryRepack and generated ops from live state	dotnet test TwoPlayers_SharedChest_10kRandomizedOps_ConservesMailIds	tests green

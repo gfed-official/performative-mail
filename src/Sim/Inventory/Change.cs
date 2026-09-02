@@ -15,6 +15,7 @@ public sealed record Reset(ContainerSpec Spec, IReadOnlyList<Entry> Entries) : C
 
 public sealed record ContainerDelta(
     ContainerId Container,
+    ContainerVersion BeforeVersion,
     ContainerVersion Version,
     ulong Hash,
     IReadOnlyList<Change> Changes);
