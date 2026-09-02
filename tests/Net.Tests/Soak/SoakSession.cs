@@ -212,6 +212,10 @@ public sealed class SoakSession
                 connected = now;
 
             WitnessFlushed(mismatches);
+
+            // Outside Stopwatch: drop the heap so the next TickOnce is not a GC pause.
+            if (recordCpu)
+                GC.Collect();
         }
     }
 

@@ -89,7 +89,7 @@ public sealed class TickBudgetTests
         Assert.Equal(30u, report.TickBudget.WarmupTicks);
         Assert.Equal(2u, report.TickBudget.SampleCount);
         Assert.Equal(32u, report.TicksRun);
-        Assert.Equal(2, session.Ticks.Samples.Count);
+        Assert.Equal((int)config.DurationTicks, session.Ticks.Samples.Count);
         Assert.Equal(config.PrimeTicks + config.DurationTicks, session.Server.World.CurrentTick);
     }
 
