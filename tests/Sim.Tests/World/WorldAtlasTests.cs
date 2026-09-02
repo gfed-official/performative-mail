@@ -127,8 +127,7 @@ public sealed class WorldAtlasTests
     {
         var json = MutateRepoMap(houses =>
         {
-            var first = houses[0]!.AsObject();
-            first["number"] = houses[1]!["number"]!.GetValue<int>();
+            houses[2]!["number"] = houses[0]!["number"]!.GetValue<int>();
         });
         var ex = Assert.Throws<WorldAtlasException>(() => WorldAtlasLoader.LoadJson(json, "duplicate-number"));
         Assert.Contains("duplicate house number", ex.Message, StringComparison.OrdinalIgnoreCase);

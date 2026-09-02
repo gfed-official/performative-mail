@@ -131,6 +131,21 @@ public static class WorldAtlasLoader
             throw new WorldAtlasException($"{source}: expected {ExpectedHouseCount} houses, found {houses.Length}.");
 
         var seen = new HashSet<int>();
+        for (int i = 0; i < houses.Length; i++)
+        {
+            var probe = houses[i] ?? throw new WorldAtlasException($"{source}: houses[{i}] is null.");
+            if (probe.Number < 1 || probe.Number > ExpectedHouseCount)
+                throw new WorldAtlasException($"{source}: house number {probe.Number} is outside 1..{ExpectedHouseCount}.");
+            if (!seen.Add(probe.Number))
+                throw new WorldAtlasException($"{source}: duplicate house number {probe.Number}.");
+        }
+
+        for (int n = 1; n <= ExpectedHouseCount; n++)
+        {
+            if (!seen.Contains(n))
+                throw new WorldAtlasException($"{source}: missing house number {n}.");
+        }
+
         var records = new HouseRecord[houses.Length];
         int? oddY = null;
         int? evenY = null;
@@ -139,11 +154,7 @@ public static class WorldAtlasLoader
 
         for (int i = 0; i < houses.Length; i++)
         {
-            var raw = houses[i] ?? throw new WorldAtlasException($"{source}: houses[{i}] is null.");
-            if (raw.Number < 1 || raw.Number > ExpectedHouseCount)
-                throw new WorldAtlasException($"{source}: house number {raw.Number} is outside 1..{ExpectedHouseCount}.");
-            if (!seen.Add(raw.Number))
-                throw new WorldAtlasException($"{source}: duplicate house number {raw.Number}.");
+            var raw = houses[i]!;
             if (raw.Unit != 0)
                 throw new WorldAtlasException($"{source}: house {raw.Number} unit must be 0.");
 
@@ -215,14 +226,6 @@ public static class WorldAtlasLoader
                 lotTile,
                 lotSize,
                 mailbox);
-        }
-
-        if (seen.Count != ExpectedHouseCount)
-            throw new WorldAtlasException($"{source}: house numbers must be 1 through {ExpectedHouseCount}.");
-        for (int n = 1; n <= ExpectedHouseCount; n++)
-        {
-            if (!seen.Contains(n))
-                throw new WorldAtlasException($"{source}: missing house number {n}.");
         }
 
         if (oddY is null || evenY is null || oddY.Value == evenY.Value)
