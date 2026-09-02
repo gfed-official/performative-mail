@@ -57,6 +57,8 @@ public sealed class BotClientLoopbackTests
 
     private static (int Xcm, int Ycm) PoseOf(BotLoop loop)
     {
+        // SnapshotCadence skips tick % 3 == 1. LastSnapshot then jumps ~33 cm and
+        // trips the teleport guard. Prediction is reconciled every driven tick.
         var pose = loop.Client.Prediction.Pose;
         return (pose.Xcm, pose.Ycm);
     }
