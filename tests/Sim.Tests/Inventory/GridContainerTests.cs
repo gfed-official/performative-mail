@@ -130,6 +130,7 @@ public sealed class GridContainerTests
         Assert.True(rotated.TryApplyFit(rotated.SmallPackage(Oak), allowPartial: false, out var rotatedLeft));
         Assert.Null(rotatedLeft);
         var rotatedId = rotated.Container.EntryAt(new Cell(0, 0));
+        Assert.NotEqual(EntryId.None, rotatedId);
         Assert.Equal(rotatedId, rotated.Container.EntryAt(new Cell(1, 0)));
         Assert.NotEqual(rotatedId, rotated.Container.EntryAt(new Cell(0, 1)));
         Assert.True(rotated.Container.TryGetEntry(rotatedId, out var rotatedEntry));
