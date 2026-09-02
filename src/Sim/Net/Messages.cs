@@ -75,6 +75,25 @@ public readonly record struct OwnerSnapshot(
     }
 }
 
+public readonly record struct RemoteSnapshot(
+    uint ServerTick,
+    EntityId Id,
+    PlayerPose Pose)
+{
+    public TimeSpan ServerTime => InterpolationBuffer.TimeOfTick(ServerTick);
+
+    public static RemoteSnapshot From(in PlayerSnapshot player, uint serverTick, EntityId owner)
+    {
+        if (player.Id == owner)
+            throw new InvalidOperationException("Owner pawn must not enter InterpolationBuffer.");
+
+        return new RemoteSnapshot(
+            serverTick,
+            player.Id,
+            new PlayerPose(player.Xcm, player.Ycm, player.Zcm, player.Yaw));
+    }
+}
+
 public sealed class SnapshotPacket
 {
     public uint ServerTick { get; }
