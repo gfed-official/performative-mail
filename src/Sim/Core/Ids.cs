@@ -16,6 +16,8 @@ public readonly record struct AddressId(byte District, byte Street, byte Number,
 
 public readonly record struct MailKindId(ushort Value);
 
+public readonly record struct DestinationId(uint Value);
+
 public readonly record struct ItemDefId(ushort Value);
 
 public readonly record struct ContainerId(uint Value);

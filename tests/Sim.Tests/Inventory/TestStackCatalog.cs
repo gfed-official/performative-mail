@@ -1,5 +1,6 @@
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
+using PerformativeMail.Sim.Mail;
 
 namespace PerformativeMail.Sim.Tests.Inventory;
 
@@ -7,9 +8,9 @@ public sealed class TestStackCatalog : IStackCatalog
 {
     public static readonly TestStackCatalog Default = new();
 
-    public static readonly MailKindId Letter = new(1);
-    public static readonly MailKindId Postcard = new(2);
-    public static readonly MailKindId SmallPackage = new(3);
+    public static readonly MailKindId Letter = MailKinds.Letter;
+    public static readonly MailKindId Postcard = MailKinds.Postcard;
+    public static readonly MailKindId SmallPackage = MailKinds.SmallPackage;
     public static readonly ItemDefId Log = new(1);
 
     public Footprint FootprintOf(StackKey key)
