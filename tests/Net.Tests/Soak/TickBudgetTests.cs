@@ -74,12 +74,30 @@ public sealed class TickBudgetTests
             WarmupTicks = 30,
             TickLimitMs = TickBudgetReport.LimitMs,
         };
+
+        // First Intake batch is at BatchIntervalTicks (450). Thirty warmup ticks
+        // never compile MailSpawner.EmitBatch, so a cold process max (~15 ms) is
+        // method JIT, not TickOnce work. One two-batch pass completes that JIT.
+        // LimitMs stays 2.0 (spec/12). Do not use chapter 07's 8 ms.
+        SoakSession.Start(new SoakConfig
+        {
+            DurationTicks = (uint)MailSpawnConstants.BatchIntervalTicks * 2 + 30,
+            WarmupTicks = 30,
+        }).Run();
+
         var session = SoakSession.Start(config);
         var report = session.Run();
         var budget = report.TickBudget;
 
         _output.WriteLine(
             $"max={budget.MaxCpuMs:F4} mean={budget.MeanCpuMs:F4} samples={budget.SampleCount} limit={TickBudgetReport.LimitMs}");
+        foreach (var sample in session.Ticks.Samples
+            .Skip((int)budget.WarmupTicks)
+            .OrderByDescending(s => s.CpuMs)
+            .Take(8))
+        {
+            _output.WriteLine($"  tick={sample.Tick} cpuMs={sample.CpuMs:F4}");
+        }
 
         Assert.Equal(SoakRoster.SeatCount, session.Roster.Seats.Count);
         Assert.Equal(SoakRoster.RealCount, session.Roster.Seats.Count(s => s.Kind == SeatKind.Real));

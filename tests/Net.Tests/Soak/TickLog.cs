@@ -4,6 +4,8 @@ public sealed class TickLog
 {
     private readonly List<TickSample> _samples = new();
 
+    public IReadOnlyList<TickSample> Samples => _samples;
+
     public void Add(TickSample sample)
     {
         if (sample is null)
