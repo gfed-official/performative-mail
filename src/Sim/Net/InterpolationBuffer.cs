@@ -81,7 +81,9 @@ public sealed class InterpolationBuffer
             }
 
             var t = (present - left.Time).TotalSeconds / span.TotalSeconds;
-            pose = Lerp(in left.Pose, in right.Pose, t);
+            var leftPose = left.Pose;
+            var rightPose = right.Pose;
+            pose = Lerp(leftPose, rightPose, t);
             return true;
         }
 
@@ -92,7 +94,7 @@ public sealed class InterpolationBuffer
     private static int CompareTime(Sample left, Sample right) =>
         left.Time.CompareTo(right.Time);
 
-    private static PlayerPose Lerp(in PlayerPose left, in PlayerPose right, double t) =>
+    private static PlayerPose Lerp(PlayerPose left, PlayerPose right, double t) =>
         new(
             LerpCm(left.Xcm, right.Xcm, t),
             LerpCm(left.Ycm, right.Ycm, t),
