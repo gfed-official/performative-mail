@@ -156,11 +156,9 @@ Blueprint prices (300–700 ¢) are sized so that a solo player can afford bp_so
 | NPC speed ratio | 0.6 |
 | Pump output | 1 Oil Can per 45 s |
 
-Constructs always run at full rated speed. There are no wattage, brownout, or generator fuel numbers.
-
 ### 9.1 Reference factory (shift 3 target)
 
-40 belt tiles, 1 Address Sorter, 4 Inserters. Materials: ~20 Plank (shop or harvest→shop), 12 Stone, 40 Iron Ingot (shop bundles and/or harvest ore sold/replaced by shop ingots). Resource placement guarantees enough raw harvestables on a Small Island (resourceMultiplier 3.0) to fund this via shop conversion; the shop's 10-ingot bundle (350 ¢) is the money-for-time alternative. No generators, poles, or power math.
+40 belt tiles, 1 Address Sorter, 4 Inserters. Materials: ~20 Plank (shop), 12 Stone, 40 Iron Ingot (shop bundles). Resource placement guarantees enough raw harvestables on a Small Island (resourceMultiplier 3.0) to fund builds via shop conversion; the shop's 10-ingot bundle (350 ¢) is the money-for-time alternative.
 
 ## 10. Combat
 

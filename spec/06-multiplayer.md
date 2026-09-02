@@ -69,8 +69,6 @@ Each system chooses one of four strategies:
 | Run state (phase, deadline tick, shift) | E | PhaseChanged with payload (shop offer, draft cards, results). Also included in the join state. |
 | Chat, pings, emotes | E | Text chat limited to 200 chars, rate-limited 3/s. Map pings are E with a 1/s rate limit. |
 
-There is no Power grid replication. Constructs always run at full rated speed on the server; clients do not receive supply/demand or brownout status.
-
 ### 4.1 Interest management
 
 - Each client has an interest set: entities within 150 m of its player (or vehicle) plus everything flagged global (players, vehicles with a player inside, constructs under attack, the PO).

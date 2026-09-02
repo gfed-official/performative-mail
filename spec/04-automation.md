@@ -1,6 +1,6 @@
 # 04 — Automation
 
-Mail delivery is automated by building constructs and networks. Conveyor belts and pipes move items; car-like vehicles and ships can be driven by NPCs at reduced speed; trains (deferred) use tracks and can be NPC-driven. Constructs always run at full rated speed — there is no power or energy system in Arcade v1. Many systems run autonomously but are faster when a player operates them. This chapter specifies the building system, item transport, sorting, storage, vehicles and NPC drivers, ports, and rail.
+Mail delivery is automated by building constructs and networks. Conveyor belts and pipes move items; car-like vehicles and ships can be driven by NPCs at reduced speed; trains (deferred) use tracks and can be NPC-driven. Many systems run autonomously but are faster when a player operates them. This chapter specifies the building system, item transport, sorting, storage, vehicles and NPC drivers, ports, and rail.
 
 ## 1. Building system
 
@@ -8,7 +8,7 @@ Mail delivery is automated by building constructs and networks. Conveyor belts a
 
 - Constructs snap to the 2 m tile grid and 4 cardinal rotations (belts and pipes additionally support corner pieces). Vehicles are not constructs and are free-placed.
 - Build mode shows a ghost preview with validity colouring. Validity requires: tiles buildable, not a street tile (except belt/pipe crossings, which are allowed on streets via an elevated variant), not overlapping another construct, slope < 15° (buildings auto-level the terrain under them by up to 1 m).
-- Placing consumes the recipe's materials from the player's inventory, or from the PO Depot if the player is within 20 m of the PO ("shared build" perk widens this). Build recipes are placement costs only — there is no crafting or forge loop.
+- Placing consumes the recipe's materials from the player's inventory, or from the PO Depot if the player is within 20 m of the PO ("shared build" perk widens this).
 - Drag-placement for belts, pipes, walls: hold and drag to lay a straight line; the server receives one PlaceLine request and validates each tile.
 - Deconstruct returns 100% materials during Prep, 50% during Delivery.
 
@@ -31,7 +31,7 @@ Some recipes are locked behind a blueprint bought once per run from the PO Shop 
 ### 2.1 Conveyor belts
 
 - One direction. Two lanes (left/right), each a sequence of items with 0.5 m spacing minimum (so 4 items per lane per tile). Items on a belt are simulated as a lane position (float, metres from lane start) in a per-lane array; the belt network is compiled into segments (maximal straight/curved runs between splitters, sorters, and endpoints) so a 40-tile belt is one segment, not 40 nodes.
-- Speed tiers: Mk1 2 m/s, Mk2 4 m/s (blueprint), Mk3 6 m/s (perk). Belts always run at full rated speed.
+- Speed tiers: Mk1 2 m/s, Mk2 4 m/s (blueprint), Mk3 6 m/s (perk).
 - Item size on belts: every mail item occupies one lane slot regardless of grid size except Cargo, which occupies both lanes and 2 m of length (so Cargo needs a clear belt).
 - Player operation: a player standing on a belt is carried (fun, and a valid fast-travel). A player "pushing" a belt (interact with a belt segment) gives that segment +50% speed while held — the player-interaction incentive from the doc.
 - Endpoints: a belt ending at a mailbox, container, inserter, sorter, vehicle loading zone, or another belt transfers items; a belt ending in air drops items onto the ground as WorldItems (these despawn back to Intake after 5 min, so leaking mail is wasteful but not catastrophic).
@@ -41,7 +41,6 @@ Some recipes are locked behind a blueprint bought once per run from the PO Shop 
 
 - Move items in arbitrary directions (pneumatic tube). A pipe network is a graph of pipe pieces, junctions, inlets, and outlets. Items travel as capsules, one item per capsule, 1 m spacing, 5 m/s.
 - Routing: each capsule carries a target outlet chosen at the inlet. Inlets accept a filter (address prefix or kind) mapping to an outlet id; unmatched items go to the default outlet. Because pipes route to a specific outlet, a pipe network is effectively a distributed sorter, hence pipes cost more materials and are locked behind the Pipes blueprint (or Pipes starter kit).
-- Pipes always run at full rated speed.
 - Pipes can go vertical (up buildings) and under streets (underground piece costs 2×).
 
 ### 2.3 Splitter and merger
@@ -114,7 +113,7 @@ NPC captains behave like NPC drivers on water routes (routing graph includes fer
 
 ## 4. Rail (deferred, specified for Free Play)
 
-- Rails are 1-tile pieces on the grid with straight, curve, and switch pieces. Stations (2 × 6) have loading faces for each car position. (No power requirement; rails run when placed.)
+- Rails are 1-tile pieces on the grid with straight, curve, and switch pieces. Stations (2 × 6) have loading faces for each car position.
 - Trains: 1 engine + up to 4 cars (20x40 each). Speed 20 m/s. Signals are simplified: one train per track block between stations (blocks derived automatically).
 - NPC engineers run station-to-station schedules. Player-driven trains skip the "wait for full load" timer.
 

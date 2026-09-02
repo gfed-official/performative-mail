@@ -40,7 +40,7 @@ Enemies are server-only agents: a character body on the server with a behaviour 
 | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | Barbarian | 60 | 10 | 1.0 s | 4.5 m/s | Nearest of: player, construct | Melee swarmer. Spawns in groups of 3–6. Paths on the routing graph then straight-lines the last 15 m. |
 | Archer | 40 | 8 | 1.5 s | 4 m/s | Player > turret > construct | Ranged 15 m. Keeps 10 m distance; retreats from approaching players. Pairs with Barbarians. |
-| Giant | 400 | 40 | 2.0 s | 3 m/s | Construct (buildings first: depots, sorters) > player | Slow siege unit. Ignores players unless attacked by one within 5 m for 3 s. Does not prioritise generators (none exist in v1). |
+| Giant | 400 | 40 | 2.0 s | 3 m/s | Construct (buildings first: depots, sorters) > player | Slow siege unit. Ignores players unless attacked by one within 5 m for 3 s. |
 | Wall Breaker | 30 | 150 to walls/gates/belts, 20 otherwise | Suicide | 6 m/s | Wall > gate > belt segment | Runs to the nearest wall or belt in the path to the PO and explodes (r = 1.5 m). |
 | Hog Rider | 120 | 20 | 1.0 s | 7 m/s | Depot > Vehicle Depot > chest > player | Jumps over walls (1 m). Steals: each hit on a container pulls 1 random item out and drops it as a WorldItem 3 m away. |
 | Balloon | 90 | 30 AoE r=2 m | 3.0 s | 2.5 m/s | Turret > depot > Vehicle Depot > sorter | Airborne (6 m). Only ranged weapons and turrets can hit it. Drops bombs on turrets and logistics hubs. |
@@ -119,7 +119,7 @@ When the shift clock ends, all enemies enter Flee: they run to their spawn edge 
 | Stone Wall | 1 tile | 800 | 4 Stone | As above; Wall Breaker damage reduced 50% |
 | Gate | 1 tile | 500 | 4 Logs, 1 Iron Ingot | Opens for players and friendly vehicles; enemies treat as wall |
 | Spike Strip | 1 tile | 150 | 2 Iron Ingot | 15 dmg/s to ground enemies standing on it; does not block |
-| Turret | 1 tile | 400 | Blueprint; 6 Iron Ingot, 2 Stone | 12 dmg / 0.5 s, 18 m range; always fires at full rate; targets nearest enemy, can hit Balloons. Player-operated: 2× fire rate and manual aim |
+| Turret | 1 tile | 400 | Blueprint; 6 Iron Ingot, 2 Stone | 12 dmg / 0.5 s, 18 m range; targets nearest enemy, can hit Balloons. Player-operated: 2× fire rate and manual aim |
 | Alarm Post | 1 tile | 100 | 2 Logs, 1 Iron Ingot | Extends raid warning by 15 s and marks enemies within 40 m on the map |
 | Repair Hammer (tool) | — | — | Shop 100 ¢ | Repairs 50 HP/s to a construct; consumes materials at 25% of build cost per full HP bar |
 

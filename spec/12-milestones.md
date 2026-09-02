@@ -44,7 +44,7 @@ Systems:
 - Lobby with seed, archetype, kit; join-in-progress in Prep; disconnect grace.
 - Content pipeline: JSON defs, validator in CI, hot reload.
 - Results screen and MetaProfile persistence (XP only; unlocks table wired but shallow).
-- Resource nodes and harvesting (wood, fiber, stone, ore); hand-built Wooden Wall and Chest from harvested materials so building exists before automation. No forge crafting.
+- Resource nodes and harvesting (wood, fiber, stone, ore); hand-built Wooden Wall and Chest from harvested and shop materials so building exists before automation.
 
 Acceptance criteria:
 
@@ -61,13 +61,13 @@ Scope: chapter 04, netcode §4 (belt replication), UI (build mode, filter panel,
 Systems:
 
 - Build mode with ghost validity, drag lines, deconstruct, pipette; construct registry and placement validation; terrain flattening deltas.
-- Belt segments (compiled runs, two lanes, ramps, elevated), splitters, mergers; Intake outfeed; endpoints into mailboxes, containers, vehicles. Constructs always run at full rated speed (no power grids).
+- Belt segments (compiled runs, two lanes, ramps, elevated), splitters, mergers; Intake outfeed; endpoints into mailboxes, containers, vehicles.
 - Belt replication: LaneInsert/Remove/Checksum/State; client visual sim; interest management for segments.
 - Address Sorter with filter UI; Inserters; Depot.
 - Pipes (inlet filters, junctions, outlets, underground) behind bp_pipes.
 - Mail Truck; Vehicle Depot with route console; NPC driver behaviour (routing graph, stops, delivery, return, flee stub); player takeover.
 - Sea path: rowboat (Sea kit blueprint + build placement), pier, motorboat, small port, NPC captain; water navmesh.
-- Oil Pump for vehicle fuel (no power draw).
+- Oil Pump for vehicle fuel.
 - Map screen with layers, filter chips, pings, route editor.
 
 Acceptance criteria:
@@ -97,7 +97,7 @@ Acceptance criteria:
 
 - 40 enemies in interest replicated to 8 clients within the 40 kbps per-client budget; 80 kbps worst case.
 - Enemy pathing never stalls: a fuzz test spawning waves against 200 random wall layouts finds a path or a wall to break within 2 s for every enemy.
-- Wall Breakers hit walls, Hog Riders hop them and steal from depots, Balloons target turrets (not power infrastructure), Tanks push belts: each verified in scripted scenario tests.
+- Wall Breakers hit walls, Hog Riders hop them and steal from depots, Balloons target turrets, Tanks push belts: each verified in scripted scenario tests.
 - Sanity checks from chapter 11 §10.1 reproduced in BalanceSim with combat agents (a solo player with 6 walls loses no belts on shift 2).
 - No friendly fire; no enemy damage to mailboxes or houses (assertion tests).
 
@@ -107,9 +107,9 @@ Scope: chapters 01 (stamps, events, unlocks), 02 (Large Island), 10 (full conten
 
 Systems:
 
-- Full ~28-perk pool including rule-flag perks (Insured, Priority Post); rerolls; personal cap. No power-related perks.
-- Postage Stamps (all 8) with score multipliers and rule flags (Double Raids, No Roads surface speeds, Postal Audit, Megamail, Skeleton Crew, Cursed Mail mini-raids). No Brownout stamp.
-- Run events (9) with scheduling and UI. No power_surge.
+- Full ~28-perk pool including rule-flag perks (Insured, Priority Post); rerolls; personal cap.
+- Postage Stamps (all 8) with score multipliers and rule flags (Double Raids, No Roads surface speeds, Postal Audit, Megamail, Skeleton Crew, Cursed Mail mini-raids).
+- Run events (9) with scheduling and UI.
 - Postal Rank unlock tracks, cosmetics, kits (Sea, Pipes), practice seed, daily seed string.
 - Large Island archetype: multiple towns, inlets, ferry lanes, Business Docks, Cargo, Apartment Complexes with unit slots, PO Box Bank.
 - Payday MVP callouts, forecast, extended results, seed copy.

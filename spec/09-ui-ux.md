@@ -54,8 +54,6 @@ World generation progress bar with stage names (from chapter 02), a seed string,
 - Event feed: last 5 events, 6 s each. Deliveries by teammates are compressed ("Jules delivered 12 letters").
 - Hotbar: 8 slots; slot 1 "hands", 2–8 tools and mail. Number keys / d-pad cycle.
 
-There is no power widget.
-
 ### 2.5 Inventory panel (Tab / Y)
 
 - Left: player's Hotbar (1x8), Inventory (2x8), Backpack (2x8) stacked as one visual grid with dividers.

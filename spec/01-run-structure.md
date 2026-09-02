@@ -126,7 +126,7 @@ Perks are run-scoped modifiers applied to data-driven stat blocks. They never re
 - Team perks are unique per run.
 - Rare perks may be "build-around" perks that change a rule (e.g. "Insured: destroyed constructs rebuild free at next Prep").
 - Perk effects apply immediately at Draft and persist until Results.
-- Full initial pool (~28 perks; no power-related perks) is in chapter 10.
+- Full initial pool (~28 perks) is in chapter 10.
 
 ## 5. Meta-progression
 
@@ -173,7 +173,7 @@ Selected in the lobby by the host. Each stamp has a score multiplier and a tier 
 | Megamail | 3 | All mega enemies 2× as frequent | 1.25 |
 | Skeleton Crew | 3 | Quota uses playerScale(n+2) | 1.30 |
 
-Multipliers are multiplicative. Score is totalEarned × product(stampMultipliers) and is shown on Results. (Eight stamps; Brownout is not in Arcade v1.)
+Multipliers are multiplicative. Score is totalEarned × product(stampMultipliers) and is shown on Results.
 
 ## 7. End conditions
 

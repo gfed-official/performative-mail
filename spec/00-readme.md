@@ -37,12 +37,12 @@ This specification is derived from the "Performative Mail" design document ("Mai
 - Arcade mode: 5-shift rogue-lite run, seeded, 1–8 players, online co-op.
 - One-island maps (Small Island and Large Island archetypes) with districts that unlock during the run.
 - Hand delivery, grid inventory, backpack, bike, mail truck.
-- Conveyors, pipes, splitters/mergers, address sorters, inserters, depots, vehicle depot with NPC drivers. Constructs run without a power/energy system.
+- Conveyors, pipes, splitters/mergers, address sorters, inserters, depots, vehicle depot with NPC drivers.
 - Sea path: small and medium boats, small port.
 - Combat: 7 enemy types plus mega variants, night raids, walls, gates, turrets, repair.
 - Run-scoped perks, shop, meta-progression (Postal Rank), difficulty modifiers ("Postage Stamps").
 - Listen-server hosting plus headless dedicated server export.
-- Materials from harvesting and the shop. No crafting / forge loop. Building placement still consumes material recipes.
+- Materials from harvesting and the shop. Building placement consumes material recipes.
 
 ### Deferred (Free Play and later Arcade updates)
 
@@ -51,7 +51,6 @@ This specification is derived from the "Performative Mail" design document ("Mai
 - Mail semi, large boat, deep water port, rail network.
 - Space tech tree (convergence of land and sea).
 - Host migration, cross-platform play, mod support.
-- Crafting / refining loops and power / wattage energy management (explicitly out of v1).
 
 Every system is designed so Free Play reuses it unchanged: Free Play is "Arcade with no shift clock, no quota, a larger map, and a full tech tree".
 
@@ -69,8 +68,7 @@ These are decisions the design document left open. They are stated once here and
 | Starting-area weights | Small Island 50%, Large Island 30%, Land 20% | Doc gives only the 50%. Land archetype is Free Play only in v1, so Arcade rolls Small 62.5% / Large 37.5% (same ratio). |
 | Physical units | 1 unit = 1 metre, 1 grid tile (building) = 2 m | Buildings, belts, and roads snap to a 2 m grid; character movement is free. |
 | Fixed simulation tick | 30 Hz server simulation, 20 Hz snapshot send rate | See chapter 06. |
-| Crafting | None in Arcade v1 | Refined materials and tools come from kits, the shop, and enemy drops. Building placement still consumes material recipes. |
-| Power / energy | None in Arcade v1 | Belts, pipes, sorters, inserters, and turrets always run at full rated speed. No generators, cables, poles, wattage, or brownout. |
+| Materials | Harvest raw resources; buy refined materials and tools from the shop (or take kit/drop grants) | Building placement consumes material recipes from inventory or the PO Depot. |
 
 ## Glossary
 
@@ -93,7 +91,7 @@ These are decisions the design document left open. They are stated once here and
 | Container | Anything with a grid inventory: player inventory, backpack, bike, truck, boat, depot, chest. |
 | Server | The authoritative simulation. Either the hosting player's process (listen server) or a headless process. |
 | Client | A player's process that renders and sends inputs. The host is also a client. |
-| Build recipe | Material cost consumed when placing a construct. Not a crafting loop: there is no forge or handcrafting station. |
+| Build recipe | Material cost consumed when placing a construct. |
 
 ## Conventions used in this spec
 

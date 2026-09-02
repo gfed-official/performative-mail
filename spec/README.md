@@ -1,6 +1,6 @@
 # Performative Mail — Spec
 
-Markdown mirror of the Arcade v1 implementation specification.
+Markdown Arcade v1 implementation specification.
 
 | File | Contents |
 | --- | --- |
@@ -17,8 +17,3 @@ Markdown mirror of the Arcade v1 implementation specification.
 | [10-content-tables.md](10-content-tables.md) | Items, buildings, perks, events |
 | [11-balance.md](11-balance.md) | Baseline numbers |
 | [12-milestones.md](12-milestones.md) | Build order M0–M5 |
-
-### Explicitly out of Arcade v1
-
-- Crafting / forge / handcraft item production (materials from harvest + shop; placement recipes remain)
-- Power / energy / wattage management (no generators, cables, poles, brownout)

@@ -20,7 +20,7 @@ Initial content for Arcade v1. All numbers are baselines (chapter 11 for the bal
 | oil_can | Oil Can | 1x2 | 5 | Pump output or shop | 60 / 15 |
 | berries | Berries | 1x1 | 10 | Bushes | — / 1 |
 
-There is no crafting or forge. Refined materials (rope, plank, iron_ingot, glass) are bought from the shop; raw materials come from harvesting and enemy drops.
+Refined materials (rope, plank, iron_ingot, glass) are bought from the shop; raw materials come from harvesting and enemy drops.
 
 ### 1.2 Tools and weapons
 
@@ -36,7 +36,7 @@ There is no crafting or forge. Refined materials (rope, plank, iron_ingot, glass
 | bandage | Bandage | 1x1 (stack 5) | Heal 50 instant | Shop 30 |
 | backpack | Backpack | 2x2 (equipped, not in grid) | +2x8 rows | All kits; shop 150 |
 
-Tools are never crafted. Kits and the shop are the only acquisition paths.
+Kits and the shop are the only acquisition paths.
 
 ### 1.3 Vehicles
 
@@ -49,7 +49,7 @@ Tools are never crafted. Kits and the shop are the only acquisition paths.
 
 ## 2. Buildings
 
-Cost is the build recipe (materials consumed on placement); BP is the required blueprint (shop). HP as in chapters 04–05. Constructs always run at full rated speed (no power column).
+Cost is the build recipe (materials consumed on placement); BP is the required blueprint (shop). HP as in chapters 04–05.
 
 ### 2.1 Transport
 
@@ -81,9 +81,9 @@ Cost is the build recipe (materials consumed on placement); BP is the required b
 
 | id | Name | Footprint | HP | Cost | BP | Notes |
 | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| pump | Oil Pump | 1 | 400 | 6 Iron Ingot, 2 Glass | bp_oil | 1 Oil Can / 45 s; no power draw; place on oil seep |
+| pump | Oil Pump | 1 | 400 | 6 Iron Ingot, 2 Glass | bp_oil | 1 Oil Can / 45 s; place on oil seep |
 
-Oil Pumps produce vehicle fuel only. There are no generators, poles, or cables.
+Oil Pumps produce vehicle fuel.
 
 ### 2.4 Vehicles infrastructure
 
@@ -114,8 +114,6 @@ Oil Pumps produce vehicle fuel only. There are no generators, poles, or cables.
 | Depot (PO) | 16x20 team storage |
 | Shop counter | Opens the shop during Prep and Payday |
 | Spawn pad | Respawn point |
-
-There is no Forge.
 
 ## 3. Shop catalog
 
@@ -185,8 +183,6 @@ Rarity: C common, U uncommon, R rare. Scope: T team, P personal.
 | shared_build | Shared Build | C | Build from PO Depot materials anywhere on the map |  |
 | postmasters_eye | Postmaster's Eye | R | Sorter filter slots unlimited; sorter throughput ×2 | Prereq: bp_sorting |
 
-Power-related perks (Copper Wire, Overclock, Pneumatic Post, Conveyor Grease) are not in Arcade v1.
-
 ### 4.3 Postal Service (team)
 
 | id | Name | Rarity | Effect | Notes |
@@ -239,8 +235,6 @@ Mega variants of each: HP ×2.5, damage ×1.5, scale ×1.4, speed ×0.9, aura +2
 | overtime | Overtime | Random Payday, if quota missed by ≤ 10% | One-time: Delivery extended 60 s; run continues if the shortfall is covered (once per run) |
 | delivery_bonus | Neighbourhood Watch | Random Prep | Zero misdeliveries this shift → +25% shift earnings |
 | mega_migration | Mega Migration | Random Prep, shift 3+ | Mega chance ×3 this shift; all megas drop 2 Lost Parcels |
-
-There is no power_surge event.
 
 ## 7. Street names (excerpt of ~120)
 

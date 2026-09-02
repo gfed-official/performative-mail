@@ -6,8 +6,8 @@ Engine: Godot 4.x with C# (.NET 8). This chapter defines the project layout, mod
 
 1. **Simulation is plain C#, presentation is Godot.** Everything the server decides (inventories, belts, enemies, economy, run state) lives in a PerformativeMail.Sim assembly with no Godot dependencies. Godot nodes render, animate, and gather input. This lets the headless server run without a scene tree for most systems, makes unit tests trivial, and keeps the client from accidentally becoming authoritative.
 2. **One code path for host and dedicated.** The listen server is the same ServerRuntime object in the host process with a loopback transport.
-3. **Content is data.** Items, mail kinds, buildings, recipes, perks, enemies, waves, shop, stamps, street names, and balance constants are loaded from data files (chapter 08). Adding a perk or enemy must not require a code change unless it introduces a new behaviour primitive. Recipes in Arcade v1 are build-placement costs only (no item crafting).
-4. **Fixed 2 m grid, 30 Hz tick, integer money.** No floating-point money, no variable-step simulation. No power / energy simulation.
+3. **Content is data.** Items, mail kinds, buildings, recipes, perks, enemies, waves, shop, stamps, street names, and balance constants are loaded from data files (chapter 08). Adding a perk or enemy must not require a code change unless it introduces a new behaviour primitive. Recipes define build-placement material costs.
+4. **Fixed 2 m grid, 30 Hz tick, integer money.** No floating-point money, no variable-step simulation.
 
 ## 2. Solution layout
 
@@ -49,8 +49,6 @@ PerformativeMail/
     Sim.Tests/                 # xUnit tests for the Sim assembly
     Net.Tests/                 # Serializer round-trips, snapshot deltas
 ```
-
-There is no `Power/` module. Constructs under Automation (and Combat turrets) always run at full rated speed.
 
 ## 3. Runtime composition
 
@@ -106,7 +104,7 @@ SimWorld.Tick(tick):
 
 ## 6. Data-driven content
 
-- All content files are validated at boot (and in CI by tools/ContentValidator) against the schemas in chapter 08: unique ids, referenced ids exist, grid sizes positive, perk modifiers reference known stat keys, recipes reference known items and produce buildings only (craftSeconds must be 0).
+- All content files are validated at boot (and in CI by tools/ContentValidator) against the schemas in chapter 08: unique ids, referenced ids exist, grid sizes positive, perk modifiers reference known stat keys, recipes reference known items and produce buildings only.
 - Content is loaded into immutable Def records. Runtime state never mutates a Def; perks apply via StatSheet overlays (baseValue × Σmultipliers + Σadders per stat key).
 - Stat keys are a closed enum defined in code (Stat.PlayerSpeed, Stat.BeltSpeedMk1, Stat.SorterFilterSlots, ...). Adding a new stat is a code change; adding a perk that uses an existing stat is not.
 - Balance constants (content/balance.json) cover every number tagged *tunable* in this spec.

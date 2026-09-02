@@ -134,8 +134,6 @@ Covers tools, materials, consumables, ammo. Mail kinds are a separate def becaus
 }
 ```
 
-There are no `powerDraw` or `powerSupply` fields. Constructs always run at full rated speed.
-
 Behaviour params by type:
 
 | behaviour | params |
@@ -156,7 +154,7 @@ Behaviour params by type:
 
 ### 2.7 RecipeDef (content/recipes/*.json)
 
-Recipes exist only for building placement. They never produce items and never have craftSeconds > 0.
+Recipes define material costs for building placement.
 
 ```
 {
@@ -164,12 +162,11 @@ Recipes exist only for building placement. They never produce items and never ha
   "produces": { "building": "address_sorter_mk1" },
   "inputs": [ { "item": "iron_ingot", "count": 4 }, { "item": "stone", "count": 6 } ],
   "blueprint?": "bp_sorting",      // ShopItem id that must be owned by the team
-  "craftSeconds": 0,               // must be 0; placement is instant once materials are paid
   "unlockShift": 1
 }
 ```
 
-ContentValidator rejects any RecipeDef whose `produces` is an item, or whose `craftSeconds` is greater than 0.
+ContentValidator rejects any RecipeDef whose `produces` is not a building.
 
 ### 2.8 ShopItemDef (content/shop/*.json)
 
@@ -208,7 +205,7 @@ ContentValidator rejects any RecipeDef whose `produces` is an item, or whose `cr
 }
 ```
 
-stat values are a closed enum (Stat in code). op is mul or add. Stat resolution: base × Π(mul) + Σ(add). There are no power-related stats or rule flags (no pipes_no_power, no consumer draw multipliers).
+stat values are a closed enum (Stat in code). op is mul or add. Stat resolution: base × Π(mul) + Σ(add).
 
 ### 2.10 EnemyDef (content/enemies/*.json)
 
@@ -233,7 +230,7 @@ stat values are a closed enum (Stat in code). op is mul or add. Stat resolution:
 }
 ```
 
-Balloon targetPriority is `["turret", "depot", "vehicle_depot", "sorter"]`. Giant targetPriority prefers depots and sorters (not generators).
+Balloon targetPriority is `["turret", "depot", "vehicle_depot", "sorter"]`. Giant targetPriority prefers depots and sorters.
 
 ### 2.11 WaveDef (content/waves/waves.json)
 
@@ -290,7 +287,7 @@ Balloon targetPriority is `["turret", "depot", "vehicle_depot", "sorter"]`. Gian
 
 ### 2.14 Balance (content/balance.json)
 
-Flat key/value file for every tunable not owned by another def: baseQuota, playerScaleExponent (0.65), spawnOverhead (1.6), prepSeconds, deliverySeconds, paydaySeconds, draftSeconds, complaintDecayPerSecond, complaintInspectorThreshold, respawnSeconds, deathBagDespawnSeconds, worldItemDespawnSeconds, interestRadius, playerHp, playerRegen, walkSpeed, sprintSpeed, weightSpeedFloor, npcSpeedRatio (0.6), operatedBeltMult (1.5), salvageRatioDelivery (0.5), rerollsPerRun (1), rankXpPerRank (500), etc. Chapter 11 lists values. There are no power-related balance keys.
+Flat key/value file for every tunable not owned by another def: baseQuota, playerScaleExponent (0.65), spawnOverhead (1.6), prepSeconds, deliverySeconds, paydaySeconds, draftSeconds, complaintDecayPerSecond, complaintInspectorThreshold, respawnSeconds, deathBagDespawnSeconds, worldItemDespawnSeconds, interestRadius, playerHp, playerRegen, walkSpeed, sprintSpeed, weightSpeedFloor, npcSpeedRatio (0.6), operatedBeltMult (1.5), salvageRatioDelivery (0.5), rerollsPerRun (1), rankXpPerRank (500), etc. Chapter 11 lists values.
 
 ### 2.15 Streets (content/streets.json), Unlocks (content/unlocks.json)
 
@@ -405,8 +402,6 @@ Flat key/value file for every tunable not owned by another def: baseQuota, playe
 }
 ```
 
-There is no `generatorFuel` field.
-
 ### 3.6 Belt lane events
 
 ```
@@ -467,5 +462,4 @@ There is no `generatorFuel` field.
 - ArchetypeDef.districtHouseCounts sum lies within the doc's population band for the town size.
 - Sum of MailMixDef.shares per shift = 1.0 ± 0.001.
 - Every RecipeDef.blueprint references a ShopItemDef of kind blueprint.
-- Every RecipeDef.produces a building (never an item); craftSeconds must equal 0.
-- BuildingDef must not declare powerDraw, powerSupply, or behaviours generator | pole | cable.
+- Every RecipeDef.produces a building.

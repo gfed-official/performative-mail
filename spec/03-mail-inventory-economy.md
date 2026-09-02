@@ -152,8 +152,8 @@ One team wallet (integer ¢). Delivery income adds, misdelivery subtracts, purch
 
 | Sink | Notes |
 | :-: | :-: |
-| PO Shop items | Tools, vehicles, blueprints, refined materials (chapter 10). No crafting station — the shop is the source for plank, rope, iron_ingot, glass, and tools. |
-| Building recipes | Placement costs only: recipes consume materials from inventory/depot when a construct is placed, not money. Some recipes require a blueprint bought once from the shop. There is no forge or handcraft item production. |
+| PO Shop items | Tools, vehicles, blueprints, refined materials (chapter 10): plank, rope, iron_ingot, glass, and tools. |
+| Building recipes | Recipes consume materials from inventory/depot when a construct is placed, not money. Some recipes require a blueprint bought once from the shop. |
 | Repairs | Repair hammer consumes materials at 25% of build cost per full repair |
 | Misdelivery | 50% of value |
 | Postal Inspector | −10% earnings for one shift (event) |
@@ -168,7 +168,7 @@ Selected per player in the lobby. Contents are placed in the player's inventory 
 | Sea (Rank 2) | Backpack, Axe, Rope ×2 | Rowboat blueprint, 10 Logs |
 | Pipes (Rank 10) | Backpack, Pickaxe | 8 Pipe, 1 Pump blueprint, 10 Iron Ingot |
 
-Kits are unchanged from the design baseline. Sea still grants Rope (shop material, not a craft product). The Sea kit's rowboat blueprint unlocks build placement (or the rowboat can be bought from the shop); there is no craft recipe for the boat.
+Kits are unchanged from the design baseline. Sea still grants Rope. The Sea kit's rowboat blueprint unlocks build placement (or the rowboat can be bought from the shop).
 
 ### 4.5 Reference economy check
 
