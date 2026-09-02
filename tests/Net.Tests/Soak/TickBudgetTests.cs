@@ -1,3 +1,4 @@
+using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
@@ -18,6 +19,11 @@ public sealed class TickBudgetTests
         Assert.Equal(2.0, TickBudgetReport.LimitMs);
         Assert.Equal(2.0, new SoakConfig().TickLimitMs);
         Assert.Equal(30u, new SoakConfig().WarmupTicks);
+        Assert.Equal(0u, new SoakConfig().PrimeTicks);
+        Assert.Equal(
+            (uint)(2 * (MailSpawnConstants.BatchIntervalTicks
+                + MailSpawnConstants.BatchJitterSeconds * TickClock.TickHz)),
+            SoakDuration.JitPrimeTicks);
     }
 
     [Fact]
@@ -67,24 +73,36 @@ public sealed class TickBudgetTests
     }
 
     [Fact]
+    public void TickBudget_PrimeTicks_AreExcludedFromTickLog()
+    {
+        var config = new SoakConfig
+        {
+            DurationTicks = 32,
+            WarmupTicks = 30,
+            PrimeTicks = 5,
+            TickLimitMs = TickBudgetReport.LimitMs,
+        };
+        var session = SoakSession.Start(config);
+        var report = session.Run();
+
+        Assert.Equal(5u, config.PrimeTicks);
+        Assert.Equal(30u, report.TickBudget.WarmupTicks);
+        Assert.Equal(2u, report.TickBudget.SampleCount);
+        Assert.Equal(32u, report.TicksRun);
+        Assert.Equal(2, session.Ticks.Samples.Count);
+        Assert.Equal(config.PrimeTicks + config.DurationTicks, session.Server.World.CurrentTick);
+    }
+
+    [Fact]
     public void TickBudget_LoadedEightSeatU6Map_MaxCpuMsAtMostTwo()
     {
         var config = new SoakConfig
         {
             DurationTicks = SoakDuration.TicksForSimMinutes(1),
             WarmupTicks = 30,
+            PrimeTicks = SoakDuration.JitPrimeTicks,
             TickLimitMs = TickBudgetReport.LimitMs,
         };
-
-        // First Intake batch is at BatchIntervalTicks (450). Thirty warmup ticks
-        // never compile MailSpawner.EmitBatch, so a cold process max (~15 ms) is
-        // method JIT, not TickOnce work. One two-batch pass completes that JIT.
-        // LimitMs stays 2.0 (spec/12). Do not use chapter 07's 8 ms.
-        SoakSession.Start(new SoakConfig
-        {
-            DurationTicks = (uint)MailSpawnConstants.BatchIntervalTicks * 2 + 30,
-            WarmupTicks = 30,
-        }).Run();
 
         var session = SoakSession.Start(config);
         var report = session.Run();
@@ -106,7 +124,10 @@ public sealed class TickBudgetTests
         Assert.Equal(SoakRoster.SeatCount, report.ConnectedSeats);
         Assert.Equal(config.DurationTicks, report.TicksRun);
         Assert.Equal(30u, budget.WarmupTicks);
+        Assert.Equal(30u, config.WarmupTicks);
+        Assert.Equal(SoakDuration.JitPrimeTicks, config.PrimeTicks);
         Assert.Equal(config.DurationTicks - 30u, budget.SampleCount);
+        Assert.Equal(config.PrimeTicks + config.DurationTicks, session.Server.World.CurrentTick);
         Assert.Equal(2.0, TickBudgetReport.LimitMs);
         Assert.Equal(2.0, config.TickLimitMs);
 
@@ -116,7 +137,7 @@ public sealed class TickBudgetTests
         Assert.True(session.Server.World.MailSpawner!.SpawnedValue > 0);
         Assert.True(
             MailSpawnConstants.BatchIntervalTicks < config.DurationTicks,
-            "Duration must include the first Intake batch so the sample is loaded.");
+            "Duration must include a later Intake batch so the sample is loaded.");
         Assert.Contains(
             session.Roster.Seats,
             s => s.Client.Prediction.Pose != PlayerPose.Origin);

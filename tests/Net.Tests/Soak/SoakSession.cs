@@ -140,22 +140,17 @@ public sealed class SoakSession
     {
         var mismatches = new List<HashWitness>();
         int connected = CountConnected();
-        for (uint tick = 0; tick < Config.DurationTicks; tick++)
+        var watch = new Stopwatch();
+
+        Pump(Config.PrimeTicks, mismatches, watch, recordCpu: false, ref connected);
+        if (Config.PrimeTicks > 0)
         {
-            DriveSeats();
-            var watch = Stopwatch.StartNew();
-            Server.TickOnce();
-            watch.Stop();
-            Ticks.Add(new TickSample(Server.World.CurrentTick, watch.Elapsed.TotalMilliseconds));
-            for (int i = 0; i < Roster.Seats.Count; i++)
-                Roster.Seats[i].Client.Receive();
-
-            int now = CountConnected();
-            if (now < connected)
-                connected = now;
-
-            WitnessFlushed(mismatches);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         }
+
+        Pump(Config.DurationTicks, mismatches, watch, recordCpu: true, ref connected);
 
         var witnesses = Hashes.Witnesses;
         bool sawVersion = false;
@@ -185,6 +180,39 @@ public sealed class SoakSession
             Criterion1 = criterion1,
             Criterion5 = tickBudget.Pass,
         };
+    }
+
+    private void Pump(
+        uint ticks,
+        List<HashWitness> mismatches,
+        Stopwatch watch,
+        bool recordCpu,
+        ref int connected)
+    {
+        for (uint tick = 0; tick < ticks; tick++)
+        {
+            DriveSeats();
+            if (recordCpu)
+            {
+                watch.Restart();
+                Server.TickOnce();
+                watch.Stop();
+                Ticks.Add(new TickSample(Server.World.CurrentTick, watch.Elapsed.TotalMilliseconds));
+            }
+            else
+            {
+                Server.TickOnce();
+            }
+
+            for (int i = 0; i < Roster.Seats.Count; i++)
+                Roster.Seats[i].Client.Receive();
+
+            int now = CountConnected();
+            if (now < connected)
+                connected = now;
+
+            WitnessFlushed(mismatches);
+        }
     }
 
     private void DriveSeats()
