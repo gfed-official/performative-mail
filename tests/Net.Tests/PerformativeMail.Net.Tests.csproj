@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\Sim\PerformativeMail.Sim.csproj" />
     <ProjectReference Include="..\..\src\Server\PerformativeMail.Server.csproj" />
     <ProjectReference Include="..\..\src\Client\PerformativeMail.Client.csproj" />
+    <ProjectReference Include="..\..\src\App\PerformativeMail.App.csproj" />
   </ItemGroup>
 
 </Project>
