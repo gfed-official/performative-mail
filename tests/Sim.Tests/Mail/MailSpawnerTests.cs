@@ -155,7 +155,7 @@ public sealed class MailSpawnerTests
 
         var result = world.Inventory!.Apply(Actor.Player(player), new Deposit(world.Intake, stack));
 
-        Assert.Equal(RejectReason.Forbidden, Assert.IsType<InventoryRejected>(result).Reason);
+        Assert.Equal(PerformativeMail.Sim.Inventory.RejectReason.Forbidden, Assert.IsType<InventoryRejected>(result).Reason);
     }
 
     [Fact]
@@ -166,7 +166,7 @@ public sealed class MailSpawnerTests
 
         var result = world.Inventory!.Apply(Actor.System, new Deposit(world.Intake, log));
 
-        Assert.Equal(RejectReason.WrongCategory, Assert.IsType<InventoryRejected>(result).Reason);
+        Assert.Equal(PerformativeMail.Sim.Inventory.RejectReason.WrongCategory, Assert.IsType<InventoryRejected>(result).Reason);
     }
 
     private static SimWorld CreateWorld(int seed)
