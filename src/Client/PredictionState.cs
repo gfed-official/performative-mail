@@ -29,7 +29,8 @@ public sealed class PredictionState
 
     public void Predict(in InputCmd cmd)
     {
-        Pose = MovementStep.ApplyTick(in Pose, in cmd, in _context);
+        var pose = Pose;
+        Pose = MovementStep.ApplyTick(in pose, in cmd, in _context);
         _pending.Add(cmd);
     }
 
@@ -39,14 +40,15 @@ public sealed class PredictionState
     public void Reconcile(in PlayerPose snapshotPose, uint lastProcessedInputTick)
     {
         Pose = snapshotPose;
-        _pending.RemoveAll(static cmd => cmd.Tick <= lastProcessedInputTick);
+        _pending.RemoveAll(cmd => cmd.Tick <= lastProcessedInputTick);
         if (_pending.Count > 1)
             _pending.Sort(CompareTick);
 
         for (int i = 0; i < _pending.Count; i++)
         {
+            var pose = Pose;
             var cmd = _pending[i];
-            Pose = MovementStep.ApplyTick(in Pose, in cmd, in _context);
+            Pose = MovementStep.ApplyTick(in pose, in cmd, in _context);
         }
     }
 

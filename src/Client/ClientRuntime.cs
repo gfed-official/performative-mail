@@ -85,14 +85,6 @@ public sealed class ClientRuntime
             case MessageKind.Input:
                 break;
             default:
-                _ = kind switch
-                {
-                    MessageKind.Hello => 0,
-                    MessageKind.HelloOk => 0,
-                    MessageKind.HelloReject => 0,
-                    MessageKind.Input => 0,
-                    MessageKind.Snapshot => 0,
-                };
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }
     }
