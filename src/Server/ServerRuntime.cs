@@ -15,6 +15,7 @@ public sealed class ServerRuntime
 
     private readonly List<ClientSession> _sessions = new();
     private readonly List<byte[]> _pending = new();
+    private PlayerSnapshot[] _snapshotScratch = Array.Empty<PlayerSnapshot>();
     private uint _tick;
 
     public SimWorld World { get; }
@@ -151,15 +152,17 @@ public sealed class ServerRuntime
 
     private void SendSnapshot(ClientSession session)
     {
-        var players = new PlayerSnapshot[World.Players.Count];
         var all = World.Players.All;
+        if (_snapshotScratch.Length != all.Count)
+            _snapshotScratch = new PlayerSnapshot[all.Count];
+
         for (int i = 0; i < all.Count; i++)
         {
             var body = all[i];
             var lastProcessed = session.Player is EntityId player && body.Id == player
                 ? body.LastProcessedInputTick
                 : 0u;
-            players[i] = new PlayerSnapshot(
+            _snapshotScratch[i] = new PlayerSnapshot(
                 body.Id,
                 body.Xcm,
                 body.Ycm,
@@ -170,7 +173,9 @@ public sealed class ServerRuntime
                 lastProcessed);
         }
 
-        session.Transport.Send(SnapshotChannel, WireCodec.Encode(new SnapshotPacket(World.CurrentTick, players)));
+        session.Transport.Send(
+            SnapshotChannel,
+            WireCodec.Encode(new SnapshotPacket(World.CurrentTick, _snapshotScratch)));
     }
 
     private void FlushInventoryEvents()
