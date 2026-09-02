@@ -10,6 +10,7 @@ public sealed class InventorySystem
     private readonly Dictionary<ContainerId, GridContainer> _containers = new();
     private readonly Dictionary<ContainerId, EntityId> _owners = new();
     private readonly Dictionary<EntityId, ContainerId> _external = new();
+    private readonly List<ContainerDelta> _committed = new();
     private uint _nextContainer = 1;
     private uint _nextEntry = 1;
 
@@ -83,7 +84,19 @@ public sealed class InventorySystem
             return new Rejected(RejectReason.UnknownContainer);
 
         _external[player] = container;
-        return new Accepted(new[] { Snapshot(container) });
+        var delta = Snapshot(container);
+        _committed.Add(delta);
+        return new Accepted(new[] { delta });
+    }
+
+    public IReadOnlyList<ContainerDelta> DrainCommittedDeltas()
+    {
+        if (_committed.Count == 0)
+            return Array.Empty<ContainerDelta>();
+
+        var drained = _committed.ToArray();
+        _committed.Clear();
+        return drained;
     }
 
     public void Close(EntityId player, ContainerId container)
@@ -270,6 +283,7 @@ public sealed class InventorySystem
                 grouped[id]));
         }
 
+        _committed.AddRange(deltas);
         return new Accepted(deltas, plan.Withdrawn);
     }
 

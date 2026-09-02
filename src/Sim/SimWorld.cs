@@ -1,3 +1,4 @@
+using System;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
@@ -24,6 +25,12 @@ public sealed class SimWorld
 
     public SimWorld()
     {
+    }
+
+    public SimWorld(IStackCatalog catalog)
+    {
+        if (catalog is null) throw new ArgumentNullException(nameof(catalog));
+        Inventory = new InventorySystem(catalog);
     }
 
     public SimWorld(WorldAtlas atlas, IStackCatalog catalog, int seed, int jitterSeconds = MailSpawnConstants.BatchJitterSeconds)

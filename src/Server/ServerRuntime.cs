@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using PerformativeMail.Sim;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Net;
 
 namespace PerformativeMail.Server;
@@ -9,6 +10,7 @@ namespace PerformativeMail.Server;
 public sealed class ServerRuntime
 {
     private const int SnapshotChannel = 0;
+    private const int EventChannel = 1;
     private const int HelloChannel = 2;
 
     private readonly List<ClientSession> _sessions = new();
@@ -56,6 +58,7 @@ public sealed class ServerRuntime
             Service(_sessions[i]);
 
         World.Tick(_tick++);
+        FlushInventoryEvents();
 
         if (SnapshotCadence.ShouldSend(World.CurrentTick))
         {
@@ -166,6 +169,33 @@ public sealed class ServerRuntime
         }
 
         session.Transport.Send(SnapshotChannel, WireCodec.Encode(new SnapshotPacket(World.CurrentTick, players)));
+    }
+
+    private void FlushInventoryEvents()
+    {
+        if (World.Inventory is not InventorySystem inventory)
+            return;
+
+        var deltas = inventory.DrainCommittedDeltas();
+        for (int i = 0; i < deltas.Count; i++)
+        {
+            var delta = deltas[i];
+            var payload = InventoryCodec.EncodeEvent(delta);
+            foreach (var viewer in inventory.ViewersOf(delta.Container))
+                SendToViewer(viewer, EventChannel, payload);
+        }
+    }
+
+    private void SendToViewer(EntityId viewer, int channel, byte[] payload)
+    {
+        for (int i = 0; i < _sessions.Count; i++)
+        {
+            if (_sessions[i].Player is EntityId player && player.Equals(viewer))
+            {
+                _sessions[i].Transport.Send(channel, payload);
+                return;
+            }
+        }
     }
 
     private sealed class ClientSession

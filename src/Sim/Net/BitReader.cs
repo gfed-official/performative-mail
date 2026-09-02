@@ -85,4 +85,16 @@ public sealed class BitReader
         value = unchecked((int)raw);
         return true;
     }
+
+    public bool TryReadUInt64(out ulong value)
+    {
+        if (!TryReadUInt32(out var lo) || !TryReadUInt32(out var hi))
+        {
+            value = 0;
+            return false;
+        }
+
+        value = lo | ((ulong)hi << 32);
+        return true;
+    }
 }
