@@ -68,12 +68,19 @@ public sealed class Destinations
         if (!item.Address.Equals(destination.Address))
             throw new InvalidOperationException("U3.3 misdelivery");
 
-        if (currentShift > item.DeadlineShift)
-            throw new InvalidOperationException("U3.2 late pay");
-
         _mail.Remove(mailId);
-        var paid = new Cents(item.Value);
+        var paid = PayForTimeliness(item.Value, currentShift, item.DeadlineShift);
         wallet.Credit(paid);
         return new Delivered(paid);
+    }
+
+    // §2.2 rule 3: 1.0 on time, lateValueRatio 0.5 one shift late, 0 later.
+    private static Cents PayForTimeliness(ushort value, byte currentShift, byte deadlineShift)
+    {
+        if (currentShift <= deadlineShift)
+            return new Cents(value);
+        if (currentShift == deadlineShift + 1)
+            return new Cents(value / 2);
+        return new Cents(0);
     }
 }
