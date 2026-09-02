@@ -11,10 +11,9 @@ public sealed class ServerRuntime
     private const int SnapshotChannel = 0;
     private const int HelloChannel = 2;
 
-    private readonly ITransport _transport;
+    private readonly List<ClientSession> _sessions = new();
     private readonly List<byte[]> _pending = new();
     private uint _tick;
-    private ClientSession? _session;
 
     public SimWorld World { get; }
 
@@ -25,8 +24,22 @@ public sealed class ServerRuntime
 
     public ServerRuntime(ITransport transport, SimWorld world)
     {
-        _transport = transport;
         World = world ?? throw new ArgumentNullException(nameof(world));
+        Attach(transport);
+    }
+
+    public void Attach(ITransport transport)
+    {
+        if (transport is null)
+            throw new ArgumentNullException(nameof(transport));
+
+        for (int i = 0; i < _sessions.Count; i++)
+        {
+            if (ReferenceEquals(_sessions[i].Transport, transport))
+                throw new ArgumentException("Transport is already attached.", nameof(transport));
+        }
+
+        _sessions.Add(new ClientSession(transport));
     }
 
     public void Start()
@@ -39,65 +52,70 @@ public sealed class ServerRuntime
 
     public void TickOnce()
     {
-        DrainPending();
-        HandleHellos();
-        HandlePings();
-        HandleInputs();
+        for (int i = 0; i < _sessions.Count; i++)
+            Service(_sessions[i]);
 
         World.Tick(_tick++);
 
         if (SnapshotCadence.ShouldSend(World.CurrentTick))
-            SendSnapshot();
+        {
+            for (int i = 0; i < _sessions.Count; i++)
+                SendSnapshot(_sessions[i]);
+        }
     }
 
-    private void DrainPending()
+    private void Service(ClientSession session)
     {
         _pending.Clear();
-        while (_transport.Poll(out _, out var payload))
+        while (session.Transport.Poll(out _, out var payload))
             _pending.Add(payload);
+
+        HandleHellos(session);
+        HandlePings(session);
+        HandleInputs(session);
     }
 
-    private void HandleHellos()
+    private void HandleHellos(ClientSession session)
     {
         for (int i = 0; i < _pending.Count; i++)
         {
             if (!WireCodec.TryDecode(_pending[i], out Hello hello))
                 continue;
 
-            HandleHello(in hello);
+            HandleHello(session, in hello);
         }
     }
 
-    private void HandleHello(in Hello hello)
+    private void HandleHello(ClientSession session, in Hello hello)
     {
-        if (_session is not null)
+        if (session.Player is not null)
             return;
 
         if (hello.ProtocolHash != Protocol.Hash)
         {
-            _transport.Send(HelloChannel, WireCodec.Encode(new HelloReject(HelloRejectReason.ProtocolMismatch)));
+            session.Transport.Send(HelloChannel, WireCodec.Encode(new HelloReject(HelloRejectReason.ProtocolMismatch)));
             return;
         }
 
         var body = World.Players.SpawnAtOrigin();
-        _session = new ClientSession(body.Id);
-        _transport.Send(HelloChannel, WireCodec.Encode(new HelloOk(body.Id, _tick)));
+        session.Player = body.Id;
+        session.Transport.Send(HelloChannel, WireCodec.Encode(new HelloOk(body.Id, _tick)));
     }
 
-    private void HandlePings()
+    private void HandlePings(ClientSession session)
     {
         for (int i = 0; i < _pending.Count; i++)
         {
             if (!WireCodec.TryDecode(_pending[i], out Ping ping))
                 continue;
 
-            _transport.Send(SnapshotChannel, WireCodec.Encode(new Pong(ping.ClientStamp, _tick)));
+            session.Transport.Send(SnapshotChannel, WireCodec.Encode(new Pong(ping.ClientStamp, _tick)));
         }
     }
 
-    private void HandleInputs()
+    private void HandleInputs(ClientSession session)
     {
-        if (_session is null)
+        if (session.Player is not EntityId player)
             return;
 
         for (int i = 0; i < _pending.Count; i++)
@@ -105,15 +123,13 @@ public sealed class ServerRuntime
             if (!WireCodec.TryDecode(_pending[i], out InputPacket? packet) || packet is null)
                 continue;
 
-            ApplyInputPacket(packet);
+            ApplyInputPacket(player, packet);
         }
     }
 
-    private void ApplyInputPacket(InputPacket packet)
+    private void ApplyInputPacket(EntityId player, InputPacket packet)
     {
-        if (_session is null)
-            return;
-        if (!World.Players.TryGet(_session.Player, out var body))
+        if (!World.Players.TryGet(player, out var body))
             return;
 
         for (int i = packet.Commands.Count - 1; i >= 0; i--)
@@ -124,18 +140,18 @@ public sealed class ServerRuntime
             if (body.HasAppliedInput && cmd.Tick <= body.LastProcessedInputTick)
                 continue;
 
-            World.ApplyInput(_session.Player, in cmd);
+            World.ApplyInput(player, in cmd);
         }
     }
 
-    private void SendSnapshot()
+    private void SendSnapshot(ClientSession session)
     {
         var players = new PlayerSnapshot[World.Players.Count];
         var all = World.Players.All;
         for (int i = 0; i < all.Count; i++)
         {
             var body = all[i];
-            var lastProcessed = _session is not null && body.Id == _session.Player
+            var lastProcessed = session.Player is EntityId player && body.Id == player
                 ? body.LastProcessedInputTick
                 : 0u;
             players[i] = new PlayerSnapshot(
@@ -149,13 +165,15 @@ public sealed class ServerRuntime
                 lastProcessed);
         }
 
-        _transport.Send(SnapshotChannel, WireCodec.Encode(new SnapshotPacket(World.CurrentTick, players)));
+        session.Transport.Send(SnapshotChannel, WireCodec.Encode(new SnapshotPacket(World.CurrentTick, players)));
     }
 
     private sealed class ClientSession
     {
-        public ClientSession(EntityId player) => Player = player;
+        public ClientSession(ITransport transport) => Transport = transport;
 
-        public EntityId Player { get; }
+        public ITransport Transport { get; }
+
+        public EntityId? Player { get; set; }
     }
 }
