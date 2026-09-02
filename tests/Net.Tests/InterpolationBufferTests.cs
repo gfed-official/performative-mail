@@ -1,5 +1,6 @@
 using System;
 using PerformativeMail.App;
+using PerformativeMail.Client;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
@@ -37,10 +38,36 @@ public sealed class InterpolationBufferTests
     }
 
     [Fact]
+    public void Push_OwnerSnapshot_Throws()
+    {
+        var buffer = new InterpolationBuffer();
+        var owner = new OwnerSnapshot(0, PlayerPose.Origin, 0);
+        Assert.Throws<InvalidOperationException>(() => buffer.Push(in owner));
+        Assert.Equal(0, buffer.Count);
+    }
+
+    [Fact]
     public void RemoteSnapshotFrom_OwnerEntity_Throws()
     {
         var ownerPlayer = new PlayerSnapshot(OwnerId, 0, 0, 0, 0, 0, 100, 4);
         Assert.Throws<InvalidOperationException>(() => RemoteSnapshot.From(in ownerPlayer, 0, OwnerId));
+    }
+
+    [Fact]
+    public void FourthSnapshot_DropsOldest_KeepsLastThree()
+    {
+        var buffer = new InterpolationBuffer();
+        Assert.Equal(3, InterpolationBuffer.Capacity);
+        buffer.Push(TimeSpan.FromMilliseconds(0), new PlayerPose(0, 0, 0, 0));
+        buffer.Push(TimeSpan.FromMilliseconds(50), new PlayerPose(100, 0, 0, 0));
+        buffer.Push(TimeSpan.FromMilliseconds(100), new PlayerPose(200, 0, 0, 0));
+        buffer.Push(TimeSpan.FromMilliseconds(150), new PlayerPose(300, 0, 0, 0));
+        Assert.Equal(3, buffer.Count);
+
+        // now=175, present=75: oldest (t=0) is gone; sample is on the 50–100 ms segment.
+        Assert.True(buffer.TryPresent(TimeSpan.FromMilliseconds(175), out var pose));
+        Assert.True(OnSegment(new PlayerPose(100, 0, 0, 0), new PlayerPose(200, 0, 0, 0), pose));
+        Assert.Equal(150, pose.Xcm);
     }
 
     [Fact]
@@ -52,6 +79,9 @@ public sealed class InterpolationBufferTests
 
         Assert.NotNull(client.LocalPlayer);
         var owner = client.LocalPlayer!.Value;
+        Assert.Equal(0, client.RemoteCount);
+        Assert.IsType<PlayerReplication.OwnerPredicted>(client.ReplicationFor(owner));
+
         var remotePose = new PlayerPose(80, 0, 0, 0);
         var packet = new SnapshotPacket(
             0,
@@ -68,6 +98,8 @@ public sealed class InterpolationBufferTests
         Assert.True(client.TryGetRemote(RemoteId, out var remote));
         Assert.False(client.TryGetRemote(owner, out _));
         Assert.Same(client.Prediction, client.Owner.State);
+        Assert.IsType<PlayerReplication.OwnerPredicted>(client.ReplicationFor(owner));
+        Assert.IsType<PlayerReplication.RemoteInterpolated>(client.ReplicationFor(RemoteId));
         Assert.True(remote.Buffer.TryPresent(InterpolationBuffer.Holdback, out var presented));
         Assert.Equal(remotePose, presented);
 

@@ -147,19 +147,50 @@ public sealed class ClientRuntime
     public bool TryGetRemote(EntityId id, out PlayerReplication.RemoteInterpolated remote) =>
         _remotes.TryGetValue(id, out remote!);
 
-    public bool TryPresent(EntityId id, TimeSpan now, out PlayerPose pose)
+    public bool TryGetReplication(EntityId id, out PlayerReplication role)
     {
         if (LocalPlayer is EntityId owner && id == owner)
         {
-            pose = Prediction.Pose;
+            role = _owner;
             return true;
         }
 
         if (_remotes.TryGetValue(id, out var remote))
-            return remote.Buffer.TryPresent(now, out pose);
+        {
+            role = remote;
+            return true;
+        }
 
-        pose = default;
+        role = null!;
         return false;
+    }
+
+    public PlayerReplication ReplicationFor(EntityId id)
+    {
+        if (TryGetReplication(id, out var role))
+            return role;
+
+        throw new InvalidOperationException($"No replication role for entity {id.Value}.");
+    }
+
+    public bool TryPresent(EntityId id, TimeSpan now, out PlayerPose pose)
+    {
+        if (!TryGetReplication(id, out var role))
+        {
+            pose = default;
+            return false;
+        }
+
+        switch (role)
+        {
+            case PlayerReplication.OwnerPredicted owner:
+                pose = owner.State.Pose;
+                return true;
+            case PlayerReplication.RemoteInterpolated remote:
+                return remote.Buffer.TryPresent(now, out pose);
+            default:
+                throw new ArgumentOutOfRangeException(nameof(role), role, null);
+        }
     }
 
     private void TryReconcileOwner(SnapshotPacket snapshot)

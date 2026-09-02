@@ -9,9 +9,12 @@ public sealed class InterpolationBuffer
 {
     public const int Capacity = 3;
 
+    // chapter 06 §3: interpolation buffer 100 ms (3 snapshots). Do not invent another holdback.
     public static readonly TimeSpan Holdback = TimeSpan.FromMilliseconds(100);
 
     private readonly List<Sample> _samples = new List<Sample>(Capacity);
+
+    public int Count => _samples.Count;
 
     public static InterpolationBuffer ForRemote(EntityId remote, EntityId owner)
     {
@@ -26,6 +29,11 @@ public sealed class InterpolationBuffer
 
     public void Push(in RemoteSnapshot snapshot) =>
         Push(snapshot.ServerTime, snapshot.Pose);
+
+    public void Push(in OwnerSnapshot snapshot)
+    {
+        throw new InvalidOperationException("Owner pawn must not enter InterpolationBuffer.");
+    }
 
     public void Push(TimeSpan serverTime, in PlayerPose pose)
     {
