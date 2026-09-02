@@ -35,6 +35,12 @@ public sealed class BitWriter
 
     public void WriteInt32(int value) => WriteUInt32(unchecked((uint)value));
 
+    public void WriteUInt64(ulong value)
+    {
+        WriteUInt32(unchecked((uint)value));
+        WriteUInt32(unchecked((uint)(value >> 32)));
+    }
+
     public byte[] ToArray()
     {
         var copy = new byte[_length];

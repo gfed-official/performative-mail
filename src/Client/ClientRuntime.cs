@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
 
@@ -37,6 +38,20 @@ public sealed class ClientRuntime
     public int RemoteCount => _remotes.Count;
 
     public Pong? LastPong { get; private set; }
+
+    public InventorySystem? Inventory { get; }
+
+    public int InventoryEventCount { get; private set; }
+
+    public ClientRuntime()
+    {
+    }
+
+    public ClientRuntime(IStackCatalog catalog)
+    {
+        if (catalog is null) throw new ArgumentNullException(nameof(catalog));
+        Inventory = new InventorySystem(catalog);
+    }
 
     public void Connect(ITransport transport)
     {
@@ -104,6 +119,9 @@ public sealed class ClientRuntime
             case MessageKind.Pong:
                 ApplyPong(payload);
                 break;
+            case MessageKind.InventoryEvent:
+                ApplyInventoryEvent(payload);
+                break;
             case MessageKind.Hello:
             case MessageKind.HelloReject:
             case MessageKind.Input:
@@ -131,6 +149,17 @@ public sealed class ClientRuntime
             return;
 
         LastPong = pong;
+    }
+
+    private void ApplyInventoryEvent(byte[] payload)
+    {
+        if (Inventory is null)
+            return;
+        if (!InventoryCodec.TryParseEvent(payload, out var delta, out _))
+            return;
+
+        if (Inventory.ApplyDelta(delta) == ReplicaResult.Applied)
+            InventoryEventCount++;
     }
 
     private void ApplySnapshot(byte[] payload)
