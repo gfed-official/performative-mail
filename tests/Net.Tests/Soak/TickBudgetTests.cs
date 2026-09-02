@@ -5,6 +5,7 @@ using Xunit.Abstractions;
 
 namespace PerformativeMail.Net.Tests.Soak;
 
+[Collection(SoakCollection.Name)]
 public sealed class TickBudgetTests
 {
     private readonly ITestOutputHelper _output;
