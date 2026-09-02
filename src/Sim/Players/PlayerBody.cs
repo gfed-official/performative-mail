@@ -1,4 +1,5 @@
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Movement;
 
 namespace PerformativeMail.Sim.Players;
 
@@ -14,13 +15,13 @@ public sealed class PlayerBody
 
     public EntityId Id { get; }
 
-    public int Xcm { get; }
+    public int Xcm { get; private set; }
 
-    public int Ycm { get; }
+    public int Ycm { get; private set; }
 
-    public int Zcm { get; }
+    public int Zcm { get; private set; }
 
-    public ushort Yaw { get; }
+    public ushort Yaw { get; private set; }
 
     public byte Anim { get; }
 
@@ -34,8 +35,18 @@ public sealed class PlayerBody
 
     public bool HasAppliedInput => _lastProcessed.HasValue;
 
+    public PlayerPose Pose => new(Xcm, Ycm, Zcm, Yaw);
+
     public void Apply(in InputCmd cmd)
     {
+        if (HasAppliedInput && cmd.Tick <= LastProcessedInputTick)
+            return;
+
+        var pose = MovementStep.ApplyTick(Pose, in cmd, MovementContext.Unburdened);
+        Xcm = pose.Xcm;
+        Ycm = pose.Ycm;
+        Zcm = pose.Zcm;
+        Yaw = pose.Yaw;
         LastCmd = cmd;
         _lastProcessed = cmd.Tick;
         AppliedCount++;
