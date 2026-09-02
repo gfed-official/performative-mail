@@ -74,31 +74,71 @@ public sealed class DestinationsTests
     }
 
     [Fact]
-    public void TryDeliver_LetterAddressMismatch_ThrowsU33Misdelivery()
+    public void TryDeliver_LetterAddressMismatch_DebitsFourAndConsumes()
     {
         var fx = new DeliveryFixture();
         var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
 
-        var ex = Assert.Throws<InvalidOperationException>(
-            () => fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet));
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet);
 
-        Assert.Equal("U3.3 misdelivery", ex.Message);
-        Assert.Equal(new Cents(0), fx.Wallet.Balance);
+        var misdelivered = Assert.IsType<Misdelivered>(result);
+        Assert.Equal(new Cents(4), misdelivered.Penalty);
+        Assert.Equal(new Cents(-4), fx.Wallet.Balance);
+        Assert.False(fx.Mail.Contains(mailId));
+    }
+
+    [Fact]
+    public void TryDeliver_LetterAddressMismatchWhileLate_DebitsFourAndConsumes()
+    {
+        var fx = new DeliveryFixture();
+        var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
+
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 3, fx.Wallet);
+
+        var misdelivered = Assert.IsType<Misdelivered>(result);
+        Assert.Equal(new Cents(4), misdelivered.Penalty);
+        Assert.Equal(new Cents(-4), fx.Wallet.Balance);
+        Assert.False(fx.Mail.Contains(mailId));
+    }
+
+    [Fact]
+    public void TryDeliver_LetterAddressMismatchAtWalletFloor_RejectsAndKeepsItem()
+    {
+        var fx = new DeliveryFixture(new Cents(-500));
+        var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
+
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet);
+
+        Assert.Equal(RejectReason.WalletFloor, Assert.IsType<Rejected>(result).Reason);
+        Assert.Equal(new Cents(-500), fx.Wallet.Balance);
         Assert.True(fx.Mail.Contains(mailId));
     }
 
     [Fact]
-    public void TryDeliver_LetterAddressMismatchWhileLate_ThrowsU33Misdelivery()
+    public void TryDeliver_LetterAddressMismatchFromNegative497_RejectsAndKeepsItem()
     {
-        var fx = new DeliveryFixture();
+        var fx = new DeliveryFixture(new Cents(-497));
         var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
 
-        var ex = Assert.Throws<InvalidOperationException>(
-            () => fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 3, fx.Wallet));
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet);
 
-        Assert.Equal("U3.3 misdelivery", ex.Message);
-        Assert.Equal(new Cents(0), fx.Wallet.Balance);
+        Assert.Equal(RejectReason.WalletFloor, Assert.IsType<Rejected>(result).Reason);
+        Assert.Equal(new Cents(-497), fx.Wallet.Balance);
         Assert.True(fx.Mail.Contains(mailId));
+    }
+
+    [Fact]
+    public void TryDeliver_LetterAddressMismatchFromNegative496_LandsOnWalletFloor()
+    {
+        var fx = new DeliveryFixture(new Cents(-496));
+        var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
+
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet);
+
+        var misdelivered = Assert.IsType<Misdelivered>(result);
+        Assert.Equal(new Cents(4), misdelivered.Penalty);
+        Assert.Equal(new Cents(-500), fx.Wallet.Balance);
+        Assert.False(fx.Mail.Contains(mailId));
     }
 
     [Fact]
@@ -157,11 +197,11 @@ internal sealed class DeliveryFixture
 {
     private uint _nextMail = 1;
 
-    public DeliveryFixture()
+    public DeliveryFixture(Cents wallet = default)
     {
         Mail = new MailRegistry();
         Destinations = new Destinations(Mail);
-        Wallet = new Wallet();
+        Wallet = new Wallet(wallet);
         Oak = new AddressId(1, 4, 13, 0);
         Elm = new AddressId(1, 5, 2, 0);
         HouseOak = new DestinationId(1);

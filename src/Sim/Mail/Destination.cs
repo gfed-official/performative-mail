@@ -21,6 +21,8 @@ public abstract record DeliverResult;
 
 public sealed record Delivered(Cents Paid) : DeliverResult;
 
+public sealed record Misdelivered(Cents Penalty) : DeliverResult;
+
 public sealed record Rejected(RejectReason Reason) : DeliverResult;
 
 public enum RejectReason : byte
@@ -28,6 +30,7 @@ public enum RejectReason : byte
     UnknownMail,
     UnknownDestination,
     KindNotAccepted,
+    WalletFloor,
 }
 
 public sealed class Destinations
@@ -66,12 +69,24 @@ public sealed class Destinations
             return new Rejected(RejectReason.KindNotAccepted);
 
         if (!item.Address.Equals(destination.Address))
-            throw new InvalidOperationException("U3.3 misdelivery");
+            return TryMisdeliver(mailId, item, wallet);
 
         _mail.Remove(mailId);
         var paid = PayForTimeliness(item.Value, currentShift, item.DeadlineShift);
         wallet.Credit(paid);
         return new Delivered(paid);
+    }
+
+    // §2.2 rule 5: consume and debit misdeliveryPenaltyRatio × value (0.5) when
+    // TryDebit succeeds. Reject WalletFloor and do not consume when the debit
+    // would land below -500. Lateness does not change the penalty.
+    private DeliverResult TryMisdeliver(MailId mailId, MailItem item, Wallet wallet)
+    {
+        var penalty = PenaltyForMisdelivery(item.Value);
+        if (!wallet.TryDebit(penalty))
+            return new Rejected(RejectReason.WalletFloor);
+        _mail.Remove(mailId);
+        return new Misdelivered(penalty);
     }
 
     // §2.2 rule 3: 1.0 on time, lateValueRatio 0.5 one shift late, 0 later.
@@ -83,4 +98,8 @@ public sealed class Destinations
             return new Cents(value / 2);
         return new Cents(0);
     }
+
+    // §2.2 rule 5 / chapter 11: misdeliveryPenaltyRatio 0.5.
+    private static Cents PenaltyForMisdelivery(ushort value)
+        => new Cents(value / 2);
 }
