@@ -7,4 +7,6 @@ public enum MessageKind : byte
     HelloReject = 3,
     Input = 10,
     Snapshot = 20,
+    Ping = 30,
+    Pong = 31,
 }

@@ -27,10 +27,22 @@ public sealed class ClientRuntime
 
     public int SnapshotCount { get; private set; }
 
+    public Pong? LastPong { get; private set; }
+
     public void Connect(ITransport transport)
     {
         Connection = transport;
         transport.Send(HelloChannel, WireCodec.Encode(new Hello(Protocol.Hash)));
+    }
+
+    public void SeedServerTickEstimate(uint tick) => ServerTickEstimate = tick;
+
+    public void SendPing(uint stamp)
+    {
+        if (Connection is null)
+            return;
+
+        Connection.Send(InputChannel, WireCodec.Encode(new Ping(stamp)));
     }
 
     public void SubmitInput(in InputCmd cmd)
@@ -80,9 +92,13 @@ public sealed class ClientRuntime
             case MessageKind.Snapshot:
                 ApplySnapshot(payload);
                 break;
+            case MessageKind.Pong:
+                ApplyPong(payload);
+                break;
             case MessageKind.Hello:
             case MessageKind.HelloReject:
             case MessageKind.Input:
+            case MessageKind.Ping:
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
@@ -98,6 +114,14 @@ public sealed class ClientRuntime
         StartTick = helloOk.StartTick;
         if (Prediction.PendingCount == 0)
             ServerTickEstimate = helloOk.StartTick;
+    }
+
+    private void ApplyPong(byte[] payload)
+    {
+        if (!WireCodec.TryDecode(payload, out Pong pong))
+            return;
+
+        LastPong = pong;
     }
 
     private void ApplySnapshot(byte[] payload)

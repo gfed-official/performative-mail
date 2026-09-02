@@ -139,6 +139,46 @@ public static class WireCodec
         return true;
     }
 
+    public static byte[] Encode(in Ping message)
+    {
+        var writer = new BitWriter();
+        writer.WriteByte((byte)MessageKind.Ping);
+        writer.WriteUInt32(message.ClientStamp);
+        return writer.ToArray();
+    }
+
+    public static byte[] Encode(in Pong message)
+    {
+        var writer = new BitWriter();
+        writer.WriteByte((byte)MessageKind.Pong);
+        writer.WriteUInt32(message.ClientStamp);
+        writer.WriteUInt32(message.ServerTick);
+        return writer.ToArray();
+    }
+
+    public static bool TryDecode(ReadOnlySpan<byte> payload, out Ping message)
+    {
+        message = default;
+        var reader = new BitReader(payload);
+        if (!TryReadKind(reader, MessageKind.Ping)) return false;
+        if (!reader.TryReadUInt32(out var stamp)) return false;
+        if (!reader.AtEnd) return false;
+        message = new Ping(stamp);
+        return true;
+    }
+
+    public static bool TryDecode(ReadOnlySpan<byte> payload, out Pong message)
+    {
+        message = default;
+        var reader = new BitReader(payload);
+        if (!TryReadKind(reader, MessageKind.Pong)) return false;
+        if (!reader.TryReadUInt32(out var stamp)) return false;
+        if (!reader.TryReadUInt32(out var serverTick)) return false;
+        if (!reader.AtEnd) return false;
+        message = new Pong(stamp, serverTick);
+        return true;
+    }
+
     private static void WriteCommand(BitWriter writer, in InputCmd command)
     {
         writer.WriteUInt32(command.Tick);
