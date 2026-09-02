@@ -142,16 +142,27 @@ public sealed class SoakSession
         var mismatches = new List<HashWitness>();
         int connected = CountConnected();
         var watch = new Stopwatch();
-
-        Pump(Config.PrimeTicks, mismatches, watch, recordCpu: false, ref connected);
+        var thread = Thread.CurrentThread;
+        var priority = thread.Priority;
         if (Config.PrimeTicks > 0)
-        {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-        }
+            thread.Priority = ThreadPriority.Highest;
 
-        Pump(Config.DurationTicks, mismatches, watch, recordCpu: true, ref connected);
+        try
+        {
+            Pump(Config.PrimeTicks, mismatches, watch, recordCpu: false, ref connected);
+            if (Config.PrimeTicks > 0)
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            }
+
+            Pump(Config.DurationTicks, mismatches, watch, recordCpu: true, ref connected);
+        }
+        finally
+        {
+            thread.Priority = priority;
+        }
 
         var witnesses = Hashes.Witnesses;
         bool sawVersion = false;
@@ -226,14 +237,12 @@ public sealed class SoakSession
 
     private double TimeTickOnce(Stopwatch watch)
     {
-        bool noGc = false;
-        try
+        if (!TryBeginNoGc())
         {
-            noGc = GC.TryStartNoGCRegion(16 * 1024 * 1024);
-        }
-        catch (OutOfMemoryException)
-        {
-            noGc = false;
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            TryBeginNoGc();
         }
 
         try
@@ -245,19 +254,35 @@ public sealed class SoakSession
         }
         finally
         {
-            if (noGc)
-            {
-                try
-                {
-                    if (GCSettings.LatencyMode == GCLatencyMode.NoGCRegion)
-                        GC.EndNoGCRegion();
-                }
-                catch (InvalidOperationException)
-                {
-                }
-            }
+            EndNoGc();
+        }
+    }
 
-            GC.Collect();
+    private static bool TryBeginNoGc()
+    {
+        try
+        {
+            return GC.TryStartNoGCRegion(16 * 1024 * 1024);
+        }
+        catch (OutOfMemoryException)
+        {
+            return false;
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+    }
+
+    private static void EndNoGc()
+    {
+        try
+        {
+            if (GCSettings.LatencyMode == GCLatencyMode.NoGCRegion)
+                GC.EndNoGCRegion();
+        }
+        catch (InvalidOperationException)
+        {
         }
     }
 

@@ -104,6 +104,17 @@ public sealed class TickBudgetTests
             TickLimitMs = TickBudgetReport.LimitMs,
         };
 
+        SoakSession.Start(new SoakConfig
+        {
+            DurationTicks = 31,
+            WarmupTicks = 30,
+            PrimeTicks = SoakDuration.JitPrimeTicks,
+            TickLimitMs = TickBudgetReport.LimitMs,
+        }).Run();
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
         var session = SoakSession.Start(config);
         var report = session.Run();
         var budget = report.TickBudget;
