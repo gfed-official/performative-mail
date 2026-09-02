@@ -14,6 +14,8 @@ public sealed class TickLog
         _samples.Add(sample);
     }
 
+    public void Clear() => _samples.Clear();
+
     public TickBudgetReport Close(uint warmupTicks)
     {
         if (_samples.Count <= warmupTicks)

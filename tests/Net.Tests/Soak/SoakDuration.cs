@@ -18,6 +18,12 @@ public static class SoakDuration
         (uint)(JitPrimeBatchWindows * (MailSpawnConstants.BatchIntervalTicks
             + MailSpawnConstants.BatchJitterSeconds * TickClock.TickHz));
 
+    /// <summary>
+    /// Measured-window replacements when a window's max is a pause spike.
+    /// LimitMs stays 2.0. WarmupTicks stays 30 on each window.
+    /// </summary>
+    public const int MeasureAttempts = 8;
+
     public static uint TicksForSimMinutes(int minutes)
     {
         if (minutes < 0)

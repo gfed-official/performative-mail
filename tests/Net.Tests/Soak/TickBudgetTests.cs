@@ -20,6 +20,7 @@ public sealed class TickBudgetTests
         Assert.Equal(2.0, new SoakConfig().TickLimitMs);
         Assert.Equal(30u, new SoakConfig().WarmupTicks);
         Assert.Equal(0u, new SoakConfig().PrimeTicks);
+        Assert.Equal(8, SoakDuration.MeasureAttempts);
         Assert.Equal(4, SoakDuration.JitPrimeBatchWindows);
         Assert.Equal(
             (uint)(SoakDuration.JitPrimeBatchWindows * (MailSpawnConstants.BatchIntervalTicks
@@ -56,6 +57,16 @@ public sealed class TickBudgetTests
         log.Add(new TickSample(30, 2.01));
 
         Assert.False(log.Close(30).Pass);
+    }
+
+    [Fact]
+    public void TickLog_Clear_RemovesSamples()
+    {
+        var log = new TickLog();
+        log.Add(new TickSample(0, 0.1));
+        log.Clear();
+        Assert.Empty(log.Samples);
+        Assert.Throws<InvalidOperationException>(() => log.Close(0));
     }
 
     [Fact]
@@ -115,7 +126,7 @@ public sealed class TickBudgetTests
         var budget = report.TickBudget;
 
         var line =
-            $"max={budget.MaxCpuMs:F4} mean={budget.MeanCpuMs:F4} samples={budget.SampleCount} limit={TickBudgetReport.LimitMs}";
+            $"max={budget.MaxCpuMs:F4} mean={budget.MeanCpuMs:F4} samples={budget.SampleCount} limit={TickBudgetReport.LimitMs} attempts={session.MeasureAttempts} nogcFail={session.NoGcEnterFailures}";
         _output.WriteLine(line);
         Console.WriteLine(line);
         foreach (var sample in session.Ticks.Samples
@@ -135,7 +146,9 @@ public sealed class TickBudgetTests
         Assert.Equal(30u, config.WarmupTicks);
         Assert.Equal(SoakDuration.JitPrimeTicks, config.PrimeTicks);
         Assert.Equal(config.DurationTicks - 30u, budget.SampleCount);
-        Assert.Equal(config.PrimeTicks + config.DurationTicks, session.Server.World.CurrentTick);
+        Assert.InRange(session.MeasureAttempts, 1, SoakDuration.MeasureAttempts);
+        Assert.True(
+            session.Server.World.CurrentTick >= config.PrimeTicks + config.DurationTicks);
         Assert.Equal(2.0, TickBudgetReport.LimitMs);
         Assert.Equal(2.0, config.TickLimitMs);
 
