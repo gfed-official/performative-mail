@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\src\Server\PerformativeMail.Server.csproj" />
     <ProjectReference Include="..\..\src\Client\PerformativeMail.Client.csproj" />
     <ProjectReference Include="..\..\src\App\PerformativeMail.App.csproj" />
+    <ProjectReference Include="..\..\tools\BotClient\BotClient.csproj" />
   </ItemGroup>
 
 </Project>
