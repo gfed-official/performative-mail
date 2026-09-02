@@ -33,6 +33,9 @@ public sealed class BotDriverTests
         var driver = new BotDriver(world, player.Id, hotbar);
         var walletBefore = driver.Wallet.Balance.Value;
         var walletSamples = new List<int>(900) { walletBefore };
+        int lastX = player.Xcm;
+        int lastY = player.Ycm;
+        int movedTicks = 0;
 
         for (int i = 0; i < 900; i++)
         {
@@ -40,6 +43,14 @@ public sealed class BotDriverTests
                 break;
             driver.StepOnce();
             walletSamples.Add(driver.Wallet.Balance.Value);
+            int dx = player.Xcm - lastX;
+            int dy = player.Ycm - lastY;
+            double stepCm = Math.Sqrt((double)dx * dx + (double)dy * dy);
+            Assert.True(stepCm <= 25.0, $"Teleported {stepCm:0.0} cm in one tick.");
+            if (stepCm > 0)
+                movedTicks++;
+            lastX = player.Xcm;
+            lastY = player.Ycm;
             if (driver.Deliveries.Count > 0)
                 break;
         }
@@ -48,7 +59,9 @@ public sealed class BotDriverTests
         var paid = item.Value;
         Assert.True(
             driver.Deliveries.Count > 0,
-            $"No delivery. phase={driver.State.Phase} tick={world.CurrentTick} pos=({player.Xcm},{player.Ycm})");
+            $"No delivery. phase={driver.State.Phase} tick={world.CurrentTick} pos=({player.Xcm},{player.Ycm}) moved={movedTicks}");
+        Assert.True(movedTicks >= 20, $"Bot did not walk. movedTicks={movedTicks}");
+        Assert.True(world.CurrentTick >= 12);
         Assert.Equal(1, CountDeliveries(driver, mailId));
         Assert.True(walletAfter > walletBefore);
         Assert.Equal(walletBefore + paid, walletAfter);

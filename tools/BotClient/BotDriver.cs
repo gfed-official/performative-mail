@@ -61,9 +61,9 @@ public sealed class BotDriver
         _world.Tick(_world.CurrentTick + 1);
     }
 
-    public static EntityId MailboxEntity(AddressId address) => new(address.Number);
+    private static EntityId MailboxEntity(AddressId address) => new(address.Number);
 
-    public static DestinationId DestinationOf(AddressId address) => new(address.Number);
+    private static DestinationId DestinationOf(AddressId address) => new(address.Number);
 
     private BotView BuildView()
     {
