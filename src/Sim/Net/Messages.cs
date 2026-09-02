@@ -16,6 +16,10 @@ public enum HelloRejectReason : byte
 
 public readonly record struct HelloReject(HelloRejectReason Reason);
 
+public readonly record struct Ping(uint ClientStamp);
+
+public readonly record struct Pong(uint ClientStamp, uint ServerTick);
+
 public sealed class InputPacket
 {
     public IReadOnlyList<InputCmd> Commands { get; }

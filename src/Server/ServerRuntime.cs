@@ -35,6 +35,7 @@ public sealed class ServerRuntime
     {
         DrainPending();
         HandleHellos();
+        HandlePings();
         HandleInputs();
 
         World.Tick(_tick++);
@@ -75,6 +76,17 @@ public sealed class ServerRuntime
         var body = World.Players.SpawnAtOrigin();
         _session = new ClientSession(body.Id);
         _transport.Send(HelloChannel, WireCodec.Encode(new HelloOk(body.Id, _tick)));
+    }
+
+    private void HandlePings()
+    {
+        for (int i = 0; i < _pending.Count; i++)
+        {
+            if (!WireCodec.TryDecode(_pending[i], out Ping ping))
+                continue;
+
+            _transport.Send(SnapshotChannel, WireCodec.Encode(new Pong(ping.ClientStamp, _tick)));
+        }
     }
 
     private void HandleInputs()
