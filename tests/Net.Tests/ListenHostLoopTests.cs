@@ -63,6 +63,7 @@ public sealed class ListenHostLoopTests
 
         Assert.True(client.LocalPlayer.HasValue);
         Assert.Equal(FirstPlayer, client.LocalPlayer.Value);
+        Assert.Equal(0u, client.StartTick);
         Assert.True(server.World.Players.TryGet(client.LocalPlayer.Value, out var body));
         Assert.Equal(body.Id, client.LocalPlayer.Value);
         Assert.Equal(29u, body.LastProcessedInputTick);
