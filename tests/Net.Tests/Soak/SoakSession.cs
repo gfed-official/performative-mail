@@ -195,7 +195,9 @@ public sealed class SoakSession
             DriveSeats();
             if (recordCpu)
             {
-                var cpuMs = TimeTickOnce(watch);
+                var cpuMs = Config.PrimeTicks > 0
+                    ? TimeTickOnce(watch)
+                    : TimeTickOnceUnprotected(watch);
                 Ticks.Add(new TickSample(Server.World.CurrentTick, cpuMs));
             }
             else
@@ -212,6 +214,14 @@ public sealed class SoakSession
 
             WitnessFlushed(mismatches);
         }
+    }
+
+    private double TimeTickOnceUnprotected(Stopwatch watch)
+    {
+        watch.Restart();
+        Server.TickOnce();
+        watch.Stop();
+        return watch.Elapsed.TotalMilliseconds;
     }
 
     private double TimeTickOnce(Stopwatch watch)
