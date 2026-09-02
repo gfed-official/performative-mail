@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using PerformativeMail.Server;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
 
 namespace PerformativeMail.Net.Tests;
@@ -93,15 +94,15 @@ public sealed class ServerRuntimeLoopTests
         Assert.Equal(1u, body.AppliedCount);
         Assert.Equal(0u, body.LastProcessedInputTick);
         Assert.Equal(cmd, body.LastCmd);
-        Assert.Equal(0, body.Xcm);
-        Assert.Equal(0, body.Ycm);
-        Assert.Equal(0, body.Zcm);
+        var expected = MovementStep.ApplyTick(PlayerPose.Origin, in cmd, MovementContext.Unburdened);
+        Assert.Equal(expected, body.Pose);
 
         loopback.B.Send(0, WireCodec.Encode(new InputPacket(new[] { cmd, cmd, cmd })));
         server.TickOnce();
 
         Assert.Equal(1u, body.AppliedCount);
         Assert.Equal(0u, body.LastProcessedInputTick);
+        Assert.Equal(expected, body.Pose);
     }
 
     [Fact]

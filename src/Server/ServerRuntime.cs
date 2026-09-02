@@ -101,7 +101,7 @@ public sealed class ServerRuntime
         for (int i = packet.Commands.Count - 1; i >= 0; i--)
         {
             var cmd = packet.Commands[i];
-            if (cmd.Tick != _tick)
+            if (cmd.Tick > _tick)
                 continue;
             if (body.HasAppliedInput && cmd.Tick <= body.LastProcessedInputTick)
                 continue;
@@ -117,6 +117,9 @@ public sealed class ServerRuntime
         for (int i = 0; i < all.Count; i++)
         {
             var body = all[i];
+            var lastProcessed = _session is not null && body.Id == _session.Player
+                ? body.LastProcessedInputTick
+                : 0u;
             players[i] = new PlayerSnapshot(
                 body.Id,
                 body.Xcm,
@@ -125,7 +128,7 @@ public sealed class ServerRuntime
                 body.Yaw,
                 body.Anim,
                 body.HpPct,
-                body.LastProcessedInputTick);
+                lastProcessed);
         }
 
         _transport.Send(SnapshotChannel, WireCodec.Encode(new SnapshotPacket(World.CurrentTick, players)));

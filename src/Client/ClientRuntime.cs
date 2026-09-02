@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Net;
@@ -18,6 +19,10 @@ public sealed class ClientRuntime
 
     public uint StartTick { get; private set; }
 
+    public uint ServerTickEstimate { get; private set; }
+
+    public PredictionState Prediction { get; } = new PredictionState();
+
     public SnapshotPacket? LastSnapshot { get; private set; }
 
     public int SnapshotCount { get; private set; }
@@ -30,15 +35,27 @@ public sealed class ClientRuntime
 
     public void SubmitInput(in InputCmd cmd)
     {
+        var stamped = new InputCmd(ServerTickEstimate, cmd.AxisX, cmd.AxisY, cmd.Yaw, cmd.Buttons);
+        ServerTickEstimate++;
+
         if (_recent.Count == InputWindow)
             _recent.RemoveAt(InputWindow - 1);
-        _recent.Insert(0, cmd);
+        _recent.Insert(0, stamped);
+        Prediction.Predict(in stamped);
     }
 
     public void TickOnce()
     {
         SendInputs();
         Receive();
+    }
+
+    public void SendInputs()
+    {
+        if (Connection is null || _recent.Count == 0)
+            return;
+
+        Connection.Send(InputChannel, WireCodec.Encode(new InputPacket(_recent)));
     }
 
     public void Receive()
@@ -50,14 +67,6 @@ public sealed class ClientRuntime
             Apply(payload);
     }
 
-    private void SendInputs()
-    {
-        if (Connection is null || _recent.Count == 0)
-            return;
-
-        Connection.Send(InputChannel, WireCodec.Encode(new InputPacket(_recent)));
-    }
-
     private void Apply(byte[] payload)
     {
         if (!WireCodec.TryPeekKind(payload, out var kind))
@@ -66,25 +75,56 @@ public sealed class ClientRuntime
         switch (kind)
         {
             case MessageKind.HelloOk:
-                if (WireCodec.TryDecode(payload, out HelloOk helloOk))
-                {
-                    LocalPlayer = helloOk.LocalPlayer;
-                    StartTick = helloOk.StartTick;
-                }
+                ApplyHelloOk(payload);
                 break;
             case MessageKind.Snapshot:
-                if (WireCodec.TryDecode(payload, out SnapshotPacket? snapshot) && snapshot is not null)
-                {
-                    LastSnapshot = snapshot;
-                    SnapshotCount++;
-                }
+                ApplySnapshot(payload);
                 break;
             case MessageKind.Hello:
             case MessageKind.HelloReject:
             case MessageKind.Input:
                 break;
             default:
-                break;
+                _ = kind switch
+                {
+                    MessageKind.Hello => 0,
+                    MessageKind.HelloOk => 0,
+                    MessageKind.HelloReject => 0,
+                    MessageKind.Input => 0,
+                    MessageKind.Snapshot => 0,
+                };
+                throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }
+    }
+
+    private void ApplyHelloOk(byte[] payload)
+    {
+        if (!WireCodec.TryDecode(payload, out HelloOk helloOk))
+            return;
+
+        LocalPlayer = helloOk.LocalPlayer;
+        StartTick = helloOk.StartTick;
+        if (Prediction.PendingCount == 0)
+            ServerTickEstimate = helloOk.StartTick;
+    }
+
+    private void ApplySnapshot(byte[] payload)
+    {
+        if (!WireCodec.TryDecode(payload, out SnapshotPacket? snapshot) || snapshot is null)
+            return;
+
+        LastSnapshot = snapshot;
+        SnapshotCount++;
+        TryReconcileOwner(snapshot);
+    }
+
+    private void TryReconcileOwner(SnapshotPacket snapshot)
+    {
+        if (LocalPlayer is not EntityId local)
+            return;
+        if (!OwnerSnapshot.TryFrom(snapshot, local, out var owner))
+            return;
+
+        Prediction.Reconcile(in owner);
     }
 }
