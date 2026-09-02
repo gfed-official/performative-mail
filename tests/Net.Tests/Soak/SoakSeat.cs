@@ -45,5 +45,5 @@ public sealed class SoakSeat
 
     public ITransport ClientEnd { get; }
 
-    public BotState? Brain { get; }
+    public BotState? Brain { get; set; }
 }
