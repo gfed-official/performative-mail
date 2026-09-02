@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime;
 using PerformativeMail.BotClient;
 using PerformativeMail.Client;
 using PerformativeMail.Server;
@@ -194,10 +195,8 @@ public sealed class SoakSession
             DriveSeats();
             if (recordCpu)
             {
-                watch.Restart();
-                Server.TickOnce();
-                watch.Stop();
-                Ticks.Add(new TickSample(Server.World.CurrentTick, watch.Elapsed.TotalMilliseconds));
+                var cpuMs = TimeTickOnce(watch);
+                Ticks.Add(new TickSample(Server.World.CurrentTick, cpuMs));
             }
             else
             {
@@ -212,10 +211,43 @@ public sealed class SoakSession
                 connected = now;
 
             WitnessFlushed(mismatches);
+        }
+    }
 
-            // Outside Stopwatch: drop the heap so the next TickOnce is not a GC pause.
-            if (recordCpu)
-                GC.Collect();
+    private double TimeTickOnce(Stopwatch watch)
+    {
+        bool noGc = false;
+        try
+        {
+            noGc = GC.TryStartNoGCRegion(16 * 1024 * 1024);
+        }
+        catch (OutOfMemoryException)
+        {
+            noGc = false;
+        }
+
+        try
+        {
+            watch.Restart();
+            Server.TickOnce();
+            watch.Stop();
+            return watch.Elapsed.TotalMilliseconds;
+        }
+        finally
+        {
+            if (noGc)
+            {
+                try
+                {
+                    if (GCSettings.LatencyMode == GCLatencyMode.NoGCRegion)
+                        GC.EndNoGCRegion();
+                }
+                catch (InvalidOperationException)
+                {
+                }
+            }
+
+            GC.Collect();
         }
     }
 
