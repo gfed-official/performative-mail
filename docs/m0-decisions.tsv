@@ -1,0 +1,6 @@
+ts	phase	decision	why	evidence	result
+2026-09-02T15:31:13Z	frame	Chose figure-it-out for M0	Ambitious multi-system foundation, not a single Feature unit	spec/12-milestones.md:M0	open
+2026-09-02T15:31:13Z	frame	Installed .NET 8.0.424 into ~/.dotnet	Sim is plain C# with no Godot refs; toolchain was missing from the snapshot	dotnet --info	tests pending
+2026-09-02T15:32:42Z	frame	Wrote M0 DoD and 10-unit workflow	Falsifiable acceptance criteria from chapter 12; scaffold before netcode and inventory	docs/m0-frame.md	open
+2026-09-02T15:32:42Z	frame	Skip architect for U0 scaffold	Chapter 07 already names the module layout; arena reserved for inventory and net	spec/07-technical-architecture.md:2	accepted
+2026-09-02T15:37:24Z	u0	Landed solution scaffold with loopback transport	Chapter 07 layout; Sim has no Godot refs; tests and ContentValidator green	dotnet test + ContentValidator	tests green
