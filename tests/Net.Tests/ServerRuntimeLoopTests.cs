@@ -127,12 +127,12 @@ public sealed class ServerRuntimeLoopTests
 
         var last = snapshots[snapshots.Count - 1];
         Assert.Equal(29u, last.ServerTick);
-        Assert.Equal(1, last.Players.Count);
-        Assert.Equal(FirstPlayer, last.Players[0].Id);
-        Assert.Equal(0, last.Players[0].Xcm);
-        Assert.Equal(0, last.Players[0].Ycm);
-        Assert.Equal(0, last.Players[0].Zcm);
-        Assert.Equal(29u, last.Players[0].LastProcessedInputTick);
+        var snapshotPlayer = Assert.Single(last.Players);
+        Assert.Equal(FirstPlayer, snapshotPlayer.Id);
+        Assert.Equal(0, snapshotPlayer.Xcm);
+        Assert.Equal(0, snapshotPlayer.Ycm);
+        Assert.Equal(0, snapshotPlayer.Zcm);
+        Assert.Equal(29u, snapshotPlayer.LastProcessedInputTick);
     }
 
     [Fact]
