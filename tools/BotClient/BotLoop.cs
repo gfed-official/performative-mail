@@ -10,6 +10,7 @@ using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.World;
+using MailRejected = PerformativeMail.Sim.Mail.Rejected;
 
 namespace PerformativeMail.BotClient;
 
@@ -272,7 +273,7 @@ public sealed class BotLoop
                 Misdelivered++;
                 WithdrawFromHotbar(mailId);
                 break;
-            case Rejected:
+            case MailRejected:
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(result), result, "Unhandled DeliverResult.");

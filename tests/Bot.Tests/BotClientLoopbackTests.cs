@@ -2,7 +2,6 @@ using PerformativeMail.BotClient;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
-using PerformativeMail.Sim.Net;
 
 namespace PerformativeMail.Bot.Tests;
 
@@ -58,11 +57,6 @@ public sealed class BotClientLoopbackTests
 
     private static (int Xcm, int Ycm) PoseOf(BotLoop loop)
     {
-        if (loop.Client.LastSnapshot is { } snapshot
-            && loop.Client.LocalPlayer is { } self
-            && OwnerSnapshot.TryFrom(snapshot, self, out var owner))
-            return (owner.Pose.Xcm, owner.Pose.Ycm);
-
         var pose = loop.Client.Prediction.Pose;
         return (pose.Xcm, pose.Ycm);
     }
