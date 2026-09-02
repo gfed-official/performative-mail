@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using PerformativeMail.BotClient;
 using PerformativeMail.Client;
 using PerformativeMail.Server;
@@ -38,6 +39,7 @@ public sealed class SoakSession
         Hub = hub;
         Roster = roster;
         Hashes = new HashTrace();
+        Ticks = new TickLog();
         _hotbars = hotbars;
         _interactTicks = new int[SoakRoster.SeatCount];
         _destinations = destinations;
@@ -58,6 +60,8 @@ public sealed class SoakSession
     public SoakRoster Roster { get; }
 
     public HashTrace Hashes { get; }
+
+    public TickLog Ticks { get; }
 
     public static SoakSession Start(SoakConfig config)
     {
@@ -139,7 +143,10 @@ public sealed class SoakSession
         for (uint tick = 0; tick < Config.DurationTicks; tick++)
         {
             DriveSeats();
+            var watch = Stopwatch.StartNew();
             Server.TickOnce();
+            watch.Stop();
+            Ticks.Add(new TickSample(Server.World.CurrentTick, watch.Elapsed.TotalMilliseconds));
             for (int i = 0; i < Roster.Seats.Count; i++)
                 Roster.Seats[i].Client.Receive();
 
@@ -167,13 +174,16 @@ public sealed class SoakSession
             && witnesses.Count > 0
             && sawVersion;
 
+        var tickBudget = Ticks.Close(Config.WarmupTicks);
         return new SoakReport
         {
             TicksRun = Config.DurationTicks,
             ConnectedSeats = connected,
             Mismatches = mismatches,
             Witnesses = witnesses,
+            TickBudget = tickBudget,
             Criterion1 = criterion1,
+            Criterion5 = tickBudget.Pass,
         };
     }
 

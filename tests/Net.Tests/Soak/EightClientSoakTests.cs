@@ -3,6 +3,7 @@ using Xunit.Abstractions;
 
 namespace PerformativeMail.Net.Tests.Soak;
 
+[Collection(SoakCollection.Name)]
 public sealed class EightClientSoakTests
 {
     private readonly ITestOutputHelper _output;

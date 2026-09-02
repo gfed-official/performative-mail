@@ -10,5 +10,9 @@ public sealed class SoakReport
 
     public required IReadOnlyList<HashWitness> Witnesses { get; init; }
 
+    public required TickBudgetReport TickBudget { get; init; }
+
     public required bool Criterion1 { get; init; }
+
+    public required bool Criterion5 { get; init; }
 }
