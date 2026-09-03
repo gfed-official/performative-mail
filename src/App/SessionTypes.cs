@@ -150,6 +150,8 @@ public abstract record FailReason
                 return $"Could not reach {unreachable.Target}. Check the address and that the host has UDP {unreachable.Target.Port} open.";
             case Refused refused:
                 return $"The host at {refused.Target} closed the connection before join finished.";
+            case Rejected rejected when rejected.Reason == HelloRejectReason.VersionMismatch:
+                return "Version mismatch. World hash does not match the host.";
             case Rejected:
                 return "Protocol mismatch. You and the host are running different builds.";
             case HandshakeTimeout timeout:

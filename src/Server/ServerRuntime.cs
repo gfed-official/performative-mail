@@ -16,6 +16,8 @@ public sealed class ServerRuntime
 
     public SimWorld World { get; }
 
+    public WorldOffer? GeneratedWorld { get; }
+
     public IReadOnlyList<ContainerDelta> LastFlushedDeltas { get; private set; } = Array.Empty<ContainerDelta>();
 
     public int JoinedCount
@@ -39,9 +41,15 @@ public sealed class ServerRuntime
     }
 
     public ServerRuntime(IServerLink link, SimWorld world)
+        : this(link, world, generatedWorld: null)
+    {
+    }
+
+    public ServerRuntime(IServerLink link, SimWorld world, WorldOffer? generatedWorld)
     {
         _link = link ?? throw new ArgumentNullException(nameof(link));
         World = world ?? throw new ArgumentNullException(nameof(world));
+        GeneratedWorld = generatedWorld;
     }
 
     public void Start()
@@ -121,6 +129,8 @@ public sealed class ServerRuntime
         var body = World.SpawnPlayer();
         _seats[from] = new Seat(from, body.Id);
         _link.Send(from, NetChannels.Handshake, WireCodec.Encode(new HelloOk(body.Id, _tick)));
+        if (GeneratedWorld is WorldOffer offer)
+            _link.Send(from, NetChannels.Handshake, WireCodec.Encode(offer));
     }
 
     private void ApplyInputPacket(ConnectionId from, InputPacket packet)

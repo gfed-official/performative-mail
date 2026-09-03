@@ -4,6 +4,7 @@ using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Client;
 
@@ -40,6 +41,10 @@ public sealed class ClientRuntime
     public Pong? LastPong { get; private set; }
 
     public HelloReject? LastReject { get; private set; }
+
+    public WorldTables? GeneratedWorld { get; private set; }
+
+    public ulong? AcceptedWorldHash { get; private set; }
 
     public InventorySystem? Inventory { get; }
 
@@ -116,7 +121,8 @@ public sealed class ClientRuntime
                 ApplyHelloOk(payload);
                 break;
             case MessageKind.Snapshot:
-                ApplySnapshot(payload);
+                if (LastReject is null)
+                    ApplySnapshot(payload);
                 break;
             case MessageKind.Pong:
                 ApplyPong(payload);
@@ -126,6 +132,9 @@ public sealed class ClientRuntime
                 break;
             case MessageKind.HelloReject:
                 ApplyHelloReject(payload);
+                break;
+            case MessageKind.WorldOffer:
+                ApplyWorldOffer(payload);
                 break;
             case MessageKind.Hello:
             case MessageKind.Input:
@@ -153,6 +162,24 @@ public sealed class ClientRuntime
             return;
 
         LastReject = reject;
+    }
+
+    private void ApplyWorldOffer(byte[] payload)
+    {
+        if (!WireCodec.TryDecode(payload, out WorldOffer offer))
+            return;
+
+        var verdict = WorldHashCheck.Accept(offer.Seed, offer.WorldHash, out var tables, out var hash);
+        if (verdict != WorldHashVerdict.Match)
+        {
+            LastReject = new HelloReject(HelloRejectReason.VersionMismatch);
+            GeneratedWorld = null;
+            AcceptedWorldHash = null;
+            return;
+        }
+
+        GeneratedWorld = tables;
+        AcceptedWorldHash = hash;
     }
 
     private void ApplyPong(byte[] payload)
