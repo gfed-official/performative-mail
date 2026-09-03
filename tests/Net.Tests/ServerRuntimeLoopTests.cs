@@ -19,7 +19,7 @@ public sealed class ServerRuntimeLoopTests
     public void ProtocolMismatch_Rejects_AndDoesNotSpawn()
     {
         var loopback = new LoopbackTransport();
-        var server = new ServerRuntime(loopback.A);
+        var server = new ServerRuntime(LoopbackLink.OverPipes(loopback.A));
 
         loopback.B.Send(2, WireCodec.Encode(new Hello(Protocol.Hash ^ 0xFFFFFFFFu)));
         server.TickOnce();
@@ -50,7 +50,7 @@ public sealed class ServerRuntimeLoopTests
     public void MatchingHello_SpawnsClass1Entity_OnFirstJoin()
     {
         var loopback = new LoopbackTransport();
-        var server = new ServerRuntime(loopback.A);
+        var server = new ServerRuntime(LoopbackLink.OverPipes(loopback.A));
 
         loopback.B.Send(2, WireCodec.Encode(new Hello(Protocol.Hash)));
         server.TickOnce();
@@ -83,7 +83,7 @@ public sealed class ServerRuntimeLoopTests
     public void DuplicateCmds_InThreeDeepWindow_ApplyOnce()
     {
         var loopback = new LoopbackTransport();
-        var server = new ServerRuntime(loopback.A);
+        var server = new ServerRuntime(LoopbackLink.OverPipes(loopback.A));
         loopback.B.Send(2, WireCodec.Encode(new Hello(Protocol.Hash)));
 
         var cmd = new InputCmd(0, 1, -1, 100, InputButtons.Sprint);
@@ -109,7 +109,7 @@ public sealed class ServerRuntimeLoopTests
     public void ThirtyTickOnce_LastProcessedAndSnapshotCadence()
     {
         var loopback = new LoopbackTransport();
-        var server = new ServerRuntime(loopback.A);
+        var server = new ServerRuntime(LoopbackLink.OverPipes(loopback.A));
         loopback.B.Send(2, WireCodec.Encode(new Hello(Protocol.Hash)));
 
         var snapshots = new List<SnapshotPacket>();

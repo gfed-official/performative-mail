@@ -16,7 +16,7 @@ public static class Boot
         if (world is null) throw new ArgumentNullException(nameof(world));
 
         var loopback = new LoopbackTransport();
-        var server = new ServerRuntime(loopback.A, world);
+        var server = new ServerRuntime(LoopbackLink.OverPipes(loopback.A), world);
         var client = new ClientRuntime();
         server.Start();
         client.Connect(loopback.B);
