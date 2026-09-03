@@ -2,15 +2,25 @@ using System;
 
 namespace PerformativeMail.Sim.Run;
 
-public readonly record struct RunState(RunPhase Phase, byte Shift, uint PhaseDeadlineTick)
+public readonly record struct RunState
 {
     public const byte ShiftCount = 5;
 
-    public RunState
+    public RunState(RunPhase phase, byte shift, uint phaseDeadlineTick)
     {
-        if (Shift < 1 || Shift > ShiftCount)
-            throw new ArgumentOutOfRangeException(nameof(Shift), Shift, null);
+        if (shift < 1 || shift > ShiftCount)
+            throw new ArgumentOutOfRangeException(nameof(shift), shift, null);
+
+        Phase = phase;
+        Shift = shift;
+        PhaseDeadlineTick = phaseDeadlineTick;
     }
+
+    public RunPhase Phase { get; }
+
+    public byte Shift { get; }
+
+    public uint PhaseDeadlineTick { get; }
 
     public static RunState InLobby() => new(RunPhase.Lobby, 1, 0);
 
