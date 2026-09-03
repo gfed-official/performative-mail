@@ -19,3 +19,9 @@ ts	phase	decision	why	evidence	result
 2026-09-03T20:45:00Z	u1.2	Golden hash must change from 0x24849E8EF0DBB228	New height field is not the U1.1 stub; value recorded after first run	tests/Sim.Tests/World/WorldGenHashTests.cs	open
 2026-09-03T21:10:00Z	u1.2	Pinned golden hash 0x936BE960EC16395A	Seed 0x7F3A9C21 after OpenSimplex2 coastline falloff; != U1.1 0x24849E8EF0DBB228	tests/Sim.Tests/World/WorldGenHashTests.cs	tests green
 2026-09-03T21:10:00Z	verify	Golden seed land 10183 sea 79817 buildable 99.7%	Corners -2200; center 1209; valid on attempt 1	/tmp/hmprobe	VERIFIED
+2026-09-03T21:50:00Z	u1.3	Frame U1.3 as town streets lots addresses districts PO	Issue 80; chapter 02 §3.3–3.7 §3.11; hash encoding stays U1.1	https://github.com/gfed-official/performative-mail/issues/80	open
+2026-09-03T21:50:00Z	architect	WorldTables grows; SettlementStage stays internal	HouseRecord and PostOfficeRecord already exist; a second root type adds coordination	src/Sim/World/WorldTables.cs	accepted
+2026-09-03T21:50:00Z	architect	Skipped multi-model arena	Same parent constraint as U1.2; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-03T21:50:00Z	subtract	No biome layer, apartments, docks, or 100-seed validation	U1.2 has heights and buildable only; U1.4 owns roads and validation	spec/02-world-generation.md	accepted
+2026-09-03T21:50:00Z	u1.3	Addresses derived from houses; names from content/streets.json	Single source of truth; issue requires streets.json	src/Sim/World/StreetCatalog.cs	accepted
+2026-09-03T21:55:00Z	u1.3	Pinned golden hash 0x631CE9A07B6A504F	Seed 0x7F3A9C21 after filled addresses; != U1.2 0x936BE960EC16395A	tests/Sim.Tests/World/WorldGenHashTests.cs	tests green
