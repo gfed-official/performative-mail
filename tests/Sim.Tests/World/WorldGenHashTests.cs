@@ -7,6 +7,8 @@ public sealed class WorldGenHashTests
 {
     public const uint FixedSeed = 0x7F3A9C21;
 
+    public const ulong U11SkeletonWorldHash = 0x24849E8EF0DBB228UL;
+
     public const ulong GoldenWorldHash = 0x24849E8EF0DBB228UL;
 
     [Fact]
@@ -41,8 +43,17 @@ public sealed class WorldGenHashTests
         Assert.Equal(WorldGen.SmallIslandTileCm, tables.TileCm);
         Assert.Equal(WorldGen.SmallIslandTiles * WorldGen.SmallIslandTiles, tables.Heights.Length);
         Assert.Empty(tables.Addresses);
+        Assert.Equal(tables.Heights.Length, tables.Buildable.Length);
         foreach (var height in tables.Heights)
-            Assert.InRange(height, -1000, 4000);
+            Assert.InRange(height, short.MinValue, short.MaxValue);
+    }
+
+    [Fact]
+    public void GenerateSmallIsland_ReplacesU11SkeletonHash()
+    {
+        var hash = WorldHash.Compute(WorldGen.GenerateSmallIsland(FixedSeed));
+        Assert.NotEqual(U11SkeletonWorldHash, hash);
+        Assert.Equal(GoldenWorldHash, hash);
     }
 
     [Fact]
