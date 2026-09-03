@@ -7,8 +7,11 @@ public sealed class WorldGenHashTests
 {
     public const uint FixedSeed = 0x7F3A9C21;
 
+    // U1.1 hashed a PCG stub fill. U1.2 replaces that field with OpenSimplex2 +
+    // coastline + falloff, so the golden must move. Kept to prove this is not a rename.
     public const ulong U11SkeletonWorldHash = 0x24849E8EF0DBB228UL;
 
+    // Seed 0x7F3A9C21 after the U1.2 height field. Not 0x24849E8EF0DBB228.
     public const ulong GoldenWorldHash = 0x936BE960EC16395AUL;
 
     [Fact]
