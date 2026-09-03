@@ -89,3 +89,4 @@ ts	phase	decision	why	evidence	result
 2026-09-03T23:12:00Z	u3.1	Explicit RunState constructor instead of primary-constructor init	netstandard2.1 Sim project rejected the init block	src/Sim/Run/RunState.cs	accepted
 2026-09-03T23:14:00Z	verify	dotnet test Release 309 passed	Sim 179 Net 114 Bot 16; 35 RunState tests	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-03T23:14:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-03T23:16:00Z	verify	CI on db224fd all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33816352869	VERIFIED
