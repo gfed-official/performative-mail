@@ -35,6 +35,8 @@ public static class Fnv
 
     public static ulong Mix64(ulong hash, byte value) => (hash ^ value) * Prime64;
 
+    public static ulong Mix8(ulong hash, byte value) => Mix64(hash, value);
+
     public static ulong MixUInt32(ulong hash, uint value)
     {
         hash = Mix64(hash, (byte)value);
