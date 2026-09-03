@@ -48,15 +48,12 @@ public readonly record struct OverlayFrame(
     OverlayGrid? Backpack,
     OverlayGrid? External)
 {
-    public static OverlayFrame From(in OverlayReplica replica)
-    {
-        var pending = replica.Pending ?? (IReadOnlySet<EntryId>)new HashSet<EntryId>();
-        return new OverlayFrame(
-            Project("hotbar", replica.Hotbar, pending),
-            Project("inventory", replica.Inventory, pending),
-            replica.Backpack is { } pack ? Project("backpack", pack, pending) : null,
-            replica.External is { } ext ? Project("external", ext, pending) : null);
-    }
+    public static OverlayFrame From(in OverlayReplica replica) =>
+        new(
+            Project("hotbar", replica.Hotbar, replica.Pending),
+            Project("inventory", replica.Inventory, replica.Pending),
+            replica.Backpack is { } pack ? Project("backpack", pack, replica.Pending) : null,
+            replica.External is { } ext ? Project("external", ext, replica.Pending) : null);
 
     private static OverlayGrid Project(string name, GridContainer grid, IReadOnlySet<EntryId> pending)
     {
