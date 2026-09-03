@@ -53,3 +53,4 @@ ts	phase	decision	why	evidence	result
 2026-09-03T22:09:15Z	verify	Planted district sum 3 exits 1	same CLI on a temp copy with districtHouseCounts 1,1,1	tools/ContentValidator	VERIFIED
 2026-09-03T22:09:15Z	verify	dotnet test Release 256 passed	Sim 126 Net 114 Bot 16; nine new content tests	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-03T22:11:10Z	subtract	Named MediumAfterDistricts instead of a Medium ternary	Comment Sicko asked for the grown-medium band as a named fact	src/Sim/World/SettlementSize.cs	accepted
+2026-09-03T22:14:10Z	verify	CI on ff0165e all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions	VERIFIED
