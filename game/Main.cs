@@ -43,7 +43,7 @@ public partial class Main : Node3D
             return;
         }
 
-        BindHud(StubMatch());
+        BindHud(BootPlaceholder());
         GD.Print("performative-mail boot ok");
     }
 
@@ -210,9 +210,9 @@ public partial class Main : Node3D
     private void InspectHud()
     {
         var dump = new StringBuilder();
-        BindHud(StubMatch());
+        BindHud(InspectMatch());
         dump.AppendLine(_hud.Dump("match"));
-        BindHud(StubMismatch());
+        BindHud(InspectMismatch());
         dump.AppendLine(_hud.Dump("mismatch"));
         dump.AppendLine("HUD_DUMP_END");
         var text = dump.ToString();
@@ -222,21 +222,17 @@ public partial class Main : Node3D
         GetTree().Quit();
     }
 
-    private static HudSnapshot StubMatch() => new(
-        RunPhase.Delivery,
-        1,
-        0,
-        2700,
-        new Cents(1820),
-        new InteractPrompt.Deliver("13 Larch Lane", "13 Larch Lane"));
+    private static HudSnapshot BootPlaceholder() =>
+        DeliveryStub(new InteractPrompt.Deliver("13 Larch Lane", "13 Larch Lane"));
 
-    private static HudSnapshot StubMismatch() => new(
-        RunPhase.Delivery,
-        1,
-        0,
-        2700,
-        new Cents(1820),
-        new InteractPrompt.Deliver("13 Larch Lane", "8 Oak Street"));
+    private static HudSnapshot InspectMatch() =>
+        DeliveryStub(new InteractPrompt.Deliver("13 Larch Lane", "13 Larch Lane"));
+
+    private static HudSnapshot InspectMismatch() =>
+        DeliveryStub(new InteractPrompt.Deliver("13 Larch Lane", "8 Oak Street"));
+
+    private static HudSnapshot DeliveryStub(InteractPrompt interact) =>
+        new(RunPhase.Delivery, 1, 0, 2700, new Cents(1820), interact);
 
     private void OnJoinPressed()
     {

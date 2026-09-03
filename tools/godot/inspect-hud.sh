@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Drive game/scenes/main.tscn, bind match then mismatch HudSnapshot, print Control text.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -23,9 +22,11 @@ need() {
 need godot
 need dotnet
 
-godot --headless --display-driver headless --path "$PROJECT_PATH" --import --quit || true
-dotnet restore "$PROJECT_PATH/PerformativeMail.csproj"
-dotnet build "$PROJECT_PATH/PerformativeMail.csproj" --no-restore --configuration Debug
+if [[ "${SKIP_BUILD:-0}" != "1" ]]; then
+  godot --headless --display-driver headless --path "$PROJECT_PATH" --import --quit || true
+  dotnet restore "$PROJECT_PATH/PerformativeMail.csproj"
+  dotnet build "$PROJECT_PATH/PerformativeMail.csproj" --no-restore --configuration Debug
+fi
 
 log="$(mktemp)"
 if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \

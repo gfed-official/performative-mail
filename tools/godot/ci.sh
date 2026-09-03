@@ -102,27 +102,7 @@ boot_smoke() {
 
 hud_inspect() {
   echo "==> HUD Control text inspect"
-  local log dump
-  log="$(mktemp)"
-  dump="$(mktemp)"
-  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
-    --inspect-hud --hud-dump="$dump" >"$log" 2>&1; then
-    cat "$log"
-    fail "HUD inspect exited non-zero"
-  fi
-  cat "$log"
-  echo "---- HUD dump ----"
-  cat "$dump"
-  echo
-  grep -Fqx "ShiftLabel=Shift 1 / 5" "$dump" || fail "ShiftLabel is not Shift 1 / 5"
-  grep -Fqx "PhaseLabel=DELIVERY" "$dump" || fail "PhaseLabel is not DELIVERY"
-  grep -Fqx "TimerLabel=01:30" "$dump" || fail "TimerLabel is not 01:30"
-  grep -Fqx "WalletLabel=\$18.20" "$dump" || fail "WalletLabel is not \$18.20"
-  grep -Fq "HeldAddress=13 Larch Lane" "$dump" || fail "held address missing"
-  grep -Fq "TargetAddress=13 Larch Lane" "$dump" || fail "match target missing"
-  grep -Fq "TargetAddress=8 Oak Street" "$dump" || fail "mismatch target missing"
-  grep -Fqx "MatchMark=tick" "$dump" || fail "match mark is not tick"
-  grep -Fqx "MatchMark=cross" "$dump" || fail "mismatch mark is not cross"
+  SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-hud.sh" "$(mktemp)"
 }
 
 host_join_smoke() {

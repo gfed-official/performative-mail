@@ -30,9 +30,6 @@ public readonly record struct HudFrame(
 
     public static HudFrame From(in HudSnapshot snapshot)
     {
-        if (snapshot.Interact is null)
-            throw new ArgumentNullException(nameof(snapshot), "Interact is required.");
-
         uint remainingTicks = snapshot.Deadline > snapshot.Now
             ? snapshot.Deadline - snapshot.Now
             : 0;
