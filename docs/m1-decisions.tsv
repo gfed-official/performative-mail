@@ -64,3 +64,8 @@ ts	phase	decision	why	evidence	result
 2026-09-03T22:45:00Z	architect	Skip four-model arena	Chapter 08 already names PerkDef StampDef unlocks.json and the closed enums	docs/m1-frame.md	accepted
 2026-09-03T22:45:00Z	subtract	Twelve Arcade perks not the M4 pool of 28	M1 hand-delivery plus bike plus one rule-flag perk; sorter and turret perks wait	content/perks	accepted
 2026-09-03T22:45:00Z	subtract	Did not add U2.4 hot reload or rewrite U2.1/U2.2 catalogs	Issue forbids editor F6 and catalog rewrites except extensions	src/Sim/World/ContentFiles.cs	accepted
+2026-09-03T22:47:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-03T22:47:00Z	verify	Planted NotAStat perk exits 1	same CLI on a temp copy of long_legs.json	tools/ContentValidator	VERIFIED
+2026-09-03T22:47:00Z	verify	Planted not_a_flag stamp exits 1	same CLI on a temp copy of double_raids.json	tools/ContentValidator	VERIFIED
+2026-09-03T22:47:00Z	verify	dotnet test Release 270 passed	Sim 140 Net 114 Bot 16; eight new perk and stamp tests	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-03T22:48:00Z	verify	CI on ebeab74 success	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33814472724	VERIFIED
