@@ -39,9 +39,9 @@ docker run --rm -e REQUIRE_DOTNET_8=0 -v "$PWD":/src -w /src \
   barichello/godot-ci:mono-4.7.2 bash tools/godot/ci.sh
 ```
 
-## Validate content directories
+## Validate content
 
-From the repo root, check that `content/` exists with the chapter 07 subdirectories. This does not check schemas yet.
+From the repo root, ContentValidator loads the M0 test map plus `streets.json`, `world/archetypes.json`, and `balance.json`. Unknown ids and district-house sums outside the grown town band fail the process.
 
 ```bash
 dotnet run --project tools/ContentValidator -- content

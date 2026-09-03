@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace PerformativeMail.Sim.World;
 
-internal static class StreetCatalog
+public static class StreetCatalog
 {
     public const string RelativePath = "streets.json";
 
@@ -20,6 +20,12 @@ internal static class StreetCatalog
     public static string[] Load()
     {
         string path = Find() ?? throw new InvalidOperationException("content/streets.json was not found.");
+        return LoadFile(path);
+    }
+
+    public static string[] LoadFile(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("Path is required.", nameof(path));
         string json;
         try
         {
