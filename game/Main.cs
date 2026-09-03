@@ -214,7 +214,7 @@ public partial class Main : Node3D
         dump.AppendLine(_hud.Dump("match"));
         BindHud(StubMismatch());
         dump.AppendLine(_hud.Dump("mismatch"));
-        dump.Append("HUD_DUMP_END");
+        dump.AppendLine("HUD_DUMP_END");
         var text = dump.ToString();
         GD.Print(text);
         if (_hudDumpPath is not null)

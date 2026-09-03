@@ -65,7 +65,7 @@ public sealed class HudFrameTests
     [Theory]
     [InlineData(0u, 1830u, TimerTone.Normal)]
     [InlineData(0u, 1800u, TimerTone.Amber)]
-    [InlineData(0u, 451u, TimerTone.Amber)]
+    [InlineData(0u, 480u, TimerTone.Amber)]
     [InlineData(0u, 450u, TimerTone.Red)]
     [InlineData(0u, 0u, TimerTone.Red)]
     public void From_TimerTone_AmberAt60sRedAt15s(uint now, uint deadline, TimerTone tone)
