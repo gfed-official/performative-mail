@@ -1,0 +1,8 @@
+ts	phase	decision	why	evidence	result
+2026-09-03T20:25:00Z	frame	Chose figure-it-out for M1 cut plus U1.1	Cross-cutting milestone cut, not a single Feature unit	spec/12-milestones.md:M1	open
+2026-09-03T20:25:00Z	frame	U1.1 is generate skeleton plus worldHash	Riskiest unknown is cross-platform hash; smallest landable that still hashes integer tables	docs/m1-frame.md	open
+2026-09-03T20:25:00Z	frame	Skip shop bike perks lobby in U1.1	Subtract before add; those systems are later units	docs/m1-frame.md	accepted
+2026-09-03T20:25:00Z	architect	Skip arena for U1.1 skeleton	Chapter 02 already names PCG32, int16 cm, 0.5 m lattice, 64-bit FNV	spec/02-world-generation.md:2	accepted
+2026-09-03T20:40:00Z	frame	Created M1 child issues 68-110	Same U8.* fields; Parent #13; U1.1 is #78	https://github.com/gfed-official/performative-mail/issues/78	open
+2026-09-03T20:50:00Z	u1.1	Named WorldTables plus FNV-1a 64 WorldHash	Integer tile and address tables are the hash domain	src/Sim/World/WorldHash.cs	open
+2026-09-03T20:50:00Z	u1.1	Skeleton heights from PCG32 heightmap stream	OpenSimplex2 waits for U1.2; this unit proves hash encoding	src/Sim/World/WorldGen.cs	open
