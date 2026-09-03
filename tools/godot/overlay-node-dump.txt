@@ -1,0 +1,175 @@
+OVERLAY_DUMP case=open
+visible=true
+hotbar cols=8 rows=1
+hotbar[1,0] count=1 address=13 pending=1 opacity=0.6
+inventory cols=8 rows=2
+backpack cols=8 rows=2
+external cols=8 rows=4
+hotbar_0_0 text= opacity=1.0
+hotbar_1_0 text=1 13 opacity=0.6
+hotbar_2_0 text= opacity=1.0
+hotbar_3_0 text= opacity=1.0
+hotbar_4_0 text= opacity=1.0
+hotbar_5_0 text= opacity=1.0
+hotbar_6_0 text= opacity=1.0
+hotbar_7_0 text= opacity=1.0
+inventory_0_0 text= opacity=1.0
+inventory_1_0 text= opacity=1.0
+inventory_2_0 text= opacity=1.0
+inventory_3_0 text= opacity=1.0
+inventory_4_0 text= opacity=1.0
+inventory_5_0 text= opacity=1.0
+inventory_6_0 text= opacity=1.0
+inventory_7_0 text= opacity=1.0
+inventory_0_1 text= opacity=1.0
+inventory_1_1 text= opacity=1.0
+inventory_2_1 text= opacity=1.0
+inventory_3_1 text= opacity=1.0
+inventory_4_1 text= opacity=1.0
+inventory_5_1 text= opacity=1.0
+inventory_6_1 text= opacity=1.0
+inventory_7_1 text= opacity=1.0
+backpack_0_0 text= opacity=1.0
+backpack_1_0 text= opacity=1.0
+backpack_2_0 text= opacity=1.0
+backpack_3_0 text= opacity=1.0
+backpack_4_0 text= opacity=1.0
+backpack_5_0 text= opacity=1.0
+backpack_6_0 text= opacity=1.0
+backpack_7_0 text= opacity=1.0
+backpack_0_1 text= opacity=1.0
+backpack_1_1 text= opacity=1.0
+backpack_2_1 text= opacity=1.0
+backpack_3_1 text= opacity=1.0
+backpack_4_1 text= opacity=1.0
+backpack_5_1 text= opacity=1.0
+backpack_6_1 text= opacity=1.0
+backpack_7_1 text= opacity=1.0
+external_0_0 text= opacity=1.0
+external_1_0 text= opacity=1.0
+external_2_0 text= opacity=1.0
+external_3_0 text= opacity=1.0
+external_4_0 text= opacity=1.0
+external_5_0 text= opacity=1.0
+external_6_0 text= opacity=1.0
+external_7_0 text= opacity=1.0
+external_0_1 text= opacity=1.0
+external_1_1 text= opacity=1.0
+external_2_1 text= opacity=1.0
+external_3_1 text= opacity=1.0
+external_4_1 text= opacity=1.0
+external_5_1 text= opacity=1.0
+external_6_1 text= opacity=1.0
+external_7_1 text= opacity=1.0
+external_0_2 text= opacity=1.0
+external_1_2 text= opacity=1.0
+external_2_2 text= opacity=1.0
+external_3_2 text= opacity=1.0
+external_4_2 text= opacity=1.0
+external_5_2 text= opacity=1.0
+external_6_2 text= opacity=1.0
+external_7_2 text= opacity=1.0
+external_0_3 text= opacity=1.0
+external_1_3 text= opacity=1.0
+external_2_3 text= opacity=1.0
+external_3_3 text= opacity=1.0
+external_4_3 text= opacity=1.0
+external_5_3 text= opacity=1.0
+external_6_3 text= opacity=1.0
+external_7_3 text= opacity=1.0
+HUD_DUMP case=open
+ShiftLabel=Shift 1 / 5
+PhaseLabel=DELIVERY
+TimerLabel=01:30
+WalletLabel=$18.20
+HeldAddress=13 Larch Lane
+TargetAddress=13 Larch Lane
+MatchMark=tick
+OVERLAY_DUMP case=closed
+visible=false
+hotbar cols=8 rows=1
+hotbar[1,0] count=1 address=13 pending=1 opacity=0.6
+inventory cols=8 rows=2
+backpack cols=8 rows=2
+external cols=8 rows=4
+hotbar_0_0 text= opacity=1.0
+hotbar_1_0 text=1 13 opacity=0.6
+hotbar_2_0 text= opacity=1.0
+hotbar_3_0 text= opacity=1.0
+hotbar_4_0 text= opacity=1.0
+hotbar_5_0 text= opacity=1.0
+hotbar_6_0 text= opacity=1.0
+hotbar_7_0 text= opacity=1.0
+inventory_0_0 text= opacity=1.0
+inventory_1_0 text= opacity=1.0
+inventory_2_0 text= opacity=1.0
+inventory_3_0 text= opacity=1.0
+inventory_4_0 text= opacity=1.0
+inventory_5_0 text= opacity=1.0
+inventory_6_0 text= opacity=1.0
+inventory_7_0 text= opacity=1.0
+inventory_0_1 text= opacity=1.0
+inventory_1_1 text= opacity=1.0
+inventory_2_1 text= opacity=1.0
+inventory_3_1 text= opacity=1.0
+inventory_4_1 text= opacity=1.0
+inventory_5_1 text= opacity=1.0
+inventory_6_1 text= opacity=1.0
+inventory_7_1 text= opacity=1.0
+backpack_0_0 text= opacity=1.0
+backpack_1_0 text= opacity=1.0
+backpack_2_0 text= opacity=1.0
+backpack_3_0 text= opacity=1.0
+backpack_4_0 text= opacity=1.0
+backpack_5_0 text= opacity=1.0
+backpack_6_0 text= opacity=1.0
+backpack_7_0 text= opacity=1.0
+backpack_0_1 text= opacity=1.0
+backpack_1_1 text= opacity=1.0
+backpack_2_1 text= opacity=1.0
+backpack_3_1 text= opacity=1.0
+backpack_4_1 text= opacity=1.0
+backpack_5_1 text= opacity=1.0
+backpack_6_1 text= opacity=1.0
+backpack_7_1 text= opacity=1.0
+external_0_0 text= opacity=1.0
+external_1_0 text= opacity=1.0
+external_2_0 text= opacity=1.0
+external_3_0 text= opacity=1.0
+external_4_0 text= opacity=1.0
+external_5_0 text= opacity=1.0
+external_6_0 text= opacity=1.0
+external_7_0 text= opacity=1.0
+external_0_1 text= opacity=1.0
+external_1_1 text= opacity=1.0
+external_2_1 text= opacity=1.0
+external_3_1 text= opacity=1.0
+external_4_1 text= opacity=1.0
+external_5_1 text= opacity=1.0
+external_6_1 text= opacity=1.0
+external_7_1 text= opacity=1.0
+external_0_2 text= opacity=1.0
+external_1_2 text= opacity=1.0
+external_2_2 text= opacity=1.0
+external_3_2 text= opacity=1.0
+external_4_2 text= opacity=1.0
+external_5_2 text= opacity=1.0
+external_6_2 text= opacity=1.0
+external_7_2 text= opacity=1.0
+external_0_3 text= opacity=1.0
+external_1_3 text= opacity=1.0
+external_2_3 text= opacity=1.0
+external_3_3 text= opacity=1.0
+external_4_3 text= opacity=1.0
+external_5_3 text= opacity=1.0
+external_6_3 text= opacity=1.0
+external_7_3 text= opacity=1.0
+HUD_DUMP case=closed
+ShiftLabel=Shift 1 / 5
+PhaseLabel=DELIVERY
+TimerLabel=01:30
+WalletLabel=$18.20
+HeldAddress=13 Larch Lane
+TargetAddress=13 Larch Lane
+MatchMark=tick
+OVERLAY_DUMP_END

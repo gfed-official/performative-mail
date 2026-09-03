@@ -25,7 +25,7 @@ public partial class InventoryOverlay : Control
         SetAnchorsPreset(LayoutPreset.FullRect);
         MouseFilter = MouseFilterEnum.Ignore;
         Visible = false;
-        BuildChrome();
+        _ = Columns();
     }
 
     public void Open()
@@ -50,25 +50,23 @@ public partial class InventoryOverlay : Control
 
     public void Bind(in OverlayFrame frame)
     {
-        if (_left is null)
-            BuildChrome();
+        var (left, right) = Columns();
         _frame = frame;
-        ClearColumn(_left);
-        ClearColumn(_right);
+        ClearColumn(left);
+        ClearColumn(right);
         _cells.Clear();
-        AddGrid(_left, frame.Hotbar);
-        AddGrid(_left, frame.Inventory);
+        AddGrid(left, frame.Hotbar);
+        AddGrid(left, frame.Inventory);
         if (frame.Backpack is { } pack)
-            AddGrid(_left, pack);
+            AddGrid(left, pack);
         if (frame.External is { } ext)
-            AddGrid(_right, ext);
+            AddGrid(right, ext);
         Visible = _open;
     }
 
     public string Dump(string caseName)
     {
-        if (_left is null)
-            BuildChrome();
+        _ = Columns();
         var dump = new StringBuilder();
         dump.Append("OVERLAY_DUMP case=");
         dump.Append(caseName);
@@ -95,10 +93,10 @@ public partial class InventoryOverlay : Control
         return dump.ToString();
     }
 
-    private void BuildChrome()
+    private (VBoxContainer Left, VBoxContainer Right) Columns()
     {
-        if (_left is not null)
-            return;
+        if (_left is { } left && _right is { } right)
+            return (left, right);
 
         var dim = new ColorRect
         {
@@ -120,13 +118,17 @@ public partial class InventoryOverlay : Control
         row.AddThemeConstantOverride("separation", 32);
         margin.AddChild(row);
 
-        _left = new VBoxContainer { Name = LeftPath, SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        _left.AddThemeConstantOverride("separation", 16);
-        row.AddChild(_left);
+        left = new VBoxContainer { Name = LeftPath, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        left.AddThemeConstantOverride("separation", 16);
+        row.AddChild(left);
 
-        _right = new VBoxContainer { Name = RightPath, SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        _right.AddThemeConstantOverride("separation", 16);
-        row.AddChild(_right);
+        right = new VBoxContainer { Name = RightPath, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        right.AddThemeConstantOverride("separation", 16);
+        row.AddChild(right);
+
+        _left = left;
+        _right = right;
+        return (left, right);
     }
 
     private void AddGrid(VBoxContainer column, OverlayGrid grid)
