@@ -1,0 +1,92 @@
+[
+  {
+    "id": "axe",
+    "name": "Axe",
+    "kind": "item",
+    "price": 80,
+    "grants": { "item": "axe", "count": 1 },
+    "availability": { "fromShift": 1, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["starter", "harvest"]
+  },
+  {
+    "id": "pickaxe",
+    "name": "Pickaxe",
+    "kind": "item",
+    "price": 100,
+    "grants": { "item": "pickaxe", "count": 1 },
+    "availability": { "fromShift": 1, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["harvest"]
+  },
+  {
+    "id": "shovel",
+    "name": "Shovel",
+    "kind": "item",
+    "price": 90,
+    "grants": { "item": "shovel", "count": 1 },
+    "availability": { "fromShift": 1, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["harvest"]
+  },
+  {
+    "id": "bandage_x3",
+    "name": "Bandages ×3",
+    "kind": "item",
+    "price": 80,
+    "grants": { "item": "bandage", "count": 3 },
+    "availability": { "fromShift": 1, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["starter"]
+  },
+  {
+    "id": "iron_ingot_x10",
+    "name": "Iron Ingots ×10",
+    "kind": "item",
+    "price": 350,
+    "grants": { "item": "iron_ingot", "count": 10 },
+    "availability": { "fromShift": 1, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["refined"]
+  },
+  {
+    "id": "plank_x20",
+    "name": "Planks ×20",
+    "kind": "item",
+    "price": 140,
+    "grants": { "item": "plank", "count": 20 },
+    "availability": { "fromShift": 1, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["refined"]
+  },
+  {
+    "id": "rope_x10",
+    "name": "Rope ×10",
+    "kind": "item",
+    "price": 120,
+    "grants": { "item": "rope", "count": 10 },
+    "availability": { "fromShift": 1, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["refined"]
+  },
+  {
+    "id": "glass_x10",
+    "name": "Glass ×10",
+    "kind": "item",
+    "price": 250,
+    "grants": { "item": "glass", "count": 10 },
+    "availability": { "fromShift": 1, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["refined"]
+  },
+  {
+    "id": "oil_can_x3",
+    "name": "Oil Cans ×3",
+    "kind": "item",
+    "price": 160,
+    "grants": { "item": "oil_can", "count": 3 },
+    "availability": { "fromShift": 2, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["fuel"]
+  }
+]

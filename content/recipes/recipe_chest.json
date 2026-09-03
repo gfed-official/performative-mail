@@ -1,0 +1,6 @@
+{
+  "id": "recipe_chest",
+  "produces": { "building": "chest" },
+  "inputs": [{ "item": "log", "count": 4 }],
+  "unlockShift": 1
+}

@@ -1,0 +1,39 @@
+[
+  {
+    "id": "hotbar",
+    "grid": [8, 1],
+    "view": "grid",
+    "beltAccess": "none"
+  },
+  {
+    "id": "player_inventory",
+    "grid": [8, 2],
+    "view": "grid",
+    "beltAccess": "none"
+  },
+  {
+    "id": "backpack",
+    "grid": [8, 2],
+    "view": "grid",
+    "beltAccess": "none"
+  },
+  {
+    "id": "chest",
+    "grid": [8, 4],
+    "view": "grid",
+    "beltAccess": "none"
+  },
+  {
+    "id": "po_intake",
+    "grid": [20, 16],
+    "view": "manifest",
+    "beltAccess": "outfeed_only",
+    "allowedCategories": ["mail"]
+  },
+  {
+    "id": "po_depot",
+    "grid": [20, 16],
+    "view": "manifest",
+    "beltAccess": "any_side"
+  }
+]

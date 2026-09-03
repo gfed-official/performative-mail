@@ -41,6 +41,18 @@ public sealed class ContentFilesTests
     }
 
     [Fact]
+    public void ContentFiles_PlantedDanglingRecipeBuilding_FailsValidate()
+    {
+        string root = PlantContentTree();
+        string path = Path.Combine(root, "recipes", "recipe_chest.json");
+        var node = JsonNode.Parse(File.ReadAllText(path))!;
+        node["produces"]!["building"] = "no_such_building";
+        File.WriteAllText(path, node.ToJsonString());
+        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Validate(root));
+        Assert.Contains("no_such_building", ex.Message);
+    }
+
+    [Fact]
     public void ArchetypeCatalog_UnknownTownSize_Throws()
     {
         string json = MutateRepoArchetypes(def =>
@@ -88,14 +100,26 @@ public sealed class ContentFilesTests
 
     private static string PlantMutatedArchetypes(Action<JsonObject> mutate)
     {
-        string src = FindContentRoot();
-        string dest = Path.Combine(Path.GetTempPath(), "pm-u21-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(Path.Combine(dest, "world"));
-        File.Copy(Path.Combine(src, StreetCatalog.RelativePath), Path.Combine(dest, StreetCatalog.RelativePath));
-        File.Copy(Path.Combine(src, BalanceCatalog.RelativePath), Path.Combine(dest, BalanceCatalog.RelativePath));
+        string dest = PlantContentTree();
         string json = MutateRepoArchetypes(mutate);
         File.WriteAllText(Path.Combine(dest, ArchetypeCatalog.RelativePath), json);
         return dest;
+    }
+
+    private static string PlantContentTree()
+    {
+        string dest = Path.Combine(Path.GetTempPath(), "pm-u22-" + Guid.NewGuid().ToString("N"));
+        CopyTree(FindContentRoot(), dest);
+        return dest;
+    }
+
+    private static void CopyTree(string src, string dest)
+    {
+        Directory.CreateDirectory(dest);
+        foreach (string file in Directory.GetFiles(src))
+            File.Copy(file, Path.Combine(dest, Path.GetFileName(file)));
+        foreach (string dir in Directory.GetDirectories(src))
+            CopyTree(dir, Path.Combine(dest, Path.GetFileName(dir)));
     }
 
     private static string MutateRepoArchetypes(Action<JsonObject> mutate)

@@ -1,0 +1,52 @@
+[
+  {
+    "id": "axe",
+    "name": "Axe",
+    "category": "tool",
+    "grid": [1, 2],
+    "maxStack": 1,
+    "weightClass": "light",
+    "sellPrice": 20,
+    "buyPrice": 80,
+    "tool": { "harvests": ["wood"], "yieldMultiplier": 1.0, "swingTime": 0.6 },
+    "weapon": { "damage": 15, "rate": 0.6, "range": 2.0, "arcDeg": 60 },
+    "tags": ["starter", "harvest"]
+  },
+  {
+    "id": "pickaxe",
+    "name": "Pickaxe",
+    "category": "tool",
+    "grid": [1, 2],
+    "maxStack": 1,
+    "weightClass": "light",
+    "sellPrice": 25,
+    "buyPrice": 100,
+    "tool": { "harvests": ["stone", "iron_ore"], "yieldMultiplier": 1.0, "swingTime": 0.6 },
+    "weapon": { "damage": 12, "rate": 0.6, "range": 2.0, "arcDeg": 60, "bonusVs": { "tank": 2.0 } },
+    "tags": ["harvest"]
+  },
+  {
+    "id": "shovel",
+    "name": "Shovel",
+    "category": "tool",
+    "grid": [1, 2],
+    "maxStack": 1,
+    "weightClass": "light",
+    "sellPrice": 22,
+    "buyPrice": 90,
+    "tool": { "harvests": ["sand"], "yieldMultiplier": 1.0, "swingTime": 0.6 },
+    "tags": ["harvest"]
+  },
+  {
+    "id": "bandage",
+    "name": "Bandage",
+    "category": "consumable",
+    "grid": [1, 1],
+    "maxStack": 5,
+    "weightClass": "light",
+    "sellPrice": 8,
+    "buyPrice": 30,
+    "consumable": { "healInstant": 50, "healOverTime": 0, "duration": 0 },
+    "tags": ["starter"]
+  }
+]

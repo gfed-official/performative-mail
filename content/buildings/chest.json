@@ -1,0 +1,19 @@
+{
+  "id": "chest",
+  "name": "Chest",
+  "footprint": [1, 1],
+  "rotations": 4,
+  "hp": 200,
+  "placement": {
+    "onStreet": false,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": false
+  },
+  "behaviour": "container",
+  "params": {},
+  "container": "chest",
+  "recipe": "recipe_chest",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["storage"]
+}

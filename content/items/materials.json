@@ -1,0 +1,122 @@
+[
+  {
+    "id": "log",
+    "name": "Log",
+    "category": "material",
+    "grid": [1, 2],
+    "maxStack": 10,
+    "weightClass": "light",
+    "sellPrice": 3,
+    "buyPrice": 12,
+    "tags": ["harvest", "wood"]
+  },
+  {
+    "id": "fiber",
+    "name": "Fiber",
+    "category": "material",
+    "grid": [1, 1],
+    "maxStack": 20,
+    "weightClass": "light",
+    "sellPrice": 1,
+    "buyPrice": 4,
+    "tags": ["harvest"]
+  },
+  {
+    "id": "rope",
+    "name": "Rope",
+    "category": "material",
+    "grid": [1, 1],
+    "maxStack": 10,
+    "weightClass": "light",
+    "sellPrice": 3,
+    "buyPrice": 15,
+    "tags": ["refined"]
+  },
+  {
+    "id": "plank",
+    "name": "Plank",
+    "category": "material",
+    "grid": [1, 1],
+    "maxStack": 20,
+    "weightClass": "light",
+    "sellPrice": 2,
+    "buyPrice": 8,
+    "tags": ["refined"]
+  },
+  {
+    "id": "stone",
+    "name": "Stone",
+    "category": "material",
+    "grid": [1, 1],
+    "maxStack": 20,
+    "weightClass": "light",
+    "sellPrice": 2,
+    "buyPrice": 8,
+    "tags": ["harvest"]
+  },
+  {
+    "id": "sand",
+    "name": "Sand",
+    "category": "material",
+    "grid": [1, 1],
+    "maxStack": 20,
+    "weightClass": "light",
+    "sellPrice": 1,
+    "buyPrice": 6,
+    "tags": ["harvest"]
+  },
+  {
+    "id": "iron_ore",
+    "name": "Iron Ore",
+    "category": "material",
+    "grid": [1, 1],
+    "maxStack": 20,
+    "weightClass": "light",
+    "sellPrice": 4,
+    "tags": ["harvest"]
+  },
+  {
+    "id": "iron_ingot",
+    "name": "Iron Ingot",
+    "category": "material",
+    "grid": [1, 1],
+    "maxStack": 20,
+    "weightClass": "light",
+    "sellPrice": 10,
+    "buyPrice": 40,
+    "tags": ["refined"]
+  },
+  {
+    "id": "glass",
+    "name": "Glass",
+    "category": "material",
+    "grid": [1, 1],
+    "maxStack": 20,
+    "weightClass": "light",
+    "sellPrice": 7,
+    "buyPrice": 30,
+    "tags": ["refined"]
+  },
+  {
+    "id": "oil_can",
+    "name": "Oil Can",
+    "category": "material",
+    "grid": [1, 2],
+    "maxStack": 5,
+    "weightClass": "light",
+    "sellPrice": 15,
+    "buyPrice": 60,
+    "tags": ["fuel"]
+  },
+  {
+    "id": "berries",
+    "name": "Berries",
+    "category": "consumable",
+    "grid": [1, 1],
+    "maxStack": 10,
+    "weightClass": "light",
+    "sellPrice": 1,
+    "consumable": { "healInstant": 0, "healOverTime": 0, "duration": 0 },
+    "tags": ["harvest", "food"]
+  }
+]
