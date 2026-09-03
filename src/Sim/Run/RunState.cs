@@ -22,6 +22,8 @@ public readonly record struct RunState
 
     public uint PhaseDeadlineTick { get; }
 
+    public uint RemainingTicks(uint now) => PhaseDeadlineTick > now ? PhaseDeadlineTick - now : 0;
+
     public static RunState InLobby() => new(RunPhase.Lobby, 1, 0);
 
     public bool TryTransition(RunPhase to, out RunState next)
@@ -39,7 +41,7 @@ public readonly record struct RunState
         return true;
     }
 
-    private static byte NextShift(RunPhase from, RunPhase to, byte shift)
+    internal static byte NextShift(RunPhase from, RunPhase to, byte shift)
     {
         if (from == RunPhase.Draft && to == RunPhase.Prep)
             return (byte)(shift + 1);

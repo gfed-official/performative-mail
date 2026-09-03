@@ -10,6 +10,7 @@ public sealed class SmokeTests
     public void TickClock_TickHz_IsThirty()
     {
         Assert.Equal(30, TickClock.TickHz);
+        Assert.Equal(1800, TickClock.TicksFromSeconds(60));
     }
 
     [Fact]
