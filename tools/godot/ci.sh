@@ -113,7 +113,7 @@ host_join_smoke() {
   guest_log="$(mktemp)"
 
   godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
-    --host --walk --report="$reports/host.json" --quit-after-ms=12000 \
+    --host --walk --report="$reports/host.json" --quit-after-ms=16000 \
     >"$host_log" 2>&1 &
   host_pid=$!
 
@@ -121,7 +121,7 @@ host_join_smoke() {
   sleep 4
 
   if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
-    --join=127.0.0.1 --walk --report="$reports/guest.json" --quit-after-ms=8000 \
+    --join=127.0.0.1 --walk --report="$reports/guest.json" --quit-after-ms=7000 \
     >"$guest_log" 2>&1; then
     echo "---- host log ----"
     cat "$host_log"
