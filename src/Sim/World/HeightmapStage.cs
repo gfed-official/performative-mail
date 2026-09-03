@@ -198,7 +198,7 @@ internal static class HeightmapStage
         {
             int xq = (int)((long)tileX * freq);
             int yq = (int)((long)tileY * freq);
-            sum += OpenSimplex2Fixed.Mul(OpenSimplex2Fixed.Noise2(seed + o * 0x9E3779B97F4A7C15L, xq, yq), amp);
+            sum += OpenSimplex2Fixed.Mul(OpenSimplex2Fixed.Noise2(seed + ((long)o << 32) + o, xq, yq), amp);
             ampSum += amp;
             amp >>= 1;
             freq <<= 1;
