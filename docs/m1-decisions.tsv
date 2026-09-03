@@ -8,3 +8,4 @@ ts	phase	decision	why	evidence	result
 2026-09-03T20:50:00Z	u1.1	Skeleton heights from PCG32 heightmap stream	OpenSimplex2 waits for U1.2; this unit proves hash encoding	src/Sim/World/WorldGen.cs	open
 2026-09-03T20:30:27Z	u1.1	Pinned golden hash 0x24849E8EF0DBB228	Same seed 0x7F3A9C21 must match on every platform	tests/Sim.Tests/World/WorldGenHashTests.cs	tests green
 2026-09-03T20:30:27Z	verify	dotnet test Release 207 passed	Sim 82 Net 109 Bot 16; WorldGenHash 6 plus Fnv 2	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-03T20:33:00Z	verify	CI on 516d964 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33802717019	VERIFIED
