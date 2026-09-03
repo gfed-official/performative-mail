@@ -24,11 +24,15 @@ public partial class Main : Node3D
     private bool _walk;
     private bool _reported;
     private bool _inspectHud;
+    private bool _inspectOverlay;
+    private bool _overlayHeld;
     private string? _reportPath;
     private string? _hudDumpPath;
+    private string? _overlayDumpPath;
     private int _quitAfterMs;
     private ulong _startedUsec;
     private Hud _hud = null!;
+    private InventoryOverlay _overlay = null!;
 
     public override void _Ready()
     {
@@ -37,6 +41,7 @@ public partial class Main : Node3D
         BuildWorld();
         BuildMenu();
         BuildHud();
+        BuildOverlay();
         ApplyArgs(OS.GetCmdlineUserArgs());
         if (_inspectHud)
         {
@@ -44,7 +49,14 @@ public partial class Main : Node3D
             return;
         }
 
+        if (_inspectOverlay)
+        {
+            InspectOverlay();
+            return;
+        }
+
         BindHud(BootPlaceholder());
+        BindOverlay(OverlayBootReplica.Build());
         GD.Print("performative-mail boot ok");
     }
 
@@ -57,6 +69,7 @@ public partial class Main : Node3D
             : InputSampler.Sample();
         var state = _session.Pump(WallNow(), in intent);
         Render(state);
+        PollOverlayToggle();
         MaybeFinish(state);
     }
 
@@ -208,6 +221,26 @@ public partial class Main : Node3D
     private void BindHud(in HudSnapshot snapshot) =>
         _hud.Bind(HudFrame.From(in snapshot));
 
+    private void BuildOverlay()
+    {
+        _overlay = new InventoryOverlay();
+        var layer = new CanvasLayer { Layer = 11 };
+        AddChild(layer);
+        layer.AddChild(_overlay);
+        _overlay.Bind(OverlayFrame.From(OverlayBootReplica.Build()));
+    }
+
+    private void BindOverlay(in OverlayReplica replica) =>
+        _overlay.Bind(OverlayFrame.From(in replica));
+
+    private void PollOverlayToggle()
+    {
+        bool held = Input.IsPhysicalKeyPressed(Key.Tab) || Input.IsPhysicalKeyPressed(Key.Y);
+        if (held && !_overlayHeld)
+            _overlay.Toggle();
+        _overlayHeld = held;
+    }
+
     private void InspectHud()
     {
         var dump = new StringBuilder();
@@ -220,6 +253,27 @@ public partial class Main : Node3D
         GD.Print(text);
         if (_hudDumpPath is not null)
             File.WriteAllText(_hudDumpPath, text);
+        GetTree().Quit();
+    }
+
+    private void InspectOverlay()
+    {
+        BindHud(BootPlaceholder());
+        BindOverlay(OverlayBootReplica.Build());
+        var dump = new StringBuilder();
+        _overlay.Open();
+        dump.Append(_overlay.Dump("open"));
+        dump.Append(_hud.Dump("open"));
+        dump.Append('\n');
+        _overlay.Close();
+        dump.Append(_overlay.Dump("closed"));
+        dump.Append(_hud.Dump("closed"));
+        dump.Append('\n');
+        dump.AppendLine("OVERLAY_DUMP_END");
+        var text = dump.ToString();
+        GD.Print(text);
+        if (_overlayDumpPath is not null)
+            File.WriteAllText(_overlayDumpPath, text);
         GetTree().Quit();
     }
 
@@ -263,8 +317,12 @@ public partial class Main : Node3D
                 _reportPath = arg.Substring("--report=".Length);
             else if (arg == "--inspect-hud")
                 _inspectHud = true;
+            else if (arg == "--inspect-overlay")
+                _inspectOverlay = true;
             else if (arg.StartsWith("--hud-dump=", StringComparison.Ordinal))
                 _hudDumpPath = arg.Substring("--hud-dump=".Length);
+            else if (arg.StartsWith("--overlay-dump=", StringComparison.Ordinal))
+                _overlayDumpPath = arg.Substring("--overlay-dump=".Length);
             else if (arg.StartsWith("--quit-after-ms=", StringComparison.Ordinal) &&
                      int.TryParse(arg.AsSpan("--quit-after-ms=".Length), out var ms))
                 _quitAfterMs = ms;

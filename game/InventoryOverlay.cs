@@ -1,0 +1,212 @@
+using System.Globalization;
+using System.Text;
+using Godot;
+using PerformativeMail.Client.UI;
+
+namespace PerformativeMail.Game;
+
+public partial class InventoryOverlay : Control
+{
+    public const string RootPath = "OverlayRoot";
+    public const string LeftPath = "LeftColumn";
+    public const string RightPath = "RightColumn";
+
+    private readonly Dictionary<string, Label> _cells = new();
+    private VBoxContainer _left = null!;
+    private VBoxContainer _right = null!;
+    private OverlayFrame _frame;
+    private bool _open;
+
+    public bool IsOpen => _open && Visible;
+
+    public override void _Ready()
+    {
+        Name = RootPath;
+        SetAnchorsPreset(LayoutPreset.FullRect);
+        MouseFilter = MouseFilterEnum.Ignore;
+        Visible = false;
+        BuildChrome();
+    }
+
+    public void Open()
+    {
+        Visible = true;
+        _open = true;
+    }
+
+    public void Close()
+    {
+        Visible = false;
+        _open = false;
+    }
+
+    public void Toggle()
+    {
+        if (IsOpen)
+            Close();
+        else
+            Open();
+    }
+
+    public void Bind(in OverlayFrame frame)
+    {
+        if (_left is null)
+            BuildChrome();
+        _frame = frame;
+        ClearColumn(_left);
+        ClearColumn(_right);
+        _cells.Clear();
+        AddGrid(_left, frame.Hotbar);
+        AddGrid(_left, frame.Inventory);
+        if (frame.Backpack is { } pack)
+            AddGrid(_left, pack);
+        if (frame.External is { } ext)
+            AddGrid(_right, ext);
+        Visible = _open;
+    }
+
+    public string Dump(string caseName)
+    {
+        if (_left is null)
+            BuildChrome();
+        var dump = new StringBuilder();
+        dump.Append("OVERLAY_DUMP case=");
+        dump.Append(caseName);
+        dump.Append('\n');
+        dump.Append("visible=");
+        dump.Append(IsOpen ? "true" : "false");
+        dump.Append('\n');
+        WriteGrid(dump, _frame.Hotbar);
+        WriteGrid(dump, _frame.Inventory);
+        if (_frame.Backpack is { } pack)
+            WriteGrid(dump, pack);
+        if (_frame.External is { } ext)
+            WriteGrid(dump, ext);
+        foreach (var pair in _cells)
+        {
+            dump.Append(pair.Key);
+            dump.Append(" text=");
+            dump.Append(pair.Value.Text);
+            dump.Append(" opacity=");
+            dump.Append(pair.Value.Modulate.A.ToString("0.0", CultureInfo.InvariantCulture));
+            dump.Append('\n');
+        }
+
+        return dump.ToString();
+    }
+
+    private void BuildChrome()
+    {
+        if (_left is not null)
+            return;
+
+        var dim = new ColorRect
+        {
+            Color = new Color(0.05f, 0.05f, 0.08f, 0.35f),
+            MouseFilter = MouseFilterEnum.Ignore,
+        };
+        dim.SetAnchorsPreset(LayoutPreset.FullRect);
+        AddChild(dim);
+
+        var margin = new MarginContainer();
+        margin.SetAnchorsPreset(LayoutPreset.FullRect);
+        margin.AddThemeConstantOverride("margin_left", 48);
+        margin.AddThemeConstantOverride("margin_top", 120);
+        margin.AddThemeConstantOverride("margin_right", 48);
+        margin.AddThemeConstantOverride("margin_bottom", 48);
+        AddChild(margin);
+
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 32);
+        margin.AddChild(row);
+
+        _left = new VBoxContainer { Name = LeftPath, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _left.AddThemeConstantOverride("separation", 16);
+        row.AddChild(_left);
+
+        _right = new VBoxContainer { Name = RightPath, SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _right.AddThemeConstantOverride("separation", 16);
+        row.AddChild(_right);
+    }
+
+    private void AddGrid(VBoxContainer column, OverlayGrid grid)
+    {
+        var block = new VBoxContainer();
+        block.AddThemeConstantOverride("separation", 4);
+        column.AddChild(block);
+
+        block.AddChild(new Label { Text = grid.Name });
+
+        var cells = new Godot.GridContainer { Columns = grid.Cols };
+        cells.AddThemeConstantOverride("h_separation", 4);
+        cells.AddThemeConstantOverride("v_separation", 4);
+        block.AddChild(cells);
+
+        for (byte y = 0; y < grid.Rows; y++)
+        {
+            for (byte x = 0; x < grid.Cols; x++)
+            {
+                var cell = grid[x, y];
+                var label = new Label
+                {
+                    Name = CellName(grid.Name, x, y),
+                    Text = cell.Text,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    CustomMinimumSize = new Vector2(72, 40),
+                    Modulate = new Color(1f, 1f, 1f, cell.Opacity),
+                };
+                var slot = new ColorRect
+                {
+                    Color = new Color(0.16f, 0.18f, 0.22f, 0.92f),
+                    CustomMinimumSize = new Vector2(76, 44),
+                };
+                slot.AddChild(label);
+                label.SetAnchorsPreset(LayoutPreset.FullRect);
+                cells.AddChild(slot);
+                _cells[label.Name] = label;
+            }
+        }
+    }
+
+    private static void WriteGrid(StringBuilder dump, OverlayGrid grid)
+    {
+        dump.Append(grid.Name);
+        dump.Append(" cols=");
+        dump.Append(grid.Cols);
+        dump.Append(" rows=");
+        dump.Append(grid.Rows);
+        dump.Append('\n');
+        for (byte y = 0; y < grid.Rows; y++)
+        {
+            for (byte x = 0; x < grid.Cols; x++)
+            {
+                var cell = grid[x, y];
+                if (cell.Text.Length == 0 && !cell.Pending)
+                    continue;
+                dump.Append(grid.Name);
+                dump.Append('[');
+                dump.Append(x);
+                dump.Append(',');
+                dump.Append(y);
+                dump.Append("] count=");
+                dump.Append(cell.CountLabel);
+                dump.Append(" address=");
+                dump.Append(cell.AddressLabel);
+                dump.Append(" pending=");
+                dump.Append(cell.Pending ? "1" : "0");
+                dump.Append(" opacity=");
+                dump.Append(cell.Opacity.ToString("0.0", CultureInfo.InvariantCulture));
+                dump.Append('\n');
+            }
+        }
+    }
+
+    private static string CellName(string grid, byte x, byte y) => grid + "_" + x + "_" + y;
+
+    private static void ClearColumn(VBoxContainer column)
+    {
+        foreach (var child in column.GetChildren())
+            child.Free();
+    }
+}
