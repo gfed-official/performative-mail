@@ -8,12 +8,24 @@ public sealed class PlayerBody
     private uint? _lastProcessed;
 
     public PlayerBody(EntityId id)
+        : this(id, PlayerPose.Origin, 0)
+    {
+    }
+
+    public PlayerBody(EntityId id, in PlayerPose pose, uint spawnSlot)
     {
         Id = id;
         HpPct = 100;
+        Xcm = pose.Xcm;
+        Ycm = pose.Ycm;
+        Zcm = pose.Zcm;
+        Yaw = pose.Yaw;
+        SpawnSlot = spawnSlot;
     }
 
     public EntityId Id { get; }
+
+    public uint SpawnSlot { get; }
 
     public int Xcm { get; private set; }
 

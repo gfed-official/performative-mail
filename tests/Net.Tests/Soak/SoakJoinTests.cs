@@ -34,9 +34,7 @@ public sealed class SoakJoinTests
     public void EightHellos_SpawnEightClass1Players_AndStayLiveForThirtyTicks()
     {
         var hub = LoopbackHub.ForSeats(SoakRoster.SeatCount);
-        var server = new ServerRuntime(hub.ServerEnds[0]);
-        for (int i = 1; i < hub.ServerEnds.Count; i++)
-            server.Attach(hub.ServerEnds[i]);
+        var server = new ServerRuntime(LoopbackLink.OverPipes(hub.ServerEnds));
 
         var seats = new SoakSeat[SoakRoster.SeatCount];
         for (int i = 0; i < seats.Length; i++)

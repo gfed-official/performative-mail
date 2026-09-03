@@ -39,6 +39,8 @@ public sealed class ClientRuntime
 
     public Pong? LastPong { get; private set; }
 
+    public HelloReject? LastReject { get; private set; }
+
     public InventorySystem? Inventory { get; }
 
     public int InventoryEventCount { get; private set; }
@@ -122,8 +124,10 @@ public sealed class ClientRuntime
             case MessageKind.InventoryEvent:
                 ApplyInventoryEvent(payload);
                 break;
-            case MessageKind.Hello:
             case MessageKind.HelloReject:
+                ApplyHelloReject(payload);
+                break;
+            case MessageKind.Hello:
             case MessageKind.Input:
             case MessageKind.Ping:
                 break;
@@ -141,6 +145,14 @@ public sealed class ClientRuntime
         StartTick = helloOk.StartTick;
         if (Prediction.PendingCount == 0)
             ServerTickEstimate = helloOk.StartTick;
+    }
+
+    private void ApplyHelloReject(byte[] payload)
+    {
+        if (!WireCodec.TryDecode(payload, out HelloReject reject))
+            return;
+
+        LastReject = reject;
     }
 
     private void ApplyPong(byte[] payload)
@@ -237,12 +249,14 @@ public sealed class ClientRuntime
         if (LocalPlayer is not EntityId owner)
             return;
 
+        var seen = new HashSet<EntityId>();
         for (int i = 0; i < snapshot.Players.Count; i++)
         {
             var player = snapshot.Players[i];
             if (player.Id == owner)
                 continue;
 
+            seen.Add(player.Id);
             if (!_remotes.TryGetValue(player.Id, out var remote))
             {
                 remote = new PlayerReplication.RemoteInterpolated(
@@ -252,5 +266,18 @@ public sealed class ClientRuntime
 
             remote.Buffer.Push(RemoteSnapshot.From(in player, snapshot.ServerTick, owner));
         }
+
+        if (_remotes.Count == seen.Count)
+            return;
+
+        var stale = new List<EntityId>();
+        foreach (var id in _remotes.Keys)
+        {
+            if (!seen.Contains(id))
+                stale.Add(id);
+        }
+
+        for (int i = 0; i < stale.Count; i++)
+            _remotes.Remove(stale[i]);
     }
 }

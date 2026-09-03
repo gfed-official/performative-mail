@@ -89,7 +89,7 @@ internal sealed class Criterion2Harness
         var loopback = new LoopbackTransport();
         _serverLink = new ConditionedTransport(loopback.A, oneWayDelay, dropRate, seed);
         _clientLink = new ConditionedTransport(loopback.B, oneWayDelay, dropRate, seed ^ unchecked((int)0xA5A5A5A5));
-        _server = new ServerRuntime(_serverLink);
+        _server = new ServerRuntime(LoopbackLink.OverPipes(_serverLink));
         _client = new ClientRuntime();
         _server.Start();
         _client.Connect(_clientLink);

@@ -42,6 +42,8 @@ public sealed class SimWorld
         MailSpawner = new MailSpawner(atlas, Mail, Inventory, Intake, seed, jitterSeconds);
     }
 
+    public PlayerBody SpawnPlayer() => Players.SpawnOnRing(SpawnRing.CentreOf(Atlas));
+
     public void Tick(uint tick)
     {
         CurrentTick = tick;

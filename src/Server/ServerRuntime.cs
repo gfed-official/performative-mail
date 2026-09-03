@@ -9,12 +9,8 @@ namespace PerformativeMail.Server;
 
 public sealed class ServerRuntime
 {
-    private const int SnapshotChannel = 0;
-    private const int EventChannel = 1;
-    private const int HelloChannel = 2;
-
-    private readonly List<ClientSession> _sessions = new();
-    private readonly List<byte[]> _pending = new();
+    private readonly IServerLink _link;
+    private readonly Dictionary<ConnectionId, Seat> _seats = new();
     private PlayerSnapshot[] _snapshotScratch = Array.Empty<PlayerSnapshot>();
     private uint _tick;
 
@@ -22,29 +18,30 @@ public sealed class ServerRuntime
 
     public IReadOnlyList<ContainerDelta> LastFlushedDeltas { get; private set; } = Array.Empty<ContainerDelta>();
 
-    public ServerRuntime(ITransport transport)
-        : this(transport, new SimWorld())
+    public int JoinedCount
     {
-    }
-
-    public ServerRuntime(ITransport transport, SimWorld world)
-    {
-        World = world ?? throw new ArgumentNullException(nameof(world));
-        Attach(transport);
-    }
-
-    public void Attach(ITransport transport)
-    {
-        if (transport is null)
-            throw new ArgumentNullException(nameof(transport));
-
-        for (int i = 0; i < _sessions.Count; i++)
+        get
         {
-            if (ReferenceEquals(_sessions[i].Transport, transport))
-                throw new ArgumentException("Transport is already attached.", nameof(transport));
-        }
+            int n = 0;
+            foreach (var seat in _seats.Values)
+            {
+                if (seat.Joined)
+                    n++;
+            }
 
-        _sessions.Add(new ClientSession(transport));
+            return n;
+        }
+    }
+
+    public ServerRuntime(IServerLink link)
+        : this(link, new SimWorld())
+    {
+    }
+
+    public ServerRuntime(IServerLink link, SimWorld world)
+    {
+        _link = link ?? throw new ArgumentNullException(nameof(link));
+        World = world ?? throw new ArgumentNullException(nameof(world));
     }
 
     public void Start()
@@ -57,84 +54,79 @@ public sealed class ServerRuntime
 
     public void TickOnce()
     {
-        for (int i = 0; i < _sessions.Count; i++)
-            Service(_sessions[i]);
-
+        Drain();
         World.Tick(_tick++);
         FlushInventoryEvents();
 
         if (SnapshotCadence.ShouldSend(World.CurrentTick))
+            Broadcast();
+    }
+
+    private void Drain()
+    {
+        while (_link.TryPoll(out var ev))
         {
-            for (int i = 0; i < _sessions.Count; i++)
-                SendSnapshot(_sessions[i]);
+            switch (ev.Kind)
+            {
+                case LinkEventKind.Opened:
+                    if (!_seats.ContainsKey(ev.Connection))
+                        _seats[ev.Connection] = new Seat(ev.Connection, null);
+                    break;
+                case LinkEventKind.Data:
+                    OnData(ev.Connection, ev.Payload);
+                    break;
+                case LinkEventKind.Closed:
+                    OnClosed(ev.Connection);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(ev.Kind), ev.Kind, null);
+            }
         }
     }
 
-    private void Service(ClientSession session)
+    private void OnData(ConnectionId from, byte[] payload)
     {
-        _pending.Clear();
-        while (session.Transport.Poll(out _, out var payload))
-            _pending.Add(payload);
+        if (!_seats.ContainsKey(from))
+            return;
 
-        HandleHellos(session);
-        HandlePings(session);
-        HandleInputs(session);
-    }
-
-    private void HandleHellos(ClientSession session)
-    {
-        for (int i = 0; i < _pending.Count; i++)
+        if (WireCodec.TryDecode(payload, out Hello hello))
         {
-            if (!WireCodec.TryDecode(_pending[i], out Hello hello))
-                continue;
-
-            HandleHello(session, in hello);
+            HandleHello(from, in hello);
+            return;
         }
+
+        if (WireCodec.TryDecode(payload, out Ping ping))
+        {
+            _link.Send(from, NetChannels.Unreliable, WireCodec.Encode(new Pong(ping.ClientStamp, _tick)));
+            return;
+        }
+
+        if (WireCodec.TryDecode(payload, out InputPacket? packet) && packet is not null)
+            ApplyInputPacket(from, packet);
     }
 
-    private void HandleHello(ClientSession session, in Hello hello)
+    private void HandleHello(ConnectionId from, in Hello hello)
     {
-        if (session.Player is not null)
+        var seat = _seats[from];
+        if (seat.Player is not null)
             return;
 
         if (hello.ProtocolHash != Protocol.Hash)
         {
-            session.Transport.Send(HelloChannel, WireCodec.Encode(new HelloReject(HelloRejectReason.ProtocolMismatch)));
+            _link.Send(from, NetChannels.Handshake, WireCodec.Encode(new HelloReject(HelloRejectReason.ProtocolMismatch)));
+            _link.Close(from, DisconnectReason.Rejected);
             return;
         }
 
-        var body = World.Players.SpawnAtOrigin();
-        session.Player = body.Id;
-        session.Transport.Send(HelloChannel, WireCodec.Encode(new HelloOk(body.Id, _tick)));
+        var body = World.SpawnPlayer();
+        _seats[from] = new Seat(from, body.Id);
+        _link.Send(from, NetChannels.Handshake, WireCodec.Encode(new HelloOk(body.Id, _tick)));
     }
 
-    private void HandlePings(ClientSession session)
+    private void ApplyInputPacket(ConnectionId from, InputPacket packet)
     {
-        for (int i = 0; i < _pending.Count; i++)
-        {
-            if (!WireCodec.TryDecode(_pending[i], out Ping ping))
-                continue;
-
-            session.Transport.Send(SnapshotChannel, WireCodec.Encode(new Pong(ping.ClientStamp, _tick)));
-        }
-    }
-
-    private void HandleInputs(ClientSession session)
-    {
-        if (session.Player is not EntityId player)
+        if (!_seats.TryGetValue(from, out var seat) || seat.Player is not EntityId player)
             return;
-
-        for (int i = 0; i < _pending.Count; i++)
-        {
-            if (!WireCodec.TryDecode(_pending[i], out InputPacket? packet) || packet is null)
-                continue;
-
-            ApplyInputPacket(player, packet);
-        }
-    }
-
-    private void ApplyInputPacket(EntityId player, InputPacket packet)
-    {
         if (!World.Players.TryGet(player, out var body))
             return;
 
@@ -150,32 +142,49 @@ public sealed class ServerRuntime
         }
     }
 
-    private void SendSnapshot(ClientSession session)
+    private void OnClosed(ConnectionId from)
+    {
+        if (!_seats.TryGetValue(from, out var seat))
+            return;
+
+        _seats.Remove(from);
+        if (seat.Player is EntityId player)
+            World.Players.Remove(player);
+    }
+
+    private void Broadcast()
     {
         var all = World.Players.All;
         if (_snapshotScratch.Length != all.Count)
             _snapshotScratch = new PlayerSnapshot[all.Count];
 
-        for (int i = 0; i < all.Count; i++)
+        foreach (var seat in _seats.Values)
         {
-            var body = all[i];
-            var lastProcessed = session.Player is EntityId player && body.Id == player
-                ? body.LastProcessedInputTick
-                : 0u;
-            _snapshotScratch[i] = new PlayerSnapshot(
-                body.Id,
-                body.Xcm,
-                body.Ycm,
-                body.Zcm,
-                body.Yaw,
-                body.Anim,
-                body.HpPct,
-                lastProcessed);
-        }
+            if (!seat.Joined)
+                continue;
 
-        session.Transport.Send(
-            SnapshotChannel,
-            WireCodec.Encode(new SnapshotPacket(World.CurrentTick, _snapshotScratch)));
+            for (int i = 0; i < all.Count; i++)
+            {
+                var body = all[i];
+                var lastProcessed = seat.Player is EntityId player && body.Id == player
+                    ? body.LastProcessedInputTick
+                    : 0u;
+                _snapshotScratch[i] = new PlayerSnapshot(
+                    body.Id,
+                    body.Xcm,
+                    body.Ycm,
+                    body.Zcm,
+                    body.Yaw,
+                    body.Anim,
+                    body.HpPct,
+                    lastProcessed);
+            }
+
+            _link.Send(
+                seat.Id,
+                NetChannels.Unreliable,
+                WireCodec.Encode(new SnapshotPacket(World.CurrentTick, _snapshotScratch)));
+        }
     }
 
     private void FlushInventoryEvents()
@@ -193,28 +202,34 @@ public sealed class ServerRuntime
             var delta = deltas[i];
             var payload = InventoryCodec.EncodeEvent(delta);
             foreach (var viewer in inventory.ViewersOf(delta.Container))
-                SendToViewer(viewer, EventChannel, payload);
+                SendToViewer(viewer, NetChannels.Reliable, payload);
         }
     }
 
     private void SendToViewer(EntityId viewer, int channel, byte[] payload)
     {
-        for (int i = 0; i < _sessions.Count; i++)
+        foreach (var seat in _seats.Values)
         {
-            if (_sessions[i].Player is EntityId player && player.Equals(viewer))
+            if (seat.Player is EntityId player && player.Equals(viewer))
             {
-                _sessions[i].Transport.Send(channel, payload);
+                _link.Send(seat.Id, channel, payload);
                 return;
             }
         }
     }
 
-    private sealed class ClientSession
+    private readonly struct Seat
     {
-        public ClientSession(ITransport transport) => Transport = transport;
+        public Seat(ConnectionId id, EntityId? player)
+        {
+            Id = id;
+            Player = player;
+        }
 
-        public ITransport Transport { get; }
+        public ConnectionId Id { get; }
 
-        public EntityId? Player { get; set; }
+        public EntityId? Player { get; }
+
+        public bool Joined => Player.HasValue;
     }
 }

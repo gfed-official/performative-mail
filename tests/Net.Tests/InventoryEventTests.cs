@@ -166,7 +166,7 @@ public sealed class InventoryEventTests
         var catalog = EventCatalog.Instance;
         var hub = LoopbackHub.ForSeats(1);
         var world = new SimWorld(catalog);
-        var server = new ServerRuntime(hub.ServerEnds[0], world);
+        var server = new ServerRuntime(LoopbackLink.OverPipes(hub.ServerEnds), world);
         var client = new ClientRuntime(catalog);
         client.Connect(hub.ClientEnds[0]);
         server.TickOnce();
@@ -201,8 +201,7 @@ public sealed class InventoryEventTests
         var catalog = EventCatalog.Instance;
         var hub = LoopbackHub.ForSeats(2);
         var world = new SimWorld(catalog);
-        var server = new ServerRuntime(hub.ServerEnds[0], world);
-        server.Attach(hub.ServerEnds[1]);
+        var server = new ServerRuntime(LoopbackLink.OverPipes(hub.ServerEnds), world);
 
         var first = new ClientRuntime(catalog);
         var second = new ClientRuntime(catalog);
@@ -248,8 +247,7 @@ public sealed class InventoryEventTests
         var catalog = EventCatalog.Instance;
         var hub = LoopbackHub.ForSeats(2);
         var world = new SimWorld(catalog);
-        var server = new ServerRuntime(hub.ServerEnds[0], world);
-        server.Attach(hub.ServerEnds[1]);
+        var server = new ServerRuntime(LoopbackLink.OverPipes(hub.ServerEnds), world);
 
         var first = new ClientRuntime(catalog);
         var second = new ClientRuntime(catalog);
