@@ -43,3 +43,4 @@ ts	phase	decision	why	evidence	result
 2026-09-03T21:59:00Z	verify	CI on c680399 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions	VERIFIED
 2026-09-03T22:00:00Z	audit	Kept live Host without WorldOffer	U1.5 is the regen path beside the atlas, not a listen-server cutover	src/App/PlaySessionMachine.cs	accepted
 2026-09-03T22:00:00Z	audit	Printed budget ms on Console	CI minimal logs hid ITestOutputHelper; the issue asked for the runner number	tests/Sim.Tests/World/WorldGenBudgetTests.cs	open
+2026-09-03T22:03:00Z	verify	CI on 2f8f59f all 4 checks green	Sim.Tests 6 s for 117 tests; Console budget line still hidden at minimal verbosity	https://github.com/gfed-official/performative-mail/actions/runs/33810930999	VERIFIED
