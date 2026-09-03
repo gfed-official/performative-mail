@@ -100,6 +100,11 @@ boot_smoke() {
   fi
 }
 
+hud_inspect() {
+  echo "==> HUD Control text inspect"
+  SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-hud.sh" "$(mktemp)"
+}
+
 host_join_smoke() {
   echo "==> headless host/join smoke"
   local reports host_log guest_log host_pid
@@ -160,11 +165,12 @@ assert_playing_with_two_pawns() {
 
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|join]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|join]
 
   verify  Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import  godot --import + dotnet build of game/
   boot    headless main-scene smoke (C# _Ready marker)
+  hud     bind HudFrame and read Control text (match then mismatch)
   join    two-process LAN host/join on 127.0.0.1:7777
   all     all of the above (default)
 EOF
@@ -182,6 +188,9 @@ case "$cmd" in
   boot)
     boot_smoke
     ;;
+  hud)
+    hud_inspect
+    ;;
   join)
     host_join_smoke
     ;;
@@ -190,6 +199,7 @@ case "$cmd" in
     verify_dotnet
     import_and_build
     boot_smoke
+    hud_inspect
     host_join_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;

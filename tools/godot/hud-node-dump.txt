@@ -1,0 +1,17 @@
+HUD_DUMP case=match
+ShiftLabel=Shift 1 / 5
+PhaseLabel=DELIVERY
+TimerLabel=01:30
+WalletLabel=$18.20
+HeldAddress=13 Larch Lane
+TargetAddress=13 Larch Lane
+MatchMark=tick
+HUD_DUMP case=mismatch
+ShiftLabel=Shift 1 / 5
+PhaseLabel=DELIVERY
+TimerLabel=01:30
+WalletLabel=$18.20
+HeldAddress=13 Larch Lane
+TargetAddress=8 Oak Street
+MatchMark=cross
+HUD_DUMP_END

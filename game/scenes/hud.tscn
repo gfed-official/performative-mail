@@ -1,0 +1,71 @@
+[gd_scene load_steps=2 format=3 uid="uid://bhudframewidgets"]
+
+[ext_resource type="Script" path="res://Hud.cs" id="1_hud"]
+
+[node name="Hud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_hud")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 96
+grow_horizontal = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+
+[node name="Column" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TopRow" type="HBoxContainer" parent="Margin/Column"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="PhaseTimer" type="HBoxContainer" parent="Margin/Column/TopRow"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ShiftLabel" type="Label" parent="Margin/Column/TopRow/PhaseTimer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PhaseLabel" type="Label" parent="Margin/Column/TopRow/PhaseTimer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TimerLabel" type="Label" parent="Margin/Column/TopRow/PhaseTimer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="Margin/Column/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="WalletLabel" type="Label" parent="Margin/Column/TopRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Interact" type="HBoxContainer" parent="Margin/Column"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HeldAddress" type="Label" parent="Margin/Column/Interact"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MatchMark" type="Label" parent="Margin/Column/Interact"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TargetAddress" type="Label" parent="Margin/Column/Interact"]
+unique_name_in_owner = true
+layout_mode = 2
