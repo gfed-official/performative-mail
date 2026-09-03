@@ -9,3 +9,6 @@ ts	phase	decision	why	evidence	result
 2026-09-03T20:30:27Z	u1.1	Pinned golden hash 0x24849E8EF0DBB228	Same seed 0x7F3A9C21 must match on every platform	tests/Sim.Tests/World/WorldGenHashTests.cs	tests green
 2026-09-03T20:30:27Z	verify	dotnet test Release 207 passed	Sim 82 Net 109 Bot 16; WorldGenHash 6 plus Fnv 2	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-03T20:33:00Z	verify	CI on 516d964 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33802717019	VERIFIED
+2026-09-03T20:36:00Z	verify	CI on acadf1b all 4 checks green	docs-only trail commit	https://github.com/gfed-official/performative-mail/actions/runs/33802970270	VERIFIED
+2026-09-03T20:37:00Z	audit	Accepted PCG32 official first-draw pin	Trail review said empty Fnv and no PCG vector	tests/Sim.Tests/Core/Pcg32Tests.cs	open
+2026-09-03T20:37:00Z	audit	Kept Windows hash as U10.4	Ubuntu golden hash is this unit; cross-OS is a later gate	docs/m1-frame.md	accepted
