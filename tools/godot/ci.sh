@@ -100,6 +100,31 @@ boot_smoke() {
   fi
 }
 
+hud_inspect() {
+  echo "==> HUD Control text inspect"
+  local log dump
+  log="$(mktemp)"
+  dump="$(mktemp)"
+  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+    --inspect-hud --hud-dump="$dump" >"$log" 2>&1; then
+    cat "$log"
+    fail "HUD inspect exited non-zero"
+  fi
+  cat "$log"
+  echo "---- HUD dump ----"
+  cat "$dump"
+  echo
+  grep -Fqx "ShiftLabel=Shift 1 / 5" "$dump" || fail "ShiftLabel is not Shift 1 / 5"
+  grep -Fqx "PhaseLabel=DELIVERY" "$dump" || fail "PhaseLabel is not DELIVERY"
+  grep -Fqx "TimerLabel=01:30" "$dump" || fail "TimerLabel is not 01:30"
+  grep -Fqx "WalletLabel=\$18.20" "$dump" || fail "WalletLabel is not \$18.20"
+  grep -Fq "HeldAddress=13 Larch Lane" "$dump" || fail "held address missing"
+  grep -Fq "TargetAddress=13 Larch Lane" "$dump" || fail "match target missing"
+  grep -Fq "TargetAddress=8 Oak Street" "$dump" || fail "mismatch target missing"
+  grep -Fqx "MatchMark=tick" "$dump" || fail "match mark is not tick"
+  grep -Fqx "MatchMark=cross" "$dump" || fail "mismatch mark is not cross"
+}
+
 host_join_smoke() {
   echo "==> headless host/join smoke"
   local reports host_log guest_log host_pid
@@ -160,11 +185,12 @@ assert_playing_with_two_pawns() {
 
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|join]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|join]
 
   verify  Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import  godot --import + dotnet build of game/
   boot    headless main-scene smoke (C# _Ready marker)
+  hud     bind HudFrame and read Control text (match then mismatch)
   join    two-process LAN host/join on 127.0.0.1:7777
   all     all of the above (default)
 EOF
@@ -182,6 +208,9 @@ case "$cmd" in
   boot)
     boot_smoke
     ;;
+  hud)
+    hud_inspect
+    ;;
   join)
     host_join_smoke
     ;;
@@ -190,6 +219,7 @@ case "$cmd" in
     verify_dotnet
     import_and_build
     boot_smoke
+    hud_inspect
     host_join_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;

@@ -48,5 +48,7 @@ jobs:
         run: bash tools/godot/ci.sh import
       - name: Headless boot smoke
         run: bash tools/godot/ci.sh boot
+      - name: HUD Control text inspect
+        run: bash tools/godot/ci.sh hud
       - name: Headless host/join smoke
         run: bash tools/godot/ci.sh join

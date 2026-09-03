@@ -2,8 +2,10 @@ using System.Text;
 using Godot;
 using PerformativeMail.App;
 using PerformativeMail.Client;
+using PerformativeMail.Client.UI;
 using PerformativeMail.Game.Net;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Mail;
 
 namespace PerformativeMail.Game;
 
@@ -20,9 +22,12 @@ public partial class Main : Node3D
     private Control _form = null!;
 
     private bool _walk;
+    private bool _inspectHud;
     private string? _reportPath;
+    private string? _hudDumpPath;
     private int _quitAfterMs;
     private ulong _startedUsec;
+    private Hud _hud = null!;
 
     public override void _Ready()
     {
@@ -30,7 +35,15 @@ public partial class Main : Node3D
         _startedUsec = Time.GetTicksUsec();
         BuildWorld();
         BuildMenu();
+        BuildHud();
         ApplyArgs(OS.GetCmdlineUserArgs());
+        if (_inspectHud)
+        {
+            InspectHud();
+            return;
+        }
+
+        BindHud(StubMatch());
         GD.Print("performative-mail boot ok");
     }
 
@@ -182,6 +195,49 @@ public partial class Main : Node3D
         column.AddChild(_leave);
     }
 
+    private void BuildHud()
+    {
+        var packed = GD.Load<PackedScene>("res://scenes/hud.tscn");
+        _hud = packed.Instantiate<Hud>();
+        var layer = new CanvasLayer { Layer = 10 };
+        AddChild(layer);
+        layer.AddChild(_hud);
+    }
+
+    private void BindHud(in HudSnapshot snapshot) =>
+        _hud.Bind(HudFrame.From(in snapshot));
+
+    private void InspectHud()
+    {
+        var dump = new StringBuilder();
+        BindHud(StubMatch());
+        dump.AppendLine(_hud.Dump("match"));
+        BindHud(StubMismatch());
+        dump.AppendLine(_hud.Dump("mismatch"));
+        dump.Append("HUD_DUMP_END");
+        var text = dump.ToString();
+        GD.Print(text);
+        if (_hudDumpPath is not null)
+            File.WriteAllText(_hudDumpPath, text);
+        GetTree().Quit();
+    }
+
+    private static HudSnapshot StubMatch() => new(
+        RunPhase.Delivery,
+        1,
+        0,
+        2700,
+        new Cents(1820),
+        new InteractPrompt.Deliver("13 Larch Lane", "13 Larch Lane"));
+
+    private static HudSnapshot StubMismatch() => new(
+        RunPhase.Delivery,
+        1,
+        0,
+        2700,
+        new Cents(1820),
+        new InteractPrompt.Deliver("13 Larch Lane", "8 Oak Street"));
+
     private void OnJoinPressed()
     {
         if (!JoinTarget.TryParse(_address.Text, SessionOptions.DefaultPort, out var target))
@@ -208,6 +264,10 @@ public partial class Main : Node3D
                 join = arg.Substring("--join=".Length);
             else if (arg.StartsWith("--report=", StringComparison.Ordinal))
                 _reportPath = arg.Substring("--report=".Length);
+            else if (arg == "--inspect-hud")
+                _inspectHud = true;
+            else if (arg.StartsWith("--hud-dump=", StringComparison.Ordinal))
+                _hudDumpPath = arg.Substring("--hud-dump=".Length);
             else if (arg.StartsWith("--quit-after-ms=", StringComparison.Ordinal) &&
                      int.TryParse(arg.AsSpan("--quit-after-ms=".Length), out var ms))
                 _quitAfterMs = ms;
