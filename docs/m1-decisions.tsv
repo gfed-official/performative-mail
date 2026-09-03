@@ -103,3 +103,5 @@ ts	phase	decision	why	evidence	result
 2026-09-03T23:47:53Z	verify	dotnet test Release 356 passed	Sim 226 Net 114 Bot 16; playerScale 1/2/4/8; shift-1 solo 600/960	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-03T23:47:53Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-03T23:51:11Z	verify	CI on 03c0e6f all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33819142348	VERIFIED
+2026-09-03T23:54:32Z	architect	Hundredths-then-cents is pinned in QuotaBudgetTests	Raw Pow misses chapter 11 1476/2316; tests are the evidence, not the tmp sketch	tests/Sim.Tests/Run/QuotaBudgetTests.cs	accepted
+2026-09-03T23:54:32Z	verify	CI on 9a139e8 all 4 checks green	docs trail commit after 03c0e6f	https://github.com/gfed-official/performative-mail/actions/runs/33819363368	VERIFIED
