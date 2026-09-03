@@ -58,17 +58,13 @@ expect "visible=false"
 expect "MatchMark=tick"
 grep -q 'OVERLAY_DUMP_END' "$DUMP" || fail "missing OVERLAY_DUMP_END"
 
-python3 - <<PY
-from pathlib import Path
-text = Path("$DUMP").read_text()
-open_part, closed_part = text.split("OVERLAY_DUMP case=closed", 1)
-if "visible=true" not in open_part.split("OVERLAY_DUMP case=open", 1)[1]:
-    raise SystemExit("open case is not visible")
-if "visible=false" not in closed_part:
-    raise SystemExit("closed case is still visible")
-if "opacity=1.0" in [line for line in open_part.splitlines() if "hotbar_1_0" in line]:
-    raise SystemExit("pending hotbar cell is fully opaque")
-print("overlay open/close split ok")
-PY
+open_visible="$(awk '/OVERLAY_DUMP case=open/,/OVERLAY_DUMP case=closed/' "$DUMP" | grep -m1 '^visible=')"
+closed_visible="$(awk '/OVERLAY_DUMP case=closed/,/OVERLAY_DUMP_END/' "$DUMP" | grep -m1 '^visible=')"
+test "$open_visible" = "visible=true" || fail "open case is not visible"
+test "$closed_visible" = "visible=false" || fail "closed case is still visible"
+if awk '/OVERLAY_DUMP case=open/,/OVERLAY_DUMP case=closed/' "$DUMP" | grep -Fqx 'hotbar_1_0 text=1 13 opacity=1.0'; then
+  fail "pending hotbar cell is fully opaque"
+fi
+echo "overlay open/close split ok"
 
 echo "==> live-ui-verified"
