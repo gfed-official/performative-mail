@@ -5,6 +5,10 @@ on:
     branches: [main, "cursor/**"]
   pull_request:
 
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -21,3 +25,28 @@ jobs:
         run: dotnet test PerformativeMail.sln --no-build --configuration Release --verbosity minimal
       - name: ContentValidator
         run: dotnet run --project tools/ContentValidator --configuration Release --no-build -- content
+
+  # Godot integration lives in this container, not on the agent host.
+  # mono-* is the C# / .NET editor (filename still uses mono).
+  godot:
+    name: Godot 4.7.2 .NET
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    container:
+      image: barichello/godot-ci:mono-4.7.2
+      options: --user root
+    env:
+      REQUIRE_DOTNET_8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Verify Godot .NET 4.7.2
+        run: bash tools/godot/ci.sh verify
+      - name: Import and build game
+        run: bash tools/godot/ci.sh import
+      - name: Headless boot smoke
+        run: bash tools/godot/ci.sh boot
+      - name: Headless host/join smoke
+        run: bash tools/godot/ci.sh join
