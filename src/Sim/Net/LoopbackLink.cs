@@ -10,21 +10,22 @@ public sealed class LoopbackLink : IServerLink
     private uint _nextId;
     private int _pollCursor;
 
-    private LoopbackLink()
+    private LoopbackLink(uint firstId)
     {
+        _nextId = firstId;
     }
 
     public static LoopbackLink OverPipes(params ITransport[] pipes) =>
         OverPipes((IReadOnlyList<ITransport>)pipes);
 
-    public static LoopbackLink OverPipes(IReadOnlyList<ITransport> pipes)
+    public static LoopbackLink OverPipes(IReadOnlyList<ITransport> pipes, uint firstId = 0)
     {
         if (pipes is null)
             throw new ArgumentNullException(nameof(pipes));
         if (pipes.Count < 1)
             throw new ArgumentOutOfRangeException(nameof(pipes), "LoopbackLink needs at least one pipe.");
 
-        var link = new LoopbackLink();
+        var link = new LoopbackLink(firstId);
         for (int i = 0; i < pipes.Count; i++)
             link.Accept(pipes[i]);
         return link;
@@ -82,6 +83,33 @@ public sealed class LoopbackLink : IServerLink
             seat.Transport.Send(channelId, payload);
             return;
         }
+    }
+
+    public int OpenCount
+    {
+        get
+        {
+            int n = 0;
+            for (int i = 0; i < _seats.Count; i++)
+            {
+                if (_seats[i].Open)
+                    n++;
+            }
+
+            return n;
+        }
+    }
+
+    public bool IsOpen(ConnectionId connection)
+    {
+        for (int i = 0; i < _seats.Count; i++)
+        {
+            var seat = _seats[i];
+            if (seat.Id == connection)
+                return seat.Open;
+        }
+
+        return false;
     }
 
     public void Close(ConnectionId connection, DisconnectReason reason)
