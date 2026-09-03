@@ -22,6 +22,7 @@ public partial class Main : Node3D
     private Control _form = null!;
 
     private bool _walk;
+    private bool _reported;
     private bool _inspectHud;
     private string? _reportPath;
     private string? _hudDumpPath;
@@ -277,6 +278,13 @@ public partial class Main : Node3D
 
     private void MaybeFinish(PlaySession state)
     {
+        if (_reportPath is not null && !_reported &&
+            state is PlaySession.Playing playing && playing.Pawns.Count >= 2)
+        {
+            WriteReport(state, _reportPath);
+            _reported = true;
+        }
+
         if (_quitAfterMs <= 0)
             return;
 
@@ -284,7 +292,7 @@ public partial class Main : Node3D
         if (elapsedMs < (ulong)_quitAfterMs)
             return;
 
-        if (_reportPath is not null)
+        if (_reportPath is not null && !_reported)
             WriteReport(state, _reportPath);
         GetTree().Quit();
     }
