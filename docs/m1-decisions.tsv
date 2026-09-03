@@ -80,3 +80,4 @@ ts	phase	decision	why	evidence	result
 2026-09-03T22:59:00Z	verify	Planted NotAStat perk exits 1	same CLI on a temp copy of long_legs.json	tools/ContentValidator	VERIFIED
 2026-09-03T22:59:00Z	verify	dotnet test Release 274 passed	Sim 144 Net 114 Bot 16; four new reload tests	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-03T23:01:00Z	verify	CI on c59d6c8 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33815603136	VERIFIED
+2026-09-03T23:03:00Z	subtract	Deleted ContentFiles.Validate	Comment Sicko: void shim allocated a bundle and discarded it; callers use Load	src/Sim/World/ContentFiles.cs	accepted

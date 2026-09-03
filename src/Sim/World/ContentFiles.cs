@@ -6,8 +6,6 @@ namespace PerformativeMail.Sim.World;
 
 public static class ContentFiles
 {
-    public static void Validate(string contentRoot) => Load(contentRoot);
-
     public static ContentBundle Load(string contentRoot)
     {
         if (string.IsNullOrWhiteSpace(contentRoot))

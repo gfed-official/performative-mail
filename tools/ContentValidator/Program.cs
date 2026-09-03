@@ -47,7 +47,7 @@ catch (Exception ex)
 
 try
 {
-    ContentFiles.Validate(contentRoot);
+    ContentFiles.Load(contentRoot);
 }
 catch (Exception ex)
 {
