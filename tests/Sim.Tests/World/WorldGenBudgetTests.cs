@@ -19,7 +19,9 @@ public sealed class WorldGenBudgetTests
         var tables = WorldGen.GenerateSmallIsland(WorldGenHashTests.FixedSeed);
         clock.Stop();
 
-        _output.WriteLine($"Small Island generation {clock.ElapsedMilliseconds} ms");
+        string line = $"Small Island generation {clock.ElapsedMilliseconds} ms";
+        _output.WriteLine(line);
+        Console.WriteLine(line);
         Assert.True(tables.Valid);
         Assert.Equal(WorldGenHashTests.GoldenWorldHash, WorldHash.Compute(tables));
         Assert.True(
