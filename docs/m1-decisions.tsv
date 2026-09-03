@@ -39,3 +39,4 @@ ts	phase	decision	why	evidence	result
 2026-09-03T21:53:00Z	subtract	Renamed ServerRuntime.OfferedWorld	GeneratedWorld collided with ClientRuntime tables; the server field is the wire offer	src/Server/ServerRuntime.cs	accepted
 2026-09-03T21:53:00Z	architect	Kept LastReject as the mismatch bucket	PlaySession already fails on LastReject; a second join-failure type is extra surface	src/Client/ClientRuntime.cs	accepted
 2026-09-03T21:53:00Z	architect	Join does not wait for WorldOffer	Default Host sends none; a required offer would replace the atlas path	src/App/PlaySessionMachine.cs	accepted
+2026-09-03T21:56:00Z	verify	Serialize CI test projects	dotnet test sln --no-build ran Sim gen beside the 2 ms tick gate; max 3.05 ms mean 0.016	.github/workflows/ci.yml	open

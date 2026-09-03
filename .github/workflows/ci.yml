@@ -22,7 +22,10 @@ jobs:
       - name: Build
         run: dotnet build PerformativeMail.sln --no-restore --configuration Release
       - name: Test
-        run: dotnet test PerformativeMail.sln --no-build --configuration Release --verbosity minimal
+        run: |
+          dotnet test tests/Sim.Tests/PerformativeMail.Sim.Tests.csproj --no-build --configuration Release --verbosity minimal
+          dotnet test tests/Net.Tests/PerformativeMail.Net.Tests.csproj --no-build --configuration Release --verbosity minimal
+          dotnet test tests/Bot.Tests/PerformativeMail.Bot.Tests.csproj --no-build --configuration Release --verbosity minimal
       - name: ContentValidator
         run: dotnet run --project tools/ContentValidator --configuration Release --no-build -- content
 
