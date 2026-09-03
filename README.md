@@ -31,6 +31,14 @@ export PATH=$HOME/.dotnet:$PATH
 dotnet test PerformativeMail.sln
 ```
 
+Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4.7.2` (official Godot **4.7.2** .NET / C# editor). That job checks `godot --version`, `godot --headless --quit`, that `dotnet --version` is still 8.x, then imports `game/`, boots the main scene headless, and runs a two-process LAN host/join on `127.0.0.1:7777`.
+
+```bash
+# Same script CI runs (skip the 8.x pin if the image only has SDK 9):
+docker run --rm -e REQUIRE_DOTNET_8=0 -v "$PWD":/src -w /src \
+  barichello/godot-ci:mono-4.7.2 bash tools/godot/ci.sh
+```
+
 ## Validate content directories
 
 From the repo root, check that `content/` exists with the chapter 07 subdirectories. This does not check schemas yet.

@@ -16,6 +16,8 @@ artifacts/
 *.import
 .import/
 .godot/
+# Written by tools/godot/ci.sh when the container SDK is not 8.x
+game/global.json
 .DS_Store
 Thumbs.db
 *.nupkg

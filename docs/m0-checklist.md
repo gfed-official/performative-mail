@@ -9,6 +9,7 @@ Check a box only when evidence exists.
 - [x] ContentValidator exits 0 on `content/`
 - [x] Sim has no Godot references
 - [x] CI workflow runs restore + build + test + ContentValidator
+- [x] CI Godot job uses `barichello/godot-ci:mono-4.7.2` (Godot 4.7.2 .NET)
 
 ## U1 GridContainer
 
@@ -24,6 +25,11 @@ Check a box only when evidence exists.
 - [x] InventoryAudit conservation on commit
 - [x] Replica ApplyDelta matches authoritative hashes
 - [x] Concurrent 10 000-op chest fuzz conserves MailIds
+
+## U8 Godot
+
+- [x] Godot 4.7.2 .NET is verified in CI (`godot` on PATH, `--version` is 4.7.2 mono/.NET, `--headless --quit`, `dotnet` still 8.x)
+- [x] Headless boot smoke of `game/` plus host/join on 127.0.0.1:7777
 
 ## Later units
 

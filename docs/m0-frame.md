@@ -23,7 +23,7 @@ High. Netcode and concurrent inventory are one-way doors. Gates are executable t
 | Blocker | Impact | Mitigation |
 | --- | --- | --- |
 | Snapshot had no .NET SDK | Cannot build Sim | Installed .NET 8.0.424 into `~/.dotnet` for this session |
-| No Godot binary | Cannot verify HUD or Godot transports yet | Sequence Sim + loopback harness before Godot glue; install Godot .NET when U8 starts |
+| No Godot binary on the agent host | Cannot verify HUD or Godot transports on the VM | Sequence Sim + loopback harness before Godot glue; Godot 4.7.2 .NET is tested in GitHub Actions via `barichello/godot-ci:mono-4.7.2` |
 | Personal environment has no committed `environment.json` | Next agents may lack .NET | Propose an install step that installs the SDK after first green Sim tests |
 
 ## Workflow (Phase B draft)

@@ -31,6 +31,7 @@ public partial class Main : Node3D
         BuildWorld();
         BuildMenu();
         ApplyArgs(OS.GetCmdlineUserArgs());
+        GD.Print("performative-mail boot ok");
     }
 
     public override void _ExitTree() => _session.Dispose();

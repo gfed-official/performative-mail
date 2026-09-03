@@ -149,6 +149,6 @@ Belt simulation cost is bounded by storing lane items in contiguous arrays per s
 
 ## 10. Build and CI
 
-- GitHub Actions (or equivalent): dotnet test on the Sim and Net test projects, ContentValidator, Godot headless export of the dedicated server and a client smoke test that boots, hosts, and connects a bot for 60 s.
+- GitHub Actions (or equivalent): dotnet test on the Sim and Net test projects, ContentValidator, and a Godot 4.7.2 .NET job that runs in `barichello/godot-ci:mono-4.7.2` (headless boot smoke plus LAN host/join). Dedicated-server export and a 60 s bot connect remain later.
 - Exports: Windows and Linux client, Linux headless server. macOS client deferred.
 - Version string major.minor.patch+protocolHash shown in the main menu and checked at connect.
