@@ -25,6 +25,19 @@ public sealed class WireCodecTests
         0x03, 0x01,
     };
 
+    private static readonly byte[] HelloRejectVersionBytes =
+    {
+        0x03, 0x02,
+    };
+
+    private static readonly byte[] WorldOfferBytes =
+    {
+        0x32,
+        0x21, 0x9C, 0x3A, 0x7F,
+        0x0E, 0x68, 0x73, 0x48,
+        0x05, 0x70, 0x16, 0x82,
+    };
+
     private static readonly byte[] InputOneBytes =
     {
         0x0A, 0x01,
@@ -124,6 +137,24 @@ public sealed class WireCodecTests
     }
 
     [Fact]
+    public void HelloReject_VersionMismatch_GoldenRoundTrip()
+    {
+        var reject = new HelloReject(HelloRejectReason.VersionMismatch);
+        Assert.Equal(HelloRejectVersionBytes, WireCodec.Encode(reject));
+        Assert.True(WireCodec.TryDecode(HelloRejectVersionBytes, out HelloReject decoded));
+        Assert.Equal(reject, decoded);
+    }
+
+    [Fact]
+    public void WorldOffer_GoldenRoundTrip()
+    {
+        var offer = new WorldOffer(0x7F3A9C21, 0x821670054873680EUL);
+        Assert.Equal(WorldOfferBytes, WireCodec.Encode(offer));
+        Assert.True(WireCodec.TryDecode(WorldOfferBytes, out WorldOffer decoded));
+        Assert.Equal(offer, decoded);
+    }
+
+    [Fact]
     public void InputPacket_OneCmd_GoldenRoundTrip()
     {
         var cmd = new InputCmd(7, -127, 127, 32768, InputButtons.Sprint | InputButtons.Interact);
@@ -180,6 +211,7 @@ public sealed class WireCodecTests
         Assert.False(WireCodec.TryDecode(HelloBytes.AsSpan(0, HelloBytes.Length - 1), out Hello _));
         Assert.False(WireCodec.TryDecode(HelloOkBytes.AsSpan(0, HelloOkBytes.Length - 1), out HelloOk _));
         Assert.False(WireCodec.TryDecode(HelloRejectBytes.AsSpan(0, 1), out HelloReject _));
+        Assert.False(WireCodec.TryDecode(WorldOfferBytes.AsSpan(0, WorldOfferBytes.Length - 1), out WorldOffer _));
         Assert.False(WireCodec.TryDecode(InputOneBytes.AsSpan(0, InputOneBytes.Length - 1), out InputPacket? _));
         Assert.False(WireCodec.TryDecode(SnapshotOneBytes.AsSpan(0, SnapshotOneBytes.Length - 1), out SnapshotPacket? _));
         Assert.False(WireCodec.TryDecode(ReadOnlySpan<byte>.Empty, out Hello _));
