@@ -11,9 +11,9 @@ public enum StatOp
 
 public readonly record struct StatModifier(Stat Stat, StatOp Op, double Value);
 
-public static class StatModifiers
+internal static class StatModifiers
 {
-    public static StatModifier[] Read(ModifierRow[]? rows, string source, string id)
+    internal static StatModifier[] Read(ModifierRow[]? rows, string source, string id)
     {
         if (rows is null || rows.Length == 0) return Array.Empty<StatModifier>();
 
@@ -32,7 +32,7 @@ public static class StatModifiers
         return copy;
     }
 
-    public static RuleFlag[] ReadRules(string[]? rows, string source, string id)
+    internal static RuleFlag[] ReadRules(string[]? rows, string source, string id)
     {
         if (rows is null || rows.Length == 0) return Array.Empty<RuleFlag>();
 
@@ -53,7 +53,7 @@ public static class StatModifiers
         return copy;
     }
 
-    public static Stat ParseStat(string? raw, string source, string id, int index)
+    internal static Stat ParseStat(string? raw, string source, string id, int index)
     {
         if (string.IsNullOrWhiteSpace(raw))
             throw new InvalidOperationException($"{source}: '{id}' modifiers[{index}].stat is required.");
@@ -63,7 +63,7 @@ public static class StatModifiers
         return stat;
     }
 
-    public static StatOp ParseOp(string? raw, string source, string id, int index)
+    internal static StatOp ParseOp(string? raw, string source, string id, int index)
     {
         string token = ContentIds.RequireClosed(raw, source, $"'{id}' modifiers[{index}].op", "mul", "add");
         return token == "mul" ? StatOp.Mul : StatOp.Add;
