@@ -1,0 +1,11 @@
+{
+  "id": "insured",
+  "name": "Insured",
+  "description": "Destroyed constructs rebuild free at next Prep.",
+  "category": "defense",
+  "scope": "team",
+  "rarity": "rare",
+  "rules": ["insured_rebuild"],
+  "maxStacks": 1,
+  "tags": ["rebuild"]
+}

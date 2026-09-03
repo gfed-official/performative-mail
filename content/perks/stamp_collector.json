@@ -1,0 +1,14 @@
+{
+  "id": "stamp_collector",
+  "name": "Stamp Collector",
+  "description": "Letter and postcard value +25%.",
+  "category": "postal",
+  "scope": "team",
+  "rarity": "common",
+  "modifiers": [
+    { "stat": "LetterValue", "op": "mul", "value": 1.25 },
+    { "stat": "PostcardValue", "op": "mul", "value": 1.25 }
+  ],
+  "maxStacks": 1,
+  "tags": ["value"]
+}

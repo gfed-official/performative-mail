@@ -59,3 +59,8 @@ ts	phase	decision	why	evidence	result
 2026-09-03T22:15:52Z	audit	Unknown id means snake_case and known town size	no closed archetype allowlist; large_island would be a legal later id	tests/Sim.Tests/Content/ContentFilesTests.cs	accepted
 2026-09-03T22:15:52Z	audit	CLI mutation was proven in the agent shell not an xUnit process	CI runs the good-content CLI; the planted sum test hits ContentFiles.Validate	docs/m1-decisions.tsv	accepted
 2026-09-03T22:15:52Z	subtract	Balance ships the chapter 08 enumerated keys only	mail mix wave and movement tunables stay in later defs; extra JSON keys are ignored	content/balance.json	accepted
+2026-09-03T22:45:00Z	frame	Frame U2.3 as perk stamp unlock defs plus closed Stat and RuleFlag	Issue 85; chapter 08 2.9 2.12 2.15 and 5; U2.2 catalogs stay	https://github.com/gfed-official/performative-mail/issues/85	open
+2026-09-03T22:45:00Z	architect	Per-type catalogs plus shared StatModifier	Same load shape as items and shop; a unified modifier catalog would be new surface	src/Sim/Content/PerkCatalog.cs	accepted
+2026-09-03T22:45:00Z	architect	Skip four-model arena	Chapter 08 already names PerkDef StampDef unlocks.json and the closed enums	docs/m1-frame.md	accepted
+2026-09-03T22:45:00Z	subtract	Twelve Arcade perks not the M4 pool of 28	M1 hand-delivery plus bike plus one rule-flag perk; sorter and turret perks wait	content/perks	accepted
+2026-09-03T22:45:00Z	subtract	Did not add U2.4 hot reload or rewrite U2.1/U2.2 catalogs	Issue forbids editor F6 and catalog rewrites except extensions	src/Sim/World/ContentFiles.cs	accepted

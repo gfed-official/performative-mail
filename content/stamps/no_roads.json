@@ -1,0 +1,9 @@
+{
+  "id": "no_roads",
+  "name": "No Roads",
+  "tier": 2,
+  "scoreMult": 1.15,
+  "modifiers": [
+    { "stat": "OffRoadVehicleSpeed", "op": "mul", "value": 0.6 }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "rush_hour",
+  "name": "Rush Hour",
+  "tier": 1,
+  "scoreMult": 1.10,
+  "modifiers": [
+    { "stat": "DeliverySeconds", "op": "add", "value": -30 }
+  ]
+}

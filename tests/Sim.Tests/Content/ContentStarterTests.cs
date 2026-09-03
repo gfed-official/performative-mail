@@ -16,6 +16,9 @@ public sealed class ContentStarterTests
         var buildings = Ids(BuildingCatalog.LoadDir(Path.Combine(root, BuildingCatalog.RelativeDir)));
         var recipes = Ids(RecipeCatalog.LoadDir(Path.Combine(root, RecipeCatalog.RelativeDir)));
         var shop = Ids(ShopCatalog.LoadDir(Path.Combine(root, ShopCatalog.RelativeDir)));
+        var perks = Ids(PerkCatalog.LoadDir(Path.Combine(root, PerkCatalog.RelativeDir)));
+        var stamps = Ids(StampCatalog.LoadDir(Path.Combine(root, StampCatalog.RelativeDir)));
+        var unlocks = UnlockCatalog.LoadFile(Path.Combine(root, UnlockCatalog.RelativePath));
 
         Assert.Contains("axe", items);
         Assert.Contains("log", items);
@@ -29,6 +32,14 @@ public sealed class ContentStarterTests
         Assert.Contains("recipe_wall_wood", recipes);
         Assert.Contains("recipe_chest", recipes);
         Assert.Contains("bandage_x3", shop);
+        Assert.Equal(12, perks.Count);
+        Assert.Contains("long_legs", perks);
+        Assert.Contains("insured", perks);
+        Assert.Contains("express_lane", perks);
+        Assert.Equal(8, stamps.Count);
+        Assert.Contains("double_raids", stamps);
+        Assert.Contains("cursed_mail", stamps);
+        Assert.Contains(unlocks.Ranks, r => r.Rank == 2 && r.Grants[0].Kind == UnlockKind.Kit);
     }
 
     [Fact]
@@ -99,6 +110,8 @@ public sealed class ContentStarterTests
                 BuildingDef building => building.Id,
                 RecipeDef recipe => recipe.Id,
                 ShopItemDef row => row.Id,
+                PerkDef perk => perk.Id,
+                StampDef stamp => stamp.Id,
                 _ => null
             };
             if (id is not null) ids.Add(id);

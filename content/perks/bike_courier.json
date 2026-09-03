@@ -1,0 +1,14 @@
+{
+  "id": "bike_courier",
+  "name": "Bike Courier",
+  "description": "Bike +40% speed and bike grid +1 row.",
+  "category": "carrier",
+  "scope": "personal",
+  "rarity": "uncommon",
+  "modifiers": [
+    { "stat": "BikeSpeed", "op": "mul", "value": 1.4 },
+    { "stat": "BikeInventoryRows", "op": "add", "value": 1 }
+  ],
+  "maxStacks": 1,
+  "tags": ["bike"]
+}

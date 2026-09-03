@@ -13,7 +13,8 @@ public static class ContentRefs
         DestinationTypeDef[] dests,
         BuildingDef[] buildings,
         RecipeDef[] recipes,
-        ShopItemDef[] shop)
+        ShopItemDef[] shop,
+        PerkDef[] perks)
     {
         if (items is null) throw new ArgumentNullException(nameof(items));
         if (containers is null) throw new ArgumentNullException(nameof(containers));
@@ -23,6 +24,7 @@ public static class ContentRefs
         if (buildings is null) throw new ArgumentNullException(nameof(buildings));
         if (recipes is null) throw new ArgumentNullException(nameof(recipes));
         if (shop is null) throw new ArgumentNullException(nameof(shop));
+        if (perks is null) throw new ArgumentNullException(nameof(perks));
 
         var itemIds = Index(items, d => d.Id);
         var containerIds = Index(containers, d => d.Id);
@@ -31,6 +33,7 @@ public static class ContentRefs
         var buildingById = Map(buildings, d => d.Id);
         var recipeById = Map(recipes, d => d.Id);
         var shopById = Map(shop, d => d.Id);
+        var perkIds = Index(perks, d => d.Id);
 
         for (int i = 0; i < kinds.Length; i++)
         {
@@ -112,6 +115,24 @@ public static class ContentRefs
             var item = items[i];
             if (item.Weapon?.AmmoItem is string ammo && !itemIds.Contains(ammo))
                 throw new InvalidOperationException($"items: '{item.Id}' weapon ammoItem unknown '{ammo}'.");
+        }
+
+        for (int i = 0; i < perks.Length; i++)
+        {
+            var perk = perks[i];
+            for (int u = 0; u < perk.UnlockRecipes.Length; u++)
+            {
+                string recipe = perk.UnlockRecipes[u];
+                if (!recipeById.ContainsKey(recipe))
+                    throw new InvalidOperationException($"perks: '{perk.Id}' unlocks unknown recipe '{recipe}'.");
+            }
+
+            for (int e = 0; e < perk.Excludes.Length; e++)
+            {
+                string other = perk.Excludes[e];
+                if (!perkIds.Contains(other))
+                    throw new InvalidOperationException($"perks: '{perk.Id}' excludes unknown perk '{other}'.");
+            }
         }
     }
 

@@ -1,0 +1,13 @@
+{
+  "id": "strong_back",
+  "name": "Strong Back",
+  "description": "Weight speed penalty −50%.",
+  "category": "carrier",
+  "scope": "personal",
+  "rarity": "common",
+  "modifiers": [
+    { "stat": "WeightSpeedPenalty", "op": "mul", "value": 0.5 }
+  ],
+  "maxStacks": 1,
+  "tags": ["mobility"]
+}

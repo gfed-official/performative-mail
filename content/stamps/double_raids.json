@@ -1,0 +1,10 @@
+{
+  "id": "double_raids",
+  "name": "Double Raids",
+  "tier": 2,
+  "scoreMult": 1.25,
+  "modifiers": [
+    { "stat": "RaidAlsoAtStart", "op": "add", "value": 1 }
+  ],
+  "rules": ["raid_at_delivery_start"]
+}

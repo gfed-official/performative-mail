@@ -1,0 +1,13 @@
+{
+  "id": "express_lane",
+  "name": "Express Lane",
+  "description": "Conveyor belts move 50% faster.",
+  "category": "facility",
+  "scope": "team",
+  "rarity": "uncommon",
+  "modifiers": [
+    { "stat": "BeltSpeed", "op": "mul", "value": 1.5 }
+  ],
+  "maxStacks": 1,
+  "tags": ["belt"]
+}

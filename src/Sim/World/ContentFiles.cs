@@ -25,7 +25,10 @@ public static class ContentFiles
         var buildings = BuildingCatalog.LoadDir(RequireDir(contentRoot, BuildingCatalog.RelativeDir));
         var recipes = RecipeCatalog.LoadDir(RequireDir(contentRoot, RecipeCatalog.RelativeDir));
         var shop = ShopCatalog.LoadDir(RequireDir(contentRoot, ShopCatalog.RelativeDir));
-        ContentRefs.Validate(items, containers, kinds, mix, dests, buildings, recipes, shop);
+        var perks = PerkCatalog.LoadDir(RequireDir(contentRoot, PerkCatalog.RelativeDir));
+        StampCatalog.LoadDir(RequireDir(contentRoot, StampCatalog.RelativeDir));
+        UnlockCatalog.LoadFile(RequireFile(contentRoot, UnlockCatalog.RelativePath));
+        ContentRefs.Validate(items, containers, kinds, mix, dests, buildings, recipes, shop, perks);
     }
 
     private static string RequireFile(string contentRoot, string relative)

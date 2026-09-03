@@ -1,0 +1,9 @@
+{
+  "id": "megamail",
+  "name": "Megamail",
+  "tier": 3,
+  "scoreMult": 1.25,
+  "modifiers": [
+    { "stat": "MegaChance", "op": "mul", "value": 2 }
+  ]
+}
