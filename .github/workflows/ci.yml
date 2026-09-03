@@ -50,5 +50,7 @@ jobs:
         run: bash tools/godot/ci.sh boot
       - name: HUD Control text inspect
         run: bash tools/godot/ci.sh hud
+      - name: Inventory overlay Control text inspect
+        run: bash tools/godot/ci.sh overlay
       - name: Headless host/join smoke
         run: bash tools/godot/ci.sh join

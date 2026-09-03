@@ -105,6 +105,11 @@ hud_inspect() {
   SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-hud.sh" "$(mktemp)"
 }
 
+overlay_inspect() {
+  echo "==> inventory overlay Control text inspect"
+  SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-overlay.sh" "$(mktemp)"
+}
+
 host_join_smoke() {
   echo "==> headless host/join smoke"
   local reports host_log guest_log host_pid
@@ -165,14 +170,15 @@ assert_playing_with_two_pawns() {
 
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|join]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|join]
 
-  verify  Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
-  import  godot --import + dotnet build of game/
-  boot    headless main-scene smoke (C# _Ready marker)
-  hud     bind HudFrame and read Control text (match then mismatch)
-  join    two-process LAN host/join on 127.0.0.1:7777
-  all     all of the above (default)
+  verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
+  import   godot --import + dotnet build of game/
+  boot     headless main-scene smoke (C# _Ready marker)
+  hud      bind HudFrame and read Control text (match then mismatch)
+  overlay  open InventoryOverlay from a U2 replica and read cell text
+  join     two-process LAN host/join on 127.0.0.1:7777
+  all      all of the above (default)
 EOF
 }
 
@@ -191,6 +197,9 @@ case "$cmd" in
   hud)
     hud_inspect
     ;;
+  overlay)
+    overlay_inspect
+    ;;
   join)
     host_join_smoke
     ;;
@@ -200,6 +209,7 @@ case "$cmd" in
     import_and_build
     boot_smoke
     hud_inspect
+    overlay_inspect
     host_join_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;
