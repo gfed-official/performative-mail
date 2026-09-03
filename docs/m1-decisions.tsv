@@ -94,3 +94,6 @@ ts	phase	decision	why	evidence	result
 2026-09-03T23:20:00Z	architect	Chose ShiftClock session over pure helpers	Ready pause and raid window are one policy; helpers would leak them to every caller	src/Sim/Run/ShiftClock.cs	accepted
 2026-09-03T23:20:00Z	architect	Skip four-model arena	Clock hooks existing PhaseDeadlineTick; two sketches compared in-thread	docs/m1-frame.md	accepted
 2026-09-03T23:20:00Z	subtract	No PhaseChanged wire no SimWorld.Tick no Payday auto-advance	Wire and HUD wait; quota owns Payday exits; Ready stays off RunState	src/Sim/SimWorld.cs	accepted
+2026-09-03T23:22:00Z	verify	dotnet test Release 329 passed	Sim 199 Net 114 Bot 16; Prep 1800 ticks; Ready ends Prep at 0	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-03T23:22:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-03T23:22:00Z	verify	CI on 0897018 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33817175092	VERIFIED
