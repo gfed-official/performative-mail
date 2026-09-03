@@ -6,3 +6,5 @@ ts	phase	decision	why	evidence	result
 2026-09-03T20:40:00Z	frame	Created M1 child issues 68-110	Same U8.* fields; Parent #13; U1.1 is #78	https://github.com/gfed-official/performative-mail/issues/78	open
 2026-09-03T20:50:00Z	u1.1	Named WorldTables plus FNV-1a 64 WorldHash	Integer tile and address tables are the hash domain	src/Sim/World/WorldHash.cs	open
 2026-09-03T20:50:00Z	u1.1	Skeleton heights from PCG32 heightmap stream	OpenSimplex2 waits for U1.2; this unit proves hash encoding	src/Sim/World/WorldGen.cs	open
+2026-09-03T20:30:27Z	u1.1	Pinned golden hash 0x24849E8EF0DBB228	Same seed 0x7F3A9C21 must match on every platform	tests/Sim.Tests/World/WorldGenHashTests.cs	tests green
+2026-09-03T20:30:27Z	verify	dotnet test Release 207 passed	Sim 82 Net 109 Bot 16; WorldGenHash 6 plus Fnv 2	dotnet test PerformativeMail.sln	VERIFIED
