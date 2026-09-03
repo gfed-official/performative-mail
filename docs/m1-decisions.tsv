@@ -33,3 +33,6 @@ ts	phase	decision	why	evidence	result
 2026-09-03T21:40:00Z	architect	Skipped multi-model arena	Same parent constraint as U1.2; two sketches compared in-thread	docs/m1-frame.md	accepted
 2026-09-03T21:40:00Z	subtract	Did not replace WorldAtlas or rewrite U1.1-U1.4 generation	Live play still loads the authored map; WorldOffer is opt-in on ServerRuntime	src/Server/ServerRuntime.cs	accepted
 2026-09-03T21:40:00Z	u1.5	Confirmed golden hash 0x821670054873680E before new tests	Seed 0x7F3A9C21 on cursor/m1-u1-4-roads-4202	tests/Sim.Tests/World/WorldGenHashTests.cs	VERIFIED
+2026-09-03T21:50:00Z	verify	dotnet test Release 247 passed	Sim 117 Net 114 Bot 16	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-03T21:50:00Z	verify	Small Island generation 46 ms	Warm Generate then timed Generate on seed 0x7F3A9C21	tests/Sim.Tests/World/WorldGenBudgetTests.cs	VERIFIED
+2026-09-03T21:50:00Z	verify	SeedViewer printed hash districts and addresses	tools/SeedViewer 0x7F3A9C21 worldHash 0x821670054873680E	tools/SeedViewer/Program.cs	VERIFIED
