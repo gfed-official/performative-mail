@@ -9,7 +9,7 @@ public sealed class WorldGenHashTests
 
     public const ulong U11SkeletonWorldHash = 0x24849E8EF0DBB228UL;
 
-    public const ulong GoldenWorldHash = 0x24849E8EF0DBB228UL;
+    public const ulong GoldenWorldHash = 0x936BE960EC16395AUL;
 
     [Fact]
     public void GenerateSmallIsland_SameSeed_SameWorldHash()
