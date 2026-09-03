@@ -7,17 +7,12 @@ public sealed class WorldGenHashTests
 {
     public const uint FixedSeed = 0x7F3A9C21;
 
-    // U1.1 hashed a PCG stub fill. U1.2 replaces that field with OpenSimplex2 +
-    // coastline + falloff, so the golden must move. Kept to prove this is not a rename.
     public const ulong U11SkeletonWorldHash = 0x24849E8EF0DBB228UL;
 
-    // Seed 0x7F3A9C21 after the U1.2 height field and empty addresses.
     public const ulong U12HeightmapWorldHash = 0x936BE960EC16395AUL;
 
-    // Seed 0x7F3A9C21 after U1.3 fills the address table.
     public const ulong U13SettlementWorldHash = 0x631CE9A07B6A504FUL;
 
-    // Seed 0x7F3A9C21 after U1.4 appends resources, ferries, routes, and spawns.
     public const ulong GoldenWorldHash = 0x821670054873680EUL;
 
     [Fact]
