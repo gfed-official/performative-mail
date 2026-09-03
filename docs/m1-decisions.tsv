@@ -100,3 +100,5 @@ ts	phase	decision	why	evidence	result
 2026-09-03T23:26:50Z	frame	Frame U3.3 as quota and spawn budget formulas	Issue 89; chapter 01 3; U2.1 already ships baseQuota playerScaleExponent spawnOverhead; no complaint death	https://github.com/gfed-official/performative-mail/issues/89	open
 2026-09-03T23:42:44Z	architect	Chose QuotaBudget.For with hundredths-then-cents	Chapter 11 printed scales and 4p/8p quotas are the contract; raw Pow misses 1476/2316; no clock hook because earnings are U3.4	/tmp/u33-architect/synthesis.md	accepted
 2026-09-03T23:47:16Z	subtract	No Payday hook no MailSpawner rewrite no PlayerScale type	Earnings and mix are later units; the formula is the landable change	src/Sim/Run/QuotaBudget.cs	accepted
+2026-09-03T23:47:53Z	verify	dotnet test Release 356 passed	Sim 226 Net 114 Bot 16; playerScale 1/2/4/8; shift-1 solo 600/960	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-03T23:47:53Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
