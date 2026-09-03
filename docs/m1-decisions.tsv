@@ -54,3 +54,8 @@ ts	phase	decision	why	evidence	result
 2026-09-03T22:09:15Z	verify	dotnet test Release 256 passed	Sim 126 Net 114 Bot 16; nine new content tests	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-03T22:11:10Z	subtract	Named MediumAfterDistricts instead of a Medium ternary	Comment Sicko asked for the grown-medium band as a named fact	src/Sim/World/SettlementSize.cs	accepted
 2026-09-03T22:14:10Z	verify	CI on ff0165e all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions	VERIFIED
+2026-09-03T22:15:52Z	audit	Kept MediumAfterDistricts as 13-50	chapter 08 example is 50; a raw medium 13-25 check would reject the spec file	src/Sim/World/SettlementSize.cs	accepted
+2026-09-03T22:15:52Z	audit	Do not aggregate TownSpec.Count this unit	only small_island ships; large island towns are a later archetype	src/Sim/World/ArchetypeCatalog.cs	open
+2026-09-03T22:15:52Z	audit	Unknown id means snake_case and known town size	no closed archetype allowlist; large_island would be a legal later id	tests/Sim.Tests/Content/ContentFilesTests.cs	accepted
+2026-09-03T22:15:52Z	audit	CLI mutation was proven in the agent shell not an xUnit process	CI runs the good-content CLI; the planted sum test hits ContentFiles.Validate	docs/m1-decisions.tsv	accepted
+2026-09-03T22:15:52Z	subtract	Balance ships the chapter 08 enumerated keys only	mail mix wave and movement tunables stay in later defs; extra JSON keys are ignored	content/balance.json	accepted
