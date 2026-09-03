@@ -26,12 +26,12 @@ public static class SettlementBands
         _ => throw new ArgumentOutOfRangeException(nameof(size), size, "Unknown settlement size.")
     };
 
-    public static PopulationBand Grown(SettlementSize size)
-    {
-        var start = For(size);
-        int max = size == SettlementSize.Medium ? For(SettlementSize.Large).MaxHouses : start.MaxHouses;
-        return new PopulationBand(start.MinHouses, max);
-    }
+    public static PopulationBand MediumAfterDistricts { get; } = new(
+        For(SettlementSize.Medium).MinHouses,
+        For(SettlementSize.Large).MaxHouses);
+
+    public static PopulationBand Grown(SettlementSize size) =>
+        size == SettlementSize.Medium ? MediumAfterDistricts : For(size);
 
     public static bool TryParse(string? id, out SettlementSize size)
     {

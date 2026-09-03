@@ -19,6 +19,7 @@ public sealed class ContentFilesTests
         Assert.Equal("small_island", defs[0].Id);
         Assert.Equal(SettlementSize.Medium, defs[0].Towns[0].Size);
         Assert.Equal(50, defs[0].DistrictHouseTotal);
+        Assert.Equal(new PopulationBand(13, 50), SettlementBands.MediumAfterDistricts);
         Assert.True(SettlementBands.Grown(SettlementSize.Medium).Contains(50));
     }
 
