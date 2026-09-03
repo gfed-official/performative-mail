@@ -43,6 +43,8 @@ Riskiest unknowns after scaffold: concurrent inventory and prediction under loss
 | U8 | Godot project + minimal HUD | Boot smoke; timer/wallet/interact prompt visible |
 | U9 | 8-client soak + tick budget | Criteria 1 and 5 |
 
+**U8 status.** Landed on `main` at `ca12c74` via PR 65 (`HudFrame`) and PR 66 (`InventoryOverlay`).
+
 Architect arena runs before U1/U2 and before U4/U5. U0 shape is already concrete in chapter 07, so arena is skipped for the scaffold.
 
 ## Playbook
