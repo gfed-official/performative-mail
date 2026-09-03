@@ -49,3 +49,6 @@ ts	phase	decision	why	evidence	result
 2026-09-03T22:08:26Z	architect	Skip four-model arena	JSON shapes are already in chapter 08; the fork is ownership not schema	docs/m1-frame.md	accepted
 2026-09-03T22:08:26Z	subtract	Did not rewrite WorldGen or WorldOffer; did not add U2.2 defs	Issue forbids U2.2+ and U1 generation rewrite; empty item dirs stay for the M0 skeleton	tools/ContentValidator/Program.cs	accepted
 2026-09-03T22:08:26Z	architect	Grown medium band is 13-50 so small_island sum 50 passes	Chapter 08 example sums to 50; chapter 02 medium is 13-25 grown to about 50 via districts	src/Sim/World/SettlementSize.cs	accepted
+2026-09-03T22:09:15Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI not a proxy	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-03T22:09:15Z	verify	Planted district sum 3 exits 1	same CLI on a temp copy with districtHouseCounts 1,1,1	tools/ContentValidator	VERIFIED
+2026-09-03T22:09:15Z	verify	dotnet test Release 256 passed	Sim 126 Net 114 Bot 16; nine new content tests	dotnet test PerformativeMail.sln	VERIFIED
