@@ -17,7 +17,7 @@
 | `overlays` | `inspect-overlays.sh` with `SKIP_BUILD=1`. Binds payday, draft, and results frames and reads Control text. |
 | `debug` | `inspect-debug.sh` with `SKIP_BUILD=1`. Opens DebugMenu from DebugBoot and reads inspect and cheat labels. |
 | `join` | Two-process LAN host and join on `127.0.0.1:7777`. Asserts both reports are Playing with at least two pawns. |
-| `play` | Solo Host play report. Asserts Playing, golden `worldHash` `0x821670054873680E`, HUD phase PREP, and shift `Shift 1 / 5`. |
+| `play` | Solo Host play report. Asserts Playing, golden `worldHash` `0x821670054873680E`, HUD phase PREP, and shift `Shift 1 / 5`. Keys, units, and jq are in [report.md](report.md). |
 | `all` | Every command above, in that order. `all` is the default. |
 | `-h`, `--help` | Print the command list. |
 
