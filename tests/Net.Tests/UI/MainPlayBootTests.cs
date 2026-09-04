@@ -201,6 +201,7 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryStockIntake", main);
         Assert.Contains("HasHeldMail", main);
         Assert.Contains("TryStepInteractSmoke", main);
+        Assert.Contains("using PerformativeMail.Sim.Inventory;", main);
     }
 
     private static string ReadMain()
