@@ -160,3 +160,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T01:11:53Z	audit	Get switches on StatOp and throws on unknown	Trail review: else-as-Add would swallow a future op	src/Sim/Content/StatSheet.cs	accepted
 2026-09-04T01:11:53Z	verify	dotnet test Release 413 passed	Sim 277 Net 120 Bot 16; eight StatSheet tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
 2026-09-04T01:15:26Z	verify	CI on dfb9c84 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33824828590	VERIFIED
+2026-09-04T01:20:00Z	frame	Frame U5.2 as twelve Arcade perks and draft offer	Issue 95; chapter 01 2.5 names shared 3-card offer from perks stream; reuse U2.3 JSON	https://github.com/gfed-official/performative-mail/issues/95	open
+2026-09-04T01:20:00Z	architect	Chose DraftSession plus 3-slot DraftOffer	Roll hides weights and the perks stream; a list can be the wrong length; pick waits for U5.3	/tmp/u52-architect/synthesis.md	accepted
+2026-09-04T01:20:00Z	architect	Skip four-model arena	Parent forbids nested subagents; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T01:20:00Z	subtract	No pick grey-out prereq filter StatSheet apply or new perk JSON	U5.3 owns pick rules; U2.3 already shipped the twelve defs	content/perks	accepted

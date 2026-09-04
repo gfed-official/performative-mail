@@ -10,13 +10,13 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues. The current landable unit is U5.1 (issue 94): StatSheet and modifier resolution. Do not start U5.2+.
+This run cuts those gates into landable child issues. The current landable unit is U5.2 (issue 95): twelve Arcade perks and the shared draft offer. Do not start U5.3+.
 
 ## Scope
 
-Touch chapters 01 (perks as StatModifier lists), 07 (StatSheet overlay), and 08 §2.9 (resolution formula). Reuse closed `Stat` / `StatModifier` from U2.3. Keep U4 bike and shop. Do not start M2–M5.
+Touch chapters 01 §2.5 (shared 3-card draft), 07 (`perks` stream), 08 §2.9 (PerkDef), and 10 §4 (Arcade twelve). Reuse U2.3 perk JSON and U5.1 `StatSheet`. Keep U4 bike and shop. Do not start M2–M5.
 
-U5.1 adds `StatSheet` that overlays modifiers on base stats. Resolution is `base × Π(mul) + Σ(add)`. No perk-specific branches, draft offer, team grey-out, or apply into vehicles.
+U5.2 adds `DraftSession` that rolls a shared 3-card offer from the perks stream. Rarity weights are Common 60 / Uncommon 30 / Rare 10, with Rare +5 per shift after shift 1. No pick, team grey-out, prerequisite filter, or apply into `StatSheet`.
 
 ## Rigor
 
