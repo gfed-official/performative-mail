@@ -32,8 +32,8 @@ public sealed class VehicleMountTests
         Assert.True(world.TryMount(rider.Id, bike.Id));
         Assert.False(world.TryMount(other.Id, bike.Id));
 
-        Assert.Equal(rider.Id, bike.Driver);
-        Assert.Equal(rider.Id, rider.VehicleId);
+        Assert.Equal(rider.Id.Value, bike.Driver.Value);
+        Assert.Equal(bike.Id, rider.VehicleId);
         Assert.Equal(0u, other.VehicleId.Value);
     }
 
