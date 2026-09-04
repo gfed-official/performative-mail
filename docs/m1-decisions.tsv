@@ -204,3 +204,6 @@ ts	phase	decision	why	evidence	result
 2026-09-04T02:42:00Z	architect	Chose ResultsPayload plus PostalRankXp.Award	XP score and seed string derive from one From call; no second score path	src/Sim/Run/ResultsPayload.cs	accepted
 2026-09-04T02:42:00Z	architect	Skip four-model arena	Chapter 01 5.1 and 08 3.2 name the fields; two sketches compared in-thread	docs/m1-frame.md	accepted
 2026-09-04T02:42:00Z	subtract	No stampBonus profile.json MessageKind or results overlay	No bonus table exists; U7.2 owns persist; U9.3 owns overlay	spec/01-run-structure.md	accepted
+2026-09-04T02:49:52Z	verify	dotnet test Release 485 passed	Sim 332 Net 137 Bot 16; baseline U6.3 was 463; 22 new Results/XP tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T02:49:52Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T02:49:52Z	verify	Acceptance filter 22 passed	Award pins 100*shifts+50*victory+5*deliveries; seed PM1-SMALL-7F3A9C21-CM.DR; score 14375	dotnet test --filter PostalRankXp|ResultsPayload	VERIFIED
