@@ -286,3 +286,10 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:45:00Z	architect	Chose ContainerStamp.Hash over snapshot-on-join	Issue 109 measures encoded JoinState; snapshots are a new sync path	src/Sim/Net/JoinState.cs	accepted
 2026-09-04T05:45:00Z	architect	Skip four-model arena	Issue names Length <= 200000; two sketches compared in-thread	docs/m1-frame.md	accepted
 2026-09-04T05:45:00Z	subtract	No full ContainerState WorldDeltas harvest or SchemaHash bump	Chapter 08 3.9 is later; empty JoinState golden stays	spec/08-data-schemas.md	accepted
+2026-09-04T05:52:00Z	verify	dotnet test Release 577 passed	Sim 378 Net 183 Bot 16; baseline U10.2 was 575; two new JoinState tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T05:52:00Z	verify	JoinState size gate printed 59B	Prep shift 3 intake plus chest; Length <= 200000; hashes match	tests/Net.Tests/JoinStateSizeTests.cs	VERIFIED
+2026-09-04T05:52:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T05:52:00Z	verify	BalanceSim still prints U10.1 and U10.2 lines	880/600 MET; 810/1100 MISS; five paydays; duration 1450s	dotnet run --project tools/BalanceSim -- content	VERIFIED
+2026-09-04T05:52:00Z	verify	Acceptance filter passed	JoinState size 59B; OneStamp hash round-trip; Prep join hashes	dotnet test --filter JoinState	VERIFIED
+2026-09-04T05:52:00Z	verify	U10.1 and U10.2 filter 12 passed	solo hand cells; FiveShiftRun 1450s; 4p hashes	dotnet test --filter RunHand_Shift1|FiveShiftRun|FourPlayer|SoloHand	VERIFIED
+2026-09-04T05:52:00Z	verify	No-regress filter 26 passed	play boot unbound; HUD Ignore; overlay Ignore	dotnet test --filter MainPlayBoot|HudBoot|HudScene|PaydayFrame|DraftFrame|ResultsFrame|PhaseOverlay	VERIFIED
