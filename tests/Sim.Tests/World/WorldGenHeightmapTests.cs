@@ -64,14 +64,12 @@ public sealed class WorldGenHeightmapTests
     }
 
     [Fact]
-    public void GenerateSmallIsland_BuildableQuotaOrInvalid()
+    public void GenerateSmallIsland_BuildableQuota_IndependentOfFullValid()
     {
         var tables = WorldGen.GenerateSmallIsland(FixedSeed);
         bool quota = HeightmapStage.MeetsBuildableQuota(tables.Heights, tables.Buildable);
-        Assert.Equal(quota, tables.Valid);
-        Assert.True(tables.HeightmapAttempts <= HeightmapStage.MaxAttempts);
-        if (tables.Valid)
-            Assert.True(quota);
+        Assert.True(quota);
+        Assert.InRange(tables.HeightmapAttempts, 1, HeightmapStage.MaxAttempts);
     }
 
     [Fact]

@@ -108,4 +108,32 @@ public sealed class WorldGenSettlementTests
         Assert.Contains("Larch Lane", names);
         Assert.Contains("Saltmarsh Row", names);
     }
+
+    [Fact]
+    public void GenerateSmallIsland_Seed7_HasStreetsOrValidatedRecovers()
+    {
+        AssertStreetsOrValidated(7u);
+    }
+
+    [Fact]
+    public void GenerateSmallIsland_Seed1000_HasStreetsOrValidatedRecovers()
+    {
+        AssertStreetsOrValidated(1000u);
+    }
+
+    private static void AssertStreetsOrValidated(uint seed)
+    {
+        var tables = WorldGen.GenerateSmallIsland(seed);
+        if (tables.Valid)
+        {
+            Assert.NotEmpty(tables.Streets);
+            Assert.NotEmpty(tables.Houses);
+            return;
+        }
+
+        var recovered = WorldGen.GenerateValidatedSmallIsland(seed, out _);
+        Assert.True(recovered.Valid);
+        Assert.NotEmpty(recovered.Streets);
+        Assert.NotEmpty(recovered.Houses);
+    }
 }

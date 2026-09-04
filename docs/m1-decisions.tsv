@@ -27,3 +27,6 @@ ts	phase	decision	why	evidence	result
 2026-09-03T21:55:00Z	u1.3	Pinned golden hash 0x631CE9A07B6A504F	Seed 0x7F3A9C21 after filled addresses; != U1.2 0x936BE960EC16395A	tests/Sim.Tests/World/WorldGenHashTests.cs	tests green
 2026-09-03T22:04:00Z	verify	dotnet test Release 230 passed	Sim 105 Net 109 Bot 16; settlement predicates plus golden 0x631CE9A07B6A504F	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-03T22:04:00Z	verify	CI on a8b76a1 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33805622399	VERIFIED
+2026-09-03T22:20:00Z	u1.4	Pinned golden hash 0x821670054873680E	Seed 0x7F3A9C21 after roads resources spawns; != U1.3 0x631CE9A07B6A504F	tests/Sim.Tests/World/WorldGenHashTests.cs	tests green
+2026-09-03T22:20:00Z	u1.4	Walk BFS starts on land in the PO when the spawn pad is water	U1.3 fallback can sit the PO on water; a wet spawn pad made every mailbox unreachable	src/Sim/World/WorldGrid.cs	accepted
+2026-09-03T22:35:00Z	u1.4	Routing nodes are crossings and street ends	Degree 3 on a 2-wide street marked almost every tile; 2462 edges collapsed to 73	src/Sim/World/ConnectivityStage.cs	accepted

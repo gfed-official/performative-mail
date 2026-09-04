@@ -418,6 +418,24 @@ internal static class SettlementStage
             GrowEastWest(main, mainA0, site.Cx, occup, streetOf, heights, width, height);
         else
             GrowNorthSouth(main, mainA0, site.Cy, occup, streetOf, heights, width, height);
+        if (main.Tiles.Count == 0)
+        {
+            if (eastWest)
+            {
+                int startX = site.Cx <= po.Tile.X + PoSize / 2
+                    ? Clamp(po.Tile.X - 1, 0, width - 1)
+                    : Clamp(po.Tile.X + PoSize, 0, width - 1);
+                GrowEastWest(main, mainA0, startX, occup, streetOf, heights, width, height);
+            }
+            else
+            {
+                int startY = site.Cy <= po.Tile.Y + PoSize / 2
+                    ? Clamp(po.Tile.Y - 1, 0, height - 1)
+                    : Clamp(po.Tile.Y + PoSize, 0, height - 1);
+                GrowNorthSouth(main, mainA0, startY, occup, streetOf, heights, width, height);
+            }
+        }
+
         if (main.Tiles.Count > 0)
             streets.Add(main);
 

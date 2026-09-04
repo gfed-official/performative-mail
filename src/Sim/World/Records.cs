@@ -52,3 +52,23 @@ public readonly record struct LotRecord(
     byte District,
     TileRect Footprint,
     bool Residential);
+
+public enum ResourceKind : byte
+{
+    Wood = 1,
+    Fiber = 2,
+    Stone = 3,
+    IronOre = 4,
+    Sand = 5,
+    Berries = 6
+}
+
+public readonly record struct ResourceNodeRecord(ResourceKind Kind, TileCoord Tile);
+
+public readonly record struct FerryLaneRecord(TileCoord A, TileCoord B);
+
+public readonly record struct RouteNodeRecord(int Id, TileCoord Tile);
+
+public readonly record struct RouteEdgeRecord(int From, int To, int LengthTiles, byte Surface);
+
+public readonly record struct SpawnEdgeRecord(byte District, TileCoord Tile, TileCoord[] PathToPo);
