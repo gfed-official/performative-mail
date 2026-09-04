@@ -28,6 +28,10 @@ public sealed class DebugWorldTests
         Assert.Equal(2, tables.Houses.Length);
         Assert.Equal(DebugWorld.House1Mailbox, tables.Houses[0].Mailbox);
         Assert.Equal(DebugWorld.House2Mailbox, tables.Houses[1].Mailbox);
+        Assert.True(tables.Houses[0].Lot.Contains(tables.Houses[0].Mailbox.Tile(tables.TileCm)));
+        Assert.True(tables.Houses[1].Lot.Contains(tables.Houses[1].Mailbox.Tile(tables.TileCm)));
+        Assert.DoesNotContain(tables.Houses[0].Mailbox.Tile(tables.TileCm), tables.Streets[0].Tiles);
+        Assert.DoesNotContain(tables.Houses[1].Mailbox.Tile(tables.TileCm), tables.Streets[0].Tiles);
         Assert.Equal("1 Debug Lane", AddressText.Format(tables.Houses[0].Address, tables.Streets));
         Assert.Equal("2 Debug Lane", AddressText.Format(tables.Houses[1].Address, tables.Streets));
         Assert.Equal(DebugWorld.StreetName, tables.Streets[0].Name);

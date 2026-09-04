@@ -19,8 +19,8 @@ public static class DebugWorld
     public static readonly TileCoord House1Lot = new(0, 8);
     public static readonly TileCoord House2Lot = new(8, 8);
     public static readonly TileCoord LotSize = new(4, 4);
-    public static readonly MailboxPose House1Mailbox = new(200, 1200, 0, 180);
-    public static readonly MailboxPose House2Mailbox = new(1800, 1200, 0, 180);
+    public static readonly MailboxPose House1Mailbox = new(200, 1600, 0, 180);
+    public static readonly MailboxPose House2Mailbox = new(1800, 1600, 0, 180);
 
     public static WorldTables Tables()
     {
