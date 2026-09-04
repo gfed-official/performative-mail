@@ -127,3 +127,12 @@ ts	phase	decision	why	evidence	result
 2026-09-04T00:19:00Z	verify	CI on 0935a08 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33821111774	VERIFIED
 2026-09-04T00:16:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T00:16:00Z	verify	Acceptance filter 4 passed	empty bags; +300 respawn; Intake return; RunState unchanged	dotnet test --filter RespawnTicks_TenSeconds|Die_EmptiesPlayerContainers|AdvanceTo_AtDespawnTick|Die_DoesNotChangeRunState	VERIFIED
+2026-09-04T00:22:00Z	frame	Frame U4.1 as shop offers and buy request	Issue 92; wallet debit; once-per-run; last-card one grant; no U4.2 bike path	https://github.com/gfed-official/performative-mail/issues/92	open
+2026-09-04T00:23:00Z	architect	Chose ShopSession over pure ShopBuy.Apply	Buy must debit stock once-per-run and grant in one call; RunState stays U3.1	/tmp/u41-architect/synthesis.md	accepted
+2026-09-04T00:23:00Z	architect	Two sketches: session vs stock ledger	Grafted ShopOffer remaining and ShopBought/ShopRejected; callers do not thread wallet	/tmp/u41-architect/synthesis.md	accepted
+2026-09-04T00:23:00Z	subtract	No bike vehicle hire service wire or RunState fields	ShopCatalog already rejects vehicle; TryDebit floor stays misdelivery-only	src/Sim/Content/ShopCatalog.cs	accepted
+2026-09-04T00:27:00Z	verify	dotnet test Release 385 passed	Sim 255 Net 114 Bot 16; eight ShopSession tests	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-04T00:27:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T00:27:00Z	verify	Acceptance filter 3 passed	DebitsWalletAndGrantsItem; OncePerRun second reject; LastCard one grant	dotnet test --filter TryBuy_OfferedItem|TryBuy_OncePerRun|TryBuy_LastCard	VERIFIED
+2026-09-04T00:31:00Z	verify	dotnet test Release 389 passed	Sim 259 Net 114 Bot 16; twelve ShopSession tests	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-04T00:31:00Z	verify	CI on 1d81360 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33821987153	VERIFIED
