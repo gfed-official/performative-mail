@@ -11,9 +11,17 @@ public static class InputSampler
     {
         sbyte axisX = Axis(Key.D, Key.Right, Key.A, Key.Left);
         sbyte axisY = Axis(Key.W, Key.Up, Key.S, Key.Down);
-        var buttons = Input.IsPhysicalKeyPressed(Key.Shift)
-            ? InputButtons.Sprint
-            : InputButtons.None;
+        var buttons = InputButtons.None;
+        if (Input.IsPhysicalKeyPressed(Key.Shift))
+            buttons |= InputButtons.Sprint;
+        if (Input.IsPhysicalKeyPressed(Key.E))
+            buttons |= InputButtons.Interact;
+        for (int id = 0; id < 8; id++)
+        {
+            if (Input.IsJoyButtonPressed(id, JoyButton.X))
+                buttons |= InputButtons.Interact;
+        }
+
         return new MoveIntent(axisX, axisY, Yaw: 0, buttons);
     }
 

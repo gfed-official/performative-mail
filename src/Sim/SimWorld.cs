@@ -52,10 +52,11 @@ public sealed class SimWorld
 
     public PlayerBody SpawnPlayer() => Players.SpawnOnRing(SpawnRing.CentreOf(Atlas));
 
-    public void Tick(uint tick)
+    public void Tick(uint tick, bool spawnMail = true)
     {
         CurrentTick = tick;
-        MailSpawner?.Step(tick);
+        if (spawnMail)
+            MailSpawner?.Step(tick);
     }
 
     public bool TryMount(EntityId player, EntityId vehicle)

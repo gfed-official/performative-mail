@@ -105,3 +105,5 @@ jobs:
         run: bash tools/godot/ci.sh debug
       - name: Headless host/join smoke
         run: bash tools/godot/ci.sh join
+      - name: Headless Host play report
+        run: bash tools/godot/ci.sh play

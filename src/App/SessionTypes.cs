@@ -107,6 +107,8 @@ public abstract record FailReason
 
     public sealed record HostLost : FailReason;
 
+    public sealed record BootFailed(string Detail) : FailReason;
+
     public string Message()
     {
         switch (this)
@@ -125,6 +127,8 @@ public abstract record FailReason
                 return $"Connected to {timeout.Target}, but the host never finished join.";
             case HostLost:
                 return "Host lost.";
+            case BootFailed boot:
+                return boot.Detail;
             default:
                 throw new ArgumentOutOfRangeException(nameof(FailReason), this, null);
         }

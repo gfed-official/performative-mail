@@ -48,6 +48,54 @@ public sealed class WorldAtlas
         Houses = _houses;
     }
 
+    public static WorldAtlas FromTables(WorldTables tables)
+    {
+        if (tables is null) throw new ArgumentNullException(nameof(tables));
+        if (tables.Houses.Length == 0)
+            throw new ArgumentException("Generated world has no houses.", nameof(tables));
+        if (tables.Streets.Length == 0)
+            throw new ArgumentException("Generated world has no streets.", nameof(tables));
+
+        var street = tables.Streets[0];
+        return new WorldAtlas(
+            "small_island",
+            tables.TileCm,
+            street.District,
+            street.Id,
+            street.Name,
+            tables.PostOffice,
+            StreetBounds(tables.Streets),
+            tables.Houses);
+    }
+
+    private static TileRect StreetBounds(StreetRecord[] streets)
+    {
+        int minX = int.MaxValue;
+        int minY = int.MaxValue;
+        int maxX = int.MinValue;
+        int maxY = int.MinValue;
+        bool any = false;
+        for (int s = 0; s < streets.Length; s++)
+        {
+            var tiles = streets[s].Tiles;
+            if (tiles is null) continue;
+            for (int i = 0; i < tiles.Length; i++)
+            {
+                any = true;
+                var tile = tiles[i];
+                if (tile.X < minX) minX = tile.X;
+                if (tile.Y < minY) minY = tile.Y;
+                if (tile.X > maxX) maxX = tile.X;
+                if (tile.Y > maxY) maxY = tile.Y;
+            }
+        }
+
+        if (!any)
+            return new TileRect(0, 0, 1, 1);
+
+        return new TileRect(minX, minY, maxX - minX + 1, maxY - minY + 1);
+    }
+
     public string Id { get; }
 
     public int TileCm { get; }

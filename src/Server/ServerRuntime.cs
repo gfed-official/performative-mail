@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using PerformativeMail.Sim;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
+using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.Players;
@@ -13,8 +14,11 @@ namespace PerformativeMail.Server;
 
 public sealed class ServerRuntime
 {
+    public const int InteractHoldTicks = 12;
+
     private readonly IServerLink _link;
     private readonly Dictionary<ConnectionId, Seat> _seats = new();
+    private readonly Dictionary<uint, PlayerBags> _bags = new();
     private PlayerSnapshot[] _snapshotScratch = Array.Empty<PlayerSnapshot>();
     private uint _tick;
 
@@ -25,6 +29,14 @@ public sealed class ServerRuntime
     public RunSettings OfferedSettings { get; }
 
     public RunState Session { get; private set; }
+
+    public ShiftClock? Clock { get; }
+
+    public WorldTables? Tables { get; }
+
+    public Destinations? Destinations { get; }
+
+    public BalanceTable? Balance { get; }
 
     public IReadOnlyList<ContainerDelta> LastFlushedDeltas { get; private set; } = Array.Empty<ContainerDelta>();
 
@@ -75,22 +87,92 @@ public sealed class ServerRuntime
         WorldOffer? offeredWorld,
         RunSettings? offeredSettings,
         RunState? session)
+        : this(link, world, offeredWorld, offeredSettings, session, clock: null, tables: null, destinations: null, balance: null)
+    {
+    }
+
+    public ServerRuntime(IServerLink link, ArcadeBoot boot)
+        : this(
+            link,
+            boot.World,
+            boot.Offer,
+            boot.Settings,
+            boot.Clock.State,
+            boot.Clock,
+            boot.Tables,
+            boot.Destinations,
+            boot.Balance)
+    {
+    }
+
+    private ServerRuntime(
+        IServerLink link,
+        SimWorld world,
+        WorldOffer? offeredWorld,
+        RunSettings? offeredSettings,
+        RunState? session,
+        ShiftClock? clock,
+        WorldTables? tables,
+        Destinations? destinations,
+        BalanceTable? balance)
     {
         _link = link ?? throw new ArgumentNullException(nameof(link));
         World = world ?? throw new ArgumentNullException(nameof(world));
         OfferedWorld = offeredWorld;
         OfferedSettings = offeredSettings ?? RunSettings.Arcade();
         Session = session ?? RunState.InLobby();
+        Clock = clock;
+        Tables = tables;
+        Destinations = destinations;
+        Balance = balance;
     }
 
     public bool TryAdvancePhase()
     {
-        if (!RunTransitions.TryPrimaryNext(Session.Phase, Session.Shift, out var next))
+        if (Clock is ShiftClock clock)
+        {
+            if (!RunTransitions.TryPrimaryNext(clock.State.Phase, clock.State.Shift, out var next))
+                return false;
+            if (!clock.TryEnter(next))
+                return false;
+
+            Session = clock.State;
+            return true;
+        }
+
+        if (!RunTransitions.TryPrimaryNext(Session.Phase, Session.Shift, out var fallback))
             return false;
-        if (!Session.TryTransition(next, out var advanced))
+        if (!Session.TryTransition(fallback, out var advanced))
             return false;
 
         Session = advanced;
+        return true;
+    }
+
+    public Cents QuotaFor(byte shift)
+    {
+        if (Balance is null)
+            return default;
+        int players = Math.Max(1, JoinedCount);
+        return QuotaBudget.For(Balance, shift, players).Quota;
+    }
+
+    public bool TryInteractAddresses(EntityId player, out string held, out string target)
+    {
+        held = "";
+        target = "";
+        if (!_bags.TryGetValue(player.Value, out var bags))
+            return false;
+        if (!World.Players.TryGet(player, out var body))
+            return false;
+        if (!TryHeldMail(bags.Hotbar, out _, out var mail))
+            return false;
+        if (!TryNearestMailbox(body, out _, out var house))
+            return false;
+
+        var streets = Tables?.Streets ?? Array.Empty<StreetRecord>();
+        held = AddressText.Format(mail.Address, streets);
+        target = AddressText.Format(house.Address, streets);
         return true;
     }
 
@@ -110,7 +192,15 @@ public sealed class ServerRuntime
 
         DropExpired();
         Deaths?.AdvanceTo(_tick);
-        World.Tick(_tick++);
+        if (Clock is ShiftClock clock)
+        {
+            clock.AdvanceTo(_tick);
+            Session = clock.State;
+        }
+
+        bool spawnMail = Clock is null || Session.Phase == RunPhase.Delivery;
+        World.Tick(_tick, spawnMail);
+        _tick++;
         FlushInventoryEvents();
 
         if (SnapshotCadence.ShouldSend(World.CurrentTick))
@@ -128,7 +218,7 @@ public sealed class ServerRuntime
         if (World.Inventory is not InventorySystem inv)
             throw new InvalidOperationException("World has no inventory.");
 
-        Deaths ??= new DeathSession(inv, inv.CreateContainer(ContainerSpec.Intake), PlayerPose.Origin);
+        Deaths ??= new DeathSession(inv, inv.CreateContainer(ContainerSpec.Intake), SpawnRing.CentreOf(World.Atlas));
         Deaths.Bind(body, hotbar, inventory, backpack, cursor);
     }
 
@@ -217,6 +307,9 @@ public sealed class ServerRuntime
 
         var body = World.SpawnPlayer();
         Welcome(from, body.Id, seat.Account);
+        if (Clock is not null)
+            EquipPlayer(body);
+        BeginShiftIfLobby(body.Id);
     }
 
     private void Welcome(ConnectionId from, EntityId player, uint account)
@@ -232,6 +325,35 @@ public sealed class ServerRuntime
 
         if (OfferedWorld is WorldOffer offer)
             _link.Send(from, NetChannels.Handshake, WireCodec.Encode(offer));
+    }
+
+    private void EquipPlayer(PlayerBody body)
+    {
+        if (World.Inventory is not InventorySystem inv)
+            return;
+
+        var hotbar = inv.CreateContainer(ContainerSpec.Hotbar, body.Id);
+        var inventory = inv.CreateContainer(ContainerSpec.BaseInventory, body.Id);
+        BindPlayerBags(body, hotbar, inventory);
+        inv.Open(body.Id, hotbar);
+        inv.Open(body.Id, inventory);
+        if (World.Intake.Value != 0)
+            inv.Open(body.Id, World.Intake);
+        _bags[body.Id.Value] = new PlayerBags(hotbar, inventory, 0);
+    }
+
+    private void BeginShiftIfLobby(EntityId player)
+    {
+        if (Clock is not ShiftClock clock)
+            return;
+
+        clock.Connect(player.Value);
+        if (clock.State.Phase != RunPhase.Lobby)
+            return;
+
+        clock.TryEnter(RunPhase.Generating);
+        clock.TryEnter(RunPhase.Prep);
+        Session = clock.State;
     }
 
     private JoinState BuildJoinState()
@@ -279,7 +401,138 @@ public sealed class ServerRuntime
                 continue;
 
             World.ApplyInput(player, in cmd);
+            StepInteract(player, body, in cmd);
         }
+    }
+
+    private void StepInteract(EntityId player, PlayerBody body, in InputCmd cmd)
+    {
+        if (!_bags.TryGetValue(player.Value, out var bags))
+            return;
+
+        if ((cmd.Buttons & InputButtons.Interact) == 0)
+        {
+            _bags[player.Value] = bags.ResetHold();
+            return;
+        }
+
+        int held = bags.HoldTicks + 1;
+        _bags[player.Value] = bags.WithHold(held);
+        if (held != InteractHoldTicks)
+            return;
+
+        if (TryPickup(player, body, bags.Hotbar))
+            return;
+
+        TryDeliver(player, body, bags.Hotbar);
+    }
+
+    private bool TryPickup(EntityId player, PlayerBody body, ContainerId hotbar)
+    {
+        if (World.Inventory is not InventorySystem inv)
+            return false;
+        if (World.Intake.Value == 0)
+            return false;
+        if (World.Atlas is not WorldAtlas atlas)
+            return false;
+        if (!NearTile(body, atlas.PostOffice.IntakeTile, atlas.TileCm))
+            return false;
+        if (!TryFirstMail(World.Intake, out var entry, out _))
+            return false;
+
+        return inv.Apply(Actor.Player(player), new QuickMove(World.Intake, entry, hotbar, Amount.Of(1))) is Accepted;
+    }
+
+    private bool TryDeliver(EntityId player, PlayerBody body, ContainerId hotbar)
+    {
+        if (Destinations is null)
+            return false;
+        if (World.Inventory is not InventorySystem inv)
+            return false;
+        if (!TryHeldMail(hotbar, out var entry, out var mail))
+            return false;
+        if (!TryNearestMailbox(body, out var dest, out _))
+            return false;
+        if (mail.Ids.Count == 0)
+            return false;
+
+        byte shift = Clock?.State.Shift ?? Session.Shift;
+        var result = Destinations.TryDeliver(mail.Ids[0], dest, shift, World.Wallet, World.Complaint);
+        switch (result)
+        {
+            case Delivered:
+            case Misdelivered:
+                return inv.Apply(Actor.Player(player), new Withdraw(hotbar, entry, Amount.Of(1))) is Accepted;
+            case Sim.Mail.Rejected:
+                return false;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(result), result, null);
+        }
+    }
+
+    private bool TryHeldMail(ContainerId hotbar, out EntryId entry, out MailStack mail)
+    {
+        mail = null!;
+        entry = default;
+        if (World.Inventory is not InventorySystem inv)
+            return false;
+        if (!inv.TryGetContainer(hotbar, out var grid))
+            return false;
+        foreach (var item in grid.Entries)
+        {
+            if (item.Stack is not MailStack stack)
+                continue;
+            entry = item.Id;
+            mail = stack;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryFirstMail(ContainerId container, out EntryId entry, out MailStack mail)
+        => TryHeldMail(container, out entry, out mail);
+
+    private bool TryNearestMailbox(PlayerBody body, out DestinationId dest, out HouseRecord house)
+    {
+        dest = default;
+        house = default;
+        if (Tables is null)
+            return false;
+
+        long best = long.MaxValue;
+        bool found = false;
+        var houses = Tables.Houses;
+        for (int i = 0; i < houses.Length; i++)
+        {
+            var candidate = houses[i];
+            long dist = DistSq(body.Xcm, body.Ycm, candidate.Mailbox.XCm, candidate.Mailbox.YCm);
+            if (dist > (long)WorldAtlasLoader.InteractRangeCm * WorldAtlasLoader.InteractRangeCm)
+                continue;
+            if (dist >= best)
+                continue;
+            best = dist;
+            house = candidate;
+            dest = new DestinationId(candidate.Address.Packed);
+            found = true;
+        }
+
+        return found;
+    }
+
+    private static bool NearTile(PlayerBody body, TileCoord tile, int tileCm)
+    {
+        int half = tileCm / 2;
+        int x = tile.X * tileCm + half;
+        int y = tile.Y * tileCm + half;
+        return DistSq(body.Xcm, body.Ycm, x, y) <= (long)WorldAtlasLoader.InteractRangeCm * WorldAtlasLoader.InteractRangeCm;
+    }
+
+    private static long DistSq(int ax, int ay, int bx, int by)
+    {
+        long dx = ax - bx;
+        long dy = ay - by;
+        return dx * dx + dy * dy;
     }
 
     private void OnClosed(ConnectionId from)
@@ -291,6 +544,7 @@ public sealed class ServerRuntime
         if (seat.Player is not EntityId player)
             return;
 
+        Clock?.Disconnect(player.Value);
         Grace.Hold(seat.Account, player, _tick, JoinedCount);
     }
 
@@ -310,6 +564,7 @@ public sealed class ServerRuntime
         var tile = new TileCoord(body.Xcm / 100, body.Ycm / 100);
         Deaths?.Drop(player, tile, _tick);
         World.Players.Remove(player);
+        _bags.Remove(player.Value);
     }
 
     private void Broadcast()
@@ -395,5 +650,25 @@ public sealed class ServerRuntime
         public uint Account { get; }
 
         public bool Joined => Player.HasValue;
+    }
+
+    private readonly struct PlayerBags
+    {
+        public PlayerBags(ContainerId hotbar, ContainerId inventory, int holdTicks)
+        {
+            Hotbar = hotbar;
+            Inventory = inventory;
+            HoldTicks = holdTicks;
+        }
+
+        public ContainerId Hotbar { get; }
+
+        public ContainerId Inventory { get; }
+
+        public int HoldTicks { get; }
+
+        public PlayerBags WithHold(int ticks) => new(Hotbar, Inventory, ticks);
+
+        public PlayerBags ResetHold() => new(Hotbar, Inventory, 0);
     }
 }

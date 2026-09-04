@@ -2,6 +2,7 @@ using PerformativeMail.Client;
 using PerformativeMail.Client.UI;
 using PerformativeMail.Server;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.Run;
@@ -49,10 +50,11 @@ public sealed class PlaySessionMachine : IDisposable
         Leave();
         try
         {
+            var boot = ArcadeSession.Create();
             var listen = _stack.Listen(_options.ListenPort, _options.MaxPlayers);
-            var server = new ServerRuntime(listen.Link);
+            var server = new ServerRuntime(listen.Link, boot);
             server.Start();
-            var client = new ClientRuntime();
+            var client = new ClientRuntime(MailStackCatalog.Default);
             client.Connect(listen.HostSeat);
             var role = new SessionRole.Listening(HostAdvertisement.For(_options.ListenPort));
             _live = new Live.Hosting(server, listen.Link, client, role);
@@ -62,13 +64,17 @@ public sealed class PlaySessionMachine : IDisposable
         {
             _state = new PlaySession.Failed(new FailReason.PortInUse(_options.ListenPort));
         }
+        catch (Exception ex) when (ex is FileNotFoundException or InvalidOperationException)
+        {
+            _state = new PlaySession.Failed(new FailReason.BootFailed(ex.Message));
+        }
     }
 
     public void Join(JoinTarget target)
     {
         Leave();
         var link = _stack.Connect(target);
-        var client = new ClientRuntime();
+        var client = new ClientRuntime(MailStackCatalog.Default);
         client.Connect(link);
         var role = new SessionRole.Guest(target);
         _live = new Live.Dialing(link, client, role);
@@ -332,7 +338,53 @@ public sealed class PlaySessionMachine : IDisposable
         if (client.LocalPlayer is not EntityId local)
             return Fail(new FailReason.HostLost());
 
-        return new PlaySession.Playing(role, local, _pawns.Visible);
+        OverlayReplica? overlay = null;
+        if (client.Inventory is InventorySystem inv && LiveOverlay.TryFrom(inv, out var replica))
+            overlay = replica;
+
+        return new PlaySession.Playing(
+            role,
+            local,
+            _pawns.Visible,
+            ProjectHud(client, local),
+            _live.Server?.Tables ?? client.GeneratedWorld,
+            overlay);
+    }
+
+    private HudSnapshot ProjectHud(ClientRuntime client, EntityId local)
+    {
+        if (_live.Server is ServerRuntime server)
+        {
+            var phase = server.Clock?.State.Phase ?? server.Session.Phase;
+            byte shift = server.Clock?.State.Shift ?? server.Session.Shift;
+            uint now = server.Clock?.Now ?? server.World.CurrentTick;
+            uint deadline = server.Clock?.State.PhaseDeadlineTick ?? server.Session.PhaseDeadlineTick;
+            InteractPrompt interact = InteractPrompt.None.Instance;
+            if (server.TryInteractAddresses(local, out var held, out var target))
+                interact = new InteractPrompt.Deliver(held, target);
+            return new HudSnapshot(
+                phase,
+                shift,
+                now,
+                deadline,
+                server.World.Wallet.Balance,
+                interact,
+                server.World.Wallet.Balance,
+                server.QuotaFor(shift),
+                server.World.Complaint.Points);
+        }
+
+        var join = client.AcceptedJoin;
+        return new HudSnapshot(
+            join?.Run.Phase ?? RunPhase.Lobby,
+            join?.Run.Shift ?? 1,
+            client.ServerTickEstimate,
+            join?.Run.PhaseDeadlineTick ?? 0,
+            default,
+            InteractPrompt.None.Instance,
+            default,
+            default,
+            0);
     }
 
     private PlaySession Fail(FailReason reason)

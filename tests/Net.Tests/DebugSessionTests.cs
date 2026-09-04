@@ -5,6 +5,7 @@ using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Net.Tests;
 
@@ -41,10 +42,10 @@ public sealed class DebugSessionTests
         Assert.True(snap.Host);
         Assert.True(snap.CanCheat);
         Assert.Equal(play.LocalPlayer.Value, snap.LocalPlayer);
-        Assert.Equal(RunPhase.Lobby, snap.Phase);
+        Assert.Equal(RunPhase.Prep, snap.Phase);
         Assert.Equal((byte)1, snap.Shift);
         Assert.Equal(RunSettings.Arcade().Seed, snap.Seed);
-        Assert.Null(snap.WorldHash);
+        Assert.Equal(0x821670054873680EUL, snap.WorldHash);
         Assert.Equal(new Cents(0), snap.Wallet);
         Assert.True(snap.Tick.HasValue);
     }
@@ -65,7 +66,7 @@ public sealed class DebugSessionTests
     }
 
     [Fact]
-    public void HostAdvancePhase_LobbyToGenerating()
+    public void HostAdvancePhase_PrepToDelivery()
     {
         var stack = new LoopbackStack();
         using var host = new PlaySessionMachine(stack);
@@ -73,10 +74,9 @@ public sealed class DebugSessionTests
         host.Host();
         Pump(host, ref now, MoveIntent.Idle, 8);
 
-        Assert.True(host.TryAdvancePhase());
-        Assert.Equal(RunPhase.Generating, host.Inspect().Phase);
-        Assert.True(host.TryAdvancePhase());
         Assert.Equal(RunPhase.Prep, host.Inspect().Phase);
+        Assert.True(host.TryAdvancePhase());
+        Assert.Equal(RunPhase.Delivery, host.Inspect().Phase);
     }
 
     [Fact]
@@ -95,7 +95,9 @@ public sealed class DebugSessionTests
 
         Assert.True(host.TryResetLocalPawn());
         Pump(host, ref now, MoveIntent.Idle, 4);
-        Assert.Equal(PlayerPose.Origin, LocalPose(host));
+        var play = Assert.IsType<PlaySession.Playing>(host.State);
+        var spawn = SpawnRing.Pose(SpawnRing.CentreOf(WorldAtlas.FromTables(play.World!)), 0);
+        Assert.Equal(spawn, LocalPose(host));
     }
 
     [Fact]
@@ -120,7 +122,7 @@ public sealed class DebugSessionTests
         Assert.False(guest.TryAdvancePhase());
         Assert.False(guest.TryResetLocalPawn());
         Assert.Equal(new Cents(0), host.Inspect().Wallet);
-        Assert.Equal(RunPhase.Lobby, host.Inspect().Phase);
+        Assert.Equal(RunPhase.Prep, host.Inspect().Phase);
     }
 
     private static PlayerPose LocalPose(PlaySessionMachine machine)
