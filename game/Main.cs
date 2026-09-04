@@ -713,6 +713,7 @@ public partial class Main : Node3D
             "overlay" => TryOpenLiveOverlay(playing),
             "interact" => TryStepInteractSmoke(playing),
             "live-overlay" => TryStepLiveOverlay(playing),
+            "leave" => TryStepLeaveSmoke(playing),
             _ => true,
         };
         if (done)
@@ -756,6 +757,14 @@ public partial class Main : Node3D
         _holdInteract = true;
         _session.TryTeleportToIntake();
         return false;
+    }
+
+    private bool TryStepLeaveSmoke(PlaySession.Playing playing)
+    {
+        OpenPause(playing);
+        OnPauseChoice(PauseFrame.LeaveId);
+        OnPauseChoice(PauseFrame.ConfirmLeaveId);
+        return true;
     }
 
     private static bool HasHeldMail(PlaySession.Playing playing)

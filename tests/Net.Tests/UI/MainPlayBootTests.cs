@@ -224,12 +224,26 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryStepInteractSmoke", helper);
         Assert.Contains("\"live-overlay\"", helper);
         Assert.Contains("TryStepLiveOverlay", helper);
+        Assert.Contains("\"leave\"", helper);
+        Assert.Contains("TryStepLeaveSmoke", helper);
         var main = ReadMain();
         Assert.Contains("TryStockIntake", main);
         Assert.Contains("HasHeldMail", main);
         Assert.Contains("TryStepInteractSmoke", main);
         Assert.Contains("TryStepLiveOverlay", main);
+        Assert.Contains("TryStepLeaveSmoke", main);
         Assert.Contains("using PerformativeMail.Sim.Inventory;", main);
+    }
+
+    [Fact]
+    public void DebugHelperLeave_OpensPauseThenConfirmsLeave()
+    {
+        var leave = MethodBody(ReadMain(), "TryStepLeaveSmoke");
+        Assert.Contains("OpenPause(playing)", leave);
+        Assert.Contains("PauseFrame.LeaveId", leave);
+        Assert.Contains("PauseFrame.ConfirmLeaveId", leave);
+        Assert.Contains("OnPauseChoice", leave);
+        Assert.DoesNotContain("_session.Leave()", leave);
     }
 
     private static string ReadMain()
