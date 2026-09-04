@@ -32,7 +32,20 @@ export PATH=$HOME/.dotnet:$PATH
 dotnet test PerformativeMail.sln
 ```
 
-Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4.7.2` (official Godot **4.7.2** .NET / C# editor). That job checks `godot --version`, `godot --headless --quit`, that `dotnet --version` is still 8.x, then imports `game/`, boots the main scene headless, and runs a two-process LAN host/join on `127.0.0.1:7777`.
+Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4.7.2` (official Godot **4.7.2** .NET / C# editor). The `godot` job runs `tools/godot/ci.sh` once per command.
+
+- `verify` checks Godot 4.7.2 .NET, `godot --headless --quit`, and `dotnet` 8.x.
+- `import` imports `game/` and runs `dotnet build`.
+- `boot` boots the main scene headless and asserts the C# `_Ready` marker.
+- `hud` binds HudFrame and reads Control text.
+- `overlay` opens InventoryOverlay and reads cell text.
+- `lobby` binds LobbyFrame and reads Control text.
+- `overlays` binds payday, draft, and results frames and reads Control text.
+- `debug` opens DebugMenu and reads inspect and cheat labels.
+- `join` runs a two-process LAN host and join on `127.0.0.1:7777`.
+- `play` runs a solo Host play report with the golden worldHash and HUD.
+
+`all` runs every command above. `all` is the default when you omit the argument. The command list and the steps to add a Control-text smoke are in [`tools/godot/README.md`](tools/godot/README.md).
 
 ```bash
 # Same script CI runs (skip the 8.x pin if the image only has SDK 9):
