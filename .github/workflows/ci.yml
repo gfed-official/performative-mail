@@ -28,6 +28,8 @@ jobs:
           dotnet test tests/Bot.Tests/PerformativeMail.Bot.Tests.csproj --no-build --configuration Release --verbosity minimal
       - name: ContentValidator
         run: dotnet run --project tools/ContentValidator --configuration Release --no-build -- content
+      - name: BalanceSim
+        run: dotnet run --project tools/BalanceSim --configuration Release --no-build -- content
 
   # Godot integration lives in this container, not on the agent host.
   # mono-* is the C# / .NET editor (filename still uses mono).
