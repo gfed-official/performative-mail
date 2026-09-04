@@ -141,6 +141,7 @@ public sealed class JoinStatePrepTests
             var stamp = join.Containers[i];
             Assert.True(inventory.TryGetContainer(stamp.Id, out var grid));
             Assert.Equal(grid.Version, stamp.Version);
+            Assert.Equal(grid.Hash, stamp.Hash);
         }
     }
 

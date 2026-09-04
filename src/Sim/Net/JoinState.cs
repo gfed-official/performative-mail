@@ -7,7 +7,7 @@ namespace PerformativeMail.Sim.Net;
 
 public readonly record struct FlattenedTile(int X, int Y, int H);
 
-public readonly record struct ContainerStamp(ContainerId Id, ContainerVersion Version);
+public readonly record struct ContainerStamp(ContainerId Id, ContainerVersion Version, ulong Hash);
 
 public readonly record struct WorldDeltas
 {
@@ -115,6 +115,8 @@ public readonly record struct WorldDeltas
 
 public readonly record struct JoinState
 {
+    public const int MaxEncodedBytes = 200_000;
+
     private readonly ContainerStamp[] _containers;
 
     public JoinState(

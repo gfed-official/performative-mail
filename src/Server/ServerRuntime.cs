@@ -245,7 +245,7 @@ public sealed class ServerRuntime
 
         var stamps = new List<ContainerStamp>();
         foreach (var container in inventory.Containers)
-            stamps.Add(new ContainerStamp(container.Id, container.Version));
+            stamps.Add(new ContainerStamp(container.Id, container.Version, container.Hash));
         return stamps.ToArray();
     }
 
