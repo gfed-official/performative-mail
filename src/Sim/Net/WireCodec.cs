@@ -179,6 +179,27 @@ public static class WireCodec
         return true;
     }
 
+    public static byte[] Encode(in WorldOffer message)
+    {
+        var writer = new BitWriter();
+        writer.WriteByte((byte)MessageKind.WorldOffer);
+        writer.WriteUInt32(message.Seed);
+        writer.WriteUInt64(message.WorldHash);
+        return writer.ToArray();
+    }
+
+    public static bool TryDecode(ReadOnlySpan<byte> payload, out WorldOffer message)
+    {
+        message = default;
+        var reader = new BitReader(payload);
+        if (!TryReadKind(reader, MessageKind.WorldOffer)) return false;
+        if (!reader.TryReadUInt32(out var seed)) return false;
+        if (!reader.TryReadUInt64(out var worldHash)) return false;
+        if (!reader.AtEnd) return false;
+        message = new WorldOffer(seed, worldHash);
+        return true;
+    }
+
     private static void WriteCommand(BitWriter writer, in InputCmd command)
     {
         writer.WriteUInt32(command.Tick);

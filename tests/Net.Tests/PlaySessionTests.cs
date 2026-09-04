@@ -36,6 +36,14 @@ public sealed class JoinTargetTests
         var reason = new FailReason.Unreachable(new JoinTarget("192.168.1.20", 7777));
         Assert.Contains("192.168.1.20:7777", reason.Message());
     }
+
+    [Fact]
+    public void FailReason_Rejected_VersionMismatch_NamesWorldHash()
+    {
+        var reason = new FailReason.Rejected(HelloRejectReason.VersionMismatch);
+        Assert.Contains("Version mismatch", reason.Message());
+        Assert.Contains("World hash", reason.Message());
+    }
 }
 
 public sealed class ViewFrameTests

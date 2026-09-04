@@ -201,6 +201,9 @@ public sealed class PlaySessionMachine : IDisposable
 
     private PlaySession PresentPlaying(ClientRuntime client, SessionRole role, TimeSpan wallNow)
     {
+        if (client.LastReject is HelloReject reject)
+            return Fail(new FailReason.Rejected(reject.Reason));
+
         if (client.LastSnapshot is SnapshotPacket snapshot)
             _clock.Anchor(snapshot.ServerTick, wallNow);
 

@@ -30,3 +30,19 @@ ts	phase	decision	why	evidence	result
 2026-09-03T22:20:00Z	u1.4	Pinned golden hash 0x821670054873680E	Seed 0x7F3A9C21 after roads resources spawns; != U1.3 0x631CE9A07B6A504F	tests/Sim.Tests/World/WorldGenHashTests.cs	tests green
 2026-09-03T22:20:00Z	u1.4	Walk BFS starts on land in the PO when the spawn pad is water	U1.3 fallback can sit the PO on water; a wet spawn pad made every mailbox unreachable	src/Sim/World/WorldGrid.cs	accepted
 2026-09-03T22:35:00Z	u1.4	Routing nodes are crossings and street ends	Degree 3 on a 2-wide street marked almost every tile; 2462 edges collapsed to 73	src/Sim/World/ConnectivityStage.cs	accepted
+2026-09-03T21:40:00Z	u1.5	Frame U1.5 as client regen, hash mismatch, SeedViewer, 3s budget	Issue 82; chapter 02 §2 and §4; chapter 07 §9; hash encoding stays U1.4	https://github.com/gfed-official/performative-mail/issues/82	open
+2026-09-03T21:40:00Z	architect	Chose additive WorldOffer over HelloOk extension	Frozen U4.1 Hello goldens and SchemaHash 0x4112C9FA stay; Ping and InventoryEvent already use additive kinds	src/Sim/Net/MessageKind.cs	accepted
+2026-09-03T21:40:00Z	architect	Skipped multi-model arena	Same parent constraint as U1.2; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-03T21:40:00Z	subtract	Did not replace WorldAtlas or rewrite U1.1-U1.4 generation	Live play still loads the authored map; WorldOffer is opt-in on ServerRuntime	src/Server/ServerRuntime.cs	accepted
+2026-09-03T21:40:00Z	u1.5	Confirmed golden hash 0x821670054873680E before new tests	Seed 0x7F3A9C21 on cursor/m1-u1-4-roads-4202	tests/Sim.Tests/World/WorldGenHashTests.cs	VERIFIED
+2026-09-03T21:50:00Z	verify	dotnet test Release 247 passed	Sim 117 Net 114 Bot 16	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-03T21:50:00Z	verify	Small Island generation 46 ms	Warm Generate then timed Generate on seed 0x7F3A9C21	tests/Sim.Tests/World/WorldGenBudgetTests.cs	VERIFIED
+2026-09-03T21:50:00Z	verify	SeedViewer printed hash districts and addresses	tools/SeedViewer 0x7F3A9C21 worldHash 0x821670054873680E	tools/SeedViewer/Program.cs	VERIFIED
+2026-09-03T21:53:00Z	subtract	Renamed ServerRuntime.OfferedWorld	GeneratedWorld collided with ClientRuntime tables; the server field is the wire offer	src/Server/ServerRuntime.cs	accepted
+2026-09-03T21:53:00Z	architect	Kept LastReject as the mismatch bucket	PlaySession already fails on LastReject; a second join-failure type is extra surface	src/Client/ClientRuntime.cs	accepted
+2026-09-03T21:53:00Z	architect	Join does not wait for WorldOffer	Default Host sends none; a required offer would replace the atlas path	src/App/PlaySessionMachine.cs	accepted
+2026-09-03T21:56:00Z	verify	Serialize CI test projects	dotnet test sln --no-build ran Sim gen beside the 2 ms tick gate; max 3.05 ms mean 0.016	.github/workflows/ci.yml	accepted
+2026-09-03T21:59:00Z	verify	CI on c680399 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions	VERIFIED
+2026-09-03T22:00:00Z	audit	Kept live Host without WorldOffer	U1.5 is the regen path beside the atlas, not a listen-server cutover	src/App/PlaySessionMachine.cs	accepted
+2026-09-03T22:00:00Z	audit	Printed budget ms on Console	CI minimal logs hid ITestOutputHelper; the issue asked for the runner number	tests/Sim.Tests/World/WorldGenBudgetTests.cs	open
+2026-09-03T22:03:00Z	verify	CI on 2f8f59f all 4 checks green	Sim.Tests 6 s for 117 tests; Console budget line still hidden at minimal verbosity	https://github.com/gfed-official/performative-mail/actions/runs/33810930999	VERIFIED

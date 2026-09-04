@@ -12,9 +12,12 @@ public readonly record struct HelloOk(EntityId LocalPlayer, uint StartTick);
 public enum HelloRejectReason : byte
 {
     ProtocolMismatch = 1,
+    VersionMismatch = 2,
 }
 
 public readonly record struct HelloReject(HelloRejectReason Reason);
+
+public readonly record struct WorldOffer(uint Seed, ulong WorldHash);
 
 public readonly record struct Ping(uint ClientStamp);
 
