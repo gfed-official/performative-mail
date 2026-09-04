@@ -282,3 +282,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:38:00Z	verify	No-regress filter 26 passed	play boot unbound; HUD Ignore; overlay Ignore	dotnet test --filter MainPlayBoot|HudBoot|HudScene|PaydayFrame|DraftFrame|ResultsFrame|PhaseOverlay	VERIFIED
 2026-09-04T05:41:32Z	verify	CI on 33beb6f all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions	VERIFIED
 2026-09-04T05:42:02Z	audit	Trail review flagged GateHolds skips Met and hash pulse is a 2-tick proxy	Issue 108 landable line wants quota met each shift; chapter 11 bike 200 cannot; CI green row landed on c9982c4	docs/m1-decisions.tsv	open
+2026-09-04T05:45:00Z	frame	Frame U10.3 as join state size after 3 shifts	Issue 109; encoded JoinState Length <= 200000; U10.2 stays	https://github.com/gfed-official/performative-mail/issues/109	open
+2026-09-04T05:45:00Z	architect	Chose ContainerStamp.Hash over snapshot-on-join	Issue 109 measures encoded JoinState; snapshots are a new sync path	src/Sim/Net/JoinState.cs	accepted
+2026-09-04T05:45:00Z	architect	Skip four-model arena	Issue names Length <= 200000; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T05:45:00Z	subtract	No full ContainerState WorldDeltas harvest or SchemaHash bump	Chapter 08 3.9 is later; empty JoinState golden stays	spec/08-data-schemas.md	accepted
