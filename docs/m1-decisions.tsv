@@ -300,3 +300,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:56:00Z	audit	Kept SchemaHash 0x4112C9FA	JoinState itself landed without a bump; empty golden stays	src/Sim/Net/Protocol.cs	accepted
 2026-09-04T05:56:00Z	audit	Left U10.2 GateHolds quota miss on later shifts	Not this unit; chapter 11 bike 200 cannot meet 4p shifts 3-5	docs/m1-decisions.tsv	open
 2026-09-04T06:00:00Z	verify	CI on 4868ce0 all 4 checks green	test and Godot 4.7.2 .NET after clock-walk tighten	https://github.com/gfed-official/performative-mail/actions	VERIFIED
+2026-09-04T06:03:16Z	frame	Frame U10.4 as Windows and Linux worldHash CI	Issue 110; same golden hash on both runners; U10.3 stays	https://github.com/gfed-official/performative-mail/issues/110	open
+2026-09-04T06:03:16Z	architect	Chose SeedViewer matrix over full test job matrix	Issue names the golden hash print; Godot and play-boot stay Ubuntu	.github/workflows/ci.yml	accepted
+2026-09-04T06:03:16Z	architect	Skip four-model arena	Issue names windows-latest ubuntu-latest and the U1.5 golden; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T06:03:16Z	subtract	No generation rewrite SchemaHash bump or Godot on Windows	Hash encoding and SeedViewer already exist; this unit only attaches the OS runners	tools/SeedViewer/Program.cs	accepted
