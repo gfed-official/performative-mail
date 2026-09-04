@@ -7,31 +7,11 @@ using PerformativeMail.Sim.Mail;
 
 namespace PerformativeMail.Sim.Run;
 
-public readonly record struct ShopOffer(string Id, int Price, int? Remaining, bool OncePerRun);
-
-public enum ShopReject : byte
-{
-    UnknownItem,
-    NotOffered,
-    SoldOut,
-    AlreadyBought,
-    InsufficientFunds,
-    Closed,
-    NoRoom,
-    UnknownGrant
-}
-
-public abstract record ShopBuyResult;
-
-public sealed record ShopBought(string Id, Cents Paid, string? Item, int Count, string? Blueprint) : ShopBuyResult;
-
-public sealed record ShopRejected(ShopReject Reason) : ShopBuyResult;
-
 public sealed class ShopSession
 {
-    public const string RngName = "shop";
-    public const int RotatingSlots = 2;
-    public const string SpecialTag = "special";
+    private const string StreamName = "shop";
+    private const string SpecialTag = "special";
+    private const int SpecialSlots = 2;
 
     private readonly ShopItemDef[] _catalog;
     private readonly Dictionary<string, ShopItemDef> _byId;
@@ -39,11 +19,11 @@ public sealed class ShopSession
     private readonly uint _seed;
     private readonly InventorySystem? _inventory;
     private readonly ContainerId _grantTo;
-    private readonly IReadOnlyDictionary<string, ItemDefId>? _itemIds;
-    private readonly List<ShopOffer> _offers = new();
-    private readonly HashSet<string> _bought = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _ownedBlueprints = new(StringComparer.Ordinal);
-    private bool _open;
+    private readonly Dictionary<string, ItemDefId> _itemIds;
+    private readonly List<ShopOffer> _offers = new List<ShopOffer>();
+    private readonly HashSet<string> _bought = new HashSet<string>(StringComparer.Ordinal);
+    private readonly HashSet<string> _blueprints = new HashSet<string>(StringComparer.Ordinal);
+    private RunPhase _phase = RunPhase.Prep;
 
     public ShopSession(
         IReadOnlyList<ShopItemDef> catalog,
@@ -54,141 +34,144 @@ public sealed class ShopSession
         IReadOnlyDictionary<string, ItemDefId>? itemIds = null)
     {
         if (catalog is null) throw new ArgumentNullException(nameof(catalog));
-        _catalog = new ShopItemDef[catalog.Count];
-        _byId = new Dictionary<string, ShopItemDef>(catalog.Count, StringComparer.Ordinal);
-        for (int i = 0; i < catalog.Count; i++)
-        {
-            var row = catalog[i] ?? throw new ArgumentNullException(nameof(catalog));
-            _catalog[i] = row;
-            _byId.Add(row.Id, row);
-        }
-
         _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
         _seed = seed;
         _inventory = inventory;
         _grantTo = grantTo;
-        _itemIds = itemIds;
+        _catalog = new ShopItemDef[catalog.Count];
+        _byId = new Dictionary<string, ShopItemDef>(catalog.Count, StringComparer.Ordinal);
+        for (int i = 0; i < catalog.Count; i++)
+        {
+            var def = catalog[i] ?? throw new ArgumentNullException(nameof(catalog));
+            _catalog[i] = def;
+            if (!_byId.ContainsKey(def.Id))
+                _byId.Add(def.Id, def);
+        }
+
+        _itemIds = new Dictionary<string, ItemDefId>(StringComparer.Ordinal);
+        if (itemIds is null) return;
+        foreach (var pair in itemIds)
+            _itemIds[pair.Key] = pair.Value;
     }
 
     public IReadOnlyList<ShopOffer> Offers => _offers;
 
-    public IReadOnlyCollection<string> OwnedBlueprints => _ownedBlueprints;
+    public IReadOnlyCollection<string> OwnedBlueprints => _blueprints;
 
     public void RollOffers(byte shift, RunPhase phase = RunPhase.Prep)
     {
-        _open = phase is RunPhase.Prep or RunPhase.Payday;
+        _phase = phase;
         _offers.Clear();
+        var offered = new HashSet<string>(StringComparer.Ordinal);
 
-        var used = new HashSet<string>(StringComparer.Ordinal);
         for (int i = 0; i < _catalog.Length; i++)
         {
-            var row = _catalog[i];
-            if (row.Slot != ShopSlot.Fixed) continue;
-            if (!Eligible(row, shift)) continue;
-            _offers.Add(ToOffer(row, unlimited: !row.OncePerRun));
-            used.Add(row.Id);
+            var def = _catalog[i];
+            if (def.Slot != ShopSlot.Fixed || def.FromShift > shift) continue;
+            if (def.OncePerRun && _bought.Contains(def.Id)) continue;
+            _offers.Add(ToOffer(def, RemainingOf(def)));
+            offered.Add(def.Id);
         }
 
         var pool = new List<ShopItemDef>();
         for (int i = 0; i < _catalog.Length; i++)
         {
-            var row = _catalog[i];
-            if (used.Contains(row.Id)) continue;
-            if (!Eligible(row, shift)) continue;
-            if (row.Slot != ShopSlot.Rotating && !HasTag(row, SpecialTag)) continue;
-            pool.Add(row);
+            var def = _catalog[i];
+            if (def.FromShift > shift) continue;
+            if (def.OncePerRun && _bought.Contains(def.Id)) continue;
+            if (offered.Contains(def.Id)) continue;
+            if (!IsSpecial(def)) continue;
+            pool.Add(def);
         }
 
-        var rng = RngStream.Derive(_seed, RngName);
-        int slots = Math.Min(RotatingSlots, pool.Count);
-        for (int n = 0; n < slots; n++)
+        var rng = RngStream.Derive(_seed, StreamName);
+        int take = Math.Min(SpecialSlots, pool.Count);
+        for (int n = 0; n < take; n++)
         {
             int pick = (int)rng.NextBounded((uint)pool.Count);
-            var row = pool[pick];
+            var def = pool[pick];
             pool.RemoveAt(pick);
-            _offers.Add(ToOffer(row, unlimited: false));
+            _offers.Add(ToOffer(def, remaining: 1));
         }
     }
 
     public ShopBuyResult TryBuy(string shopItemId)
     {
-        if (shopItemId is null) throw new ArgumentNullException(nameof(shopItemId));
-        if (!_open) return new ShopRejected(ShopReject.Closed);
-        if (!_byId.TryGetValue(shopItemId, out var def))
-            return new ShopRejected(ShopReject.UnknownItem);
-
-        int index = IndexOfOffer(shopItemId);
-        if (index < 0) return new ShopRejected(ShopReject.NotOffered);
-
-        var offer = _offers[index];
-        if (offer.OncePerRun && _bought.Contains(shopItemId))
+        if (_phase != RunPhase.Prep && _phase != RunPhase.Payday)
+            return new ShopRejected(ShopReject.Closed);
+        if (string.IsNullOrEmpty(shopItemId))
+            return new ShopRejected(ShopReject.NotOffered);
+        if (_bought.Contains(shopItemId))
             return new ShopRejected(ShopReject.AlreadyBought);
-        if (offer.Remaining == 0)
-            return new ShopRejected(ShopReject.SoldOut);
-        if (_wallet.Balance.Value < offer.Price)
-            return new ShopRejected(ShopReject.InsufficientFunds);
 
-        string? grantItem = def.GrantItem;
-        int grantCount = def.GrantCount ?? 1;
-        string? grantBlueprint = def.GrantBlueprint;
-        ItemDefId itemId = default;
-        if (grantItem is null && grantBlueprint is null)
-            return new ShopRejected(ShopReject.UnknownGrant);
-        if (grantItem is not null)
-        {
-            if (_inventory is null || _itemIds is null || !_itemIds.TryGetValue(grantItem, out itemId))
-                return new ShopRejected(ShopReject.UnknownGrant);
-        }
-
-        var paid = new Cents(offer.Price);
-        if (!_wallet.TryDebit(paid))
-            return new ShopRejected(ShopReject.InsufficientFunds);
-
-        if (grantItem is not null)
-        {
-            var stack = new ItemStack(itemId, grantCount);
-            if (_inventory!.Apply(Actor.System, new Deposit(_grantTo, stack)) is not Accepted)
-            {
-                _wallet.Credit(paid);
-                return new ShopRejected(ShopReject.NoRoom);
-            }
-        }
-
-        if (offer.Remaining is int left)
-            _offers[index] = offer with { Remaining = left - 1 };
-        if (offer.OncePerRun)
-            _bought.Add(shopItemId);
-        if (grantBlueprint is not null)
-            _ownedBlueprints.Add(grantBlueprint);
-
-        return new ShopBought(shopItemId, paid, grantItem, grantItem is null ? 0 : grantCount, grantBlueprint);
-    }
-
-    private bool Eligible(ShopItemDef row, byte shift)
-    {
-        if (row.FromShift > shift) return false;
-        return !row.OncePerRun || !_bought.Contains(row.Id);
-    }
-
-    private static ShopOffer ToOffer(ShopItemDef row, bool unlimited)
-        => new(row.Id, row.Price, unlimited ? null : 1, row.OncePerRun);
-
-    private int IndexOfOffer(string id)
-    {
+        int index = -1;
+        ShopOffer offer = default;
         for (int i = 0; i < _offers.Count; i++)
         {
-            if (string.Equals(_offers[i].Id, id, StringComparison.Ordinal))
-                return i;
+            if (!string.Equals(_offers[i].Id, shopItemId, StringComparison.Ordinal)) continue;
+            index = i;
+            offer = _offers[i];
+            break;
         }
 
-        return -1;
+        if (index < 0)
+            return new ShopRejected(ShopReject.NotOffered);
+        if (offer.Remaining is 0)
+            return new ShopRejected(ShopReject.SoldOut);
+
+        if (!CanAfford(offer.Price))
+            return new ShopRejected(ShopReject.InsufficientFunds);
+
+        if (!_byId.TryGetValue(shopItemId, out var def))
+            return new ShopRejected(ShopReject.NotOffered);
+
+        string? grantItem = def.GrantItem;
+        string? grantBlueprint = def.GrantBlueprint;
+        int count = def.GrantCount ?? (grantItem is null ? 0 : 1);
+        if (grantItem is null && grantBlueprint is null)
+            return new ShopRejected(ShopReject.UnknownGrant);
+
+        if (grantItem is not null)
+        {
+            if (!_itemIds.TryGetValue(grantItem, out var itemId))
+                return new ShopRejected(ShopReject.UnknownItem);
+            if (_inventory is null)
+                return new ShopRejected(ShopReject.NoRoom);
+            var deposited = _inventory.Apply(Actor.System, new Deposit(_grantTo, new ItemStack(itemId, count)));
+            if (deposited is not Accepted)
+                return new ShopRejected(ShopReject.NoRoom);
+        }
+
+        if (grantBlueprint is not null)
+            _blueprints.Add(grantBlueprint);
+
+        var paid = new Cents(offer.Price);
+        _wallet.TryDebit(paid);
+
+        if (offer.OncePerRun)
+            _bought.Add(offer.Id);
+        if (offer.Remaining is int left)
+            _offers[index] = offer with { Remaining = left - 1 };
+
+        return new ShopBought(offer.Id, paid, grantItem, count, grantBlueprint);
     }
 
-    private static bool HasTag(ShopItemDef row, string tag)
+    private bool CanAfford(int price) => _wallet.Balance.Value >= price;
+
+    private static ShopOffer ToOffer(ShopItemDef def, int? remaining)
+        => new ShopOffer(def.Id, def.Price, remaining, def.OncePerRun);
+
+    private static int? RemainingOf(ShopItemDef def)
+        => def.OncePerRun || IsSpecial(def) ? 1 : (int?)null;
+
+    private static bool IsSpecial(ShopItemDef def)
     {
-        for (int i = 0; i < row.Tags.Length; i++)
+        if (def.Slot == ShopSlot.Rotating) return true;
+        var tags = def.Tags;
+        if (tags is null) return false;
+        for (int i = 0; i < tags.Length; i++)
         {
-            if (string.Equals(row.Tags[i], tag, StringComparison.Ordinal))
+            if (string.Equals(tags[i], SpecialTag, StringComparison.Ordinal))
                 return true;
         }
 

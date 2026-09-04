@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
 using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.Core;
@@ -12,13 +10,12 @@ namespace PerformativeMail.Sim.Tests.Run;
 
 public sealed class ShopSessionTests
 {
-    private static readonly ItemDefId Bandage = new(2);
-    private const uint Seed = 0x7F3A9C21;
+    private static readonly ItemDefId BandageId = new(1);
 
     [Fact]
     public void TryBuy_OfferedItem_DebitsWalletAndGrantsItem()
     {
-        var fx = Fixture.WithStarter();
+        var fx = BandageShop(new Cents(200));
         fx.Shop.RollOffers(1);
 
         var bought = Assert.IsType<ShopBought>(fx.Shop.TryBuy("bandage_x3"));
@@ -27,76 +24,164 @@ public sealed class ShopSessionTests
         Assert.Equal(new Cents(80), bought.Paid);
         Assert.Equal("bandage", bought.Item);
         Assert.Equal(3, bought.Count);
+        Assert.Null(bought.Blueprint);
         Assert.Equal(new Cents(120), fx.Wallet.Balance);
-        Assert.Equal(3, fx.Count(Bandage));
+        Assert.Equal(3, CountBandages(fx));
+    }
+
+    [Fact]
+    public void TryBuy_StarterBandage_DebitsWalletAndGrantsItem()
+    {
+        string path = Path.Combine(FindContentRoot(), ShopCatalog.RelativeDir, "starter.json");
+        var defs = ShopCatalog.Parse(File.ReadAllText(path), path);
+        var fx = BandageShop(new Cents(200), defs);
+        fx.Shop.RollOffers(1);
+
+        Assert.IsType<ShopBought>(fx.Shop.TryBuy("bandage_x3"));
+        Assert.Equal(new Cents(120), fx.Wallet.Balance);
+        Assert.Equal(3, CountBandages(fx));
     }
 
     [Fact]
     public void TryBuy_OncePerRun_SecondBuyRejected()
     {
-        var fx = Fixture.With(Blueprint("bp_sorting", 400), Wallet: new Wallet(new Cents(800)));
-        fx.Shop.RollOffers(1);
+        var defs = ShopCatalog.Parse(
+            """
+            {
+              "id": "bp_sorting",
+              "name": "Blueprint: Sorting",
+              "kind": "blueprint",
+              "price": 400,
+              "grants": { "blueprint": "bp_sorting" },
+              "availability": { "fromShift": 1, "slot": "fixed" },
+              "oncePerRun": true,
+              "tags": []
+            }
+            """,
+            "once-per-run");
+        var wallet = new Wallet(new Cents(400));
+        var shop = new ShopSession(defs, wallet, seed: 1);
+        shop.RollOffers(1);
 
-        var first = Assert.IsType<ShopBought>(fx.Shop.TryBuy("bp_sorting"));
+        var first = Assert.IsType<ShopBought>(shop.TryBuy("bp_sorting"));
         Assert.Equal("bp_sorting", first.Blueprint);
-        Assert.Contains("bp_sorting", fx.Shop.OwnedBlueprints);
-        Assert.Equal(new Cents(400), fx.Wallet.Balance);
+        Assert.Equal(new Cents(400), first.Paid);
+        Assert.Equal(new Cents(0), wallet.Balance);
+        Assert.Contains("bp_sorting", shop.OwnedBlueprints);
 
-        var second = Assert.IsType<ShopRejected>(fx.Shop.TryBuy("bp_sorting"));
+        var second = Assert.IsType<ShopRejected>(shop.TryBuy("bp_sorting"));
         Assert.Equal(ShopReject.AlreadyBought, second.Reason);
-        Assert.Equal(new Cents(400), fx.Wallet.Balance);
-        Assert.Single(fx.Shop.OwnedBlueprints);
+        Assert.Equal(new Cents(0), wallet.Balance);
+        Assert.Single(shop.OwnedBlueprints);
     }
 
     [Fact]
     public void TryBuy_LastCard_TwoBuys_OneGrant()
     {
-        var fx = Fixture.With(
-            Item("special_last", 50, "bandage", 1, ShopSlot.Rotating, once: false, "special"),
-            Wallet: new Wallet(new Cents(200)));
+        var defs = ShopCatalog.Parse(
+            """
+            {
+              "id": "special_last",
+              "name": "Last Card",
+              "kind": "item",
+              "price": 50,
+              "grants": { "item": "bandage", "count": 1 },
+              "availability": { "fromShift": 1, "slot": "rotating" },
+              "oncePerRun": false,
+              "tags": ["special"]
+            }
+            """,
+            "last-card");
+        var fx = BandageShop(new Cents(200), defs);
         fx.Shop.RollOffers(1);
 
         var first = fx.Shop.TryBuy("special_last");
         var second = fx.Shop.TryBuy("special_last");
 
         Assert.IsType<ShopBought>(first);
-        var reject = Assert.IsType<ShopRejected>(second);
-        Assert.True(reject.Reason is ShopReject.SoldOut or ShopReject.AlreadyBought);
+        var rejected = Assert.IsType<ShopRejected>(second);
+        Assert.True(rejected.Reason is ShopReject.SoldOut or ShopReject.AlreadyBought);
         Assert.Equal(new Cents(150), fx.Wallet.Balance);
-        Assert.Equal(1, fx.Count(Bandage));
+        Assert.Equal(1, CountBandages(fx));
     }
 
     [Fact]
-    public void TryBuy_InsufficientFunds_DoesNotGrant()
+    public void TryBuy_InsufficientFunds_NoGrant()
     {
-        var fx = Fixture.WithStarter(new Wallet(new Cents(79)));
+        var fx = BandageShop(new Cents(79));
         fx.Shop.RollOffers(1);
 
         var rejected = Assert.IsType<ShopRejected>(fx.Shop.TryBuy("bandage_x3"));
+
         Assert.Equal(ShopReject.InsufficientFunds, rejected.Reason);
         Assert.Equal(new Cents(79), fx.Wallet.Balance);
-        Assert.Equal(0, fx.Count(Bandage));
+        Assert.Equal(0, CountBandages(fx));
     }
 
     [Fact]
     public void TryBuy_DeliveryPhase_Closed()
     {
-        var fx = Fixture.WithStarter();
+        var fx = BandageShop(new Cents(200));
         fx.Shop.RollOffers(1, RunPhase.Delivery);
 
         var rejected = Assert.IsType<ShopRejected>(fx.Shop.TryBuy("bandage_x3"));
+
         Assert.Equal(ShopReject.Closed, rejected.Reason);
         Assert.Equal(new Cents(200), fx.Wallet.Balance);
+        Assert.Equal(0, CountBandages(fx));
+    }
+
+    [Fact]
+    public void TryBuy_Payday_AllowsBuy()
+    {
+        var fx = BandageShop(new Cents(200));
+        fx.Shop.RollOffers(1, RunPhase.Payday);
+
+        Assert.IsType<ShopBought>(fx.Shop.TryBuy("bandage_x3"));
+        Assert.Equal(new Cents(120), fx.Wallet.Balance);
+        Assert.Equal(3, CountBandages(fx));
+    }
+
+    [Fact]
+    public void TryBuy_NoRoom_DoesNotDebit()
+    {
+        var catalog = new BandageStackCatalog();
+        var inv = new InventorySystem(catalog);
+        var dest = inv.CreateContainer(new ContainerSpec(ContainerShape.Grid(1, 1), null));
+        Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(dest, new ItemStack(BandageId, 5))));
+        var wallet = new Wallet(new Cents(200));
+        var shop = new ShopSession(
+            new[] { BandageRow() },
+            wallet,
+            seed: 1,
+            inv,
+            dest,
+            new Dictionary<string, ItemDefId>(StringComparer.Ordinal) { ["bandage"] = BandageId });
+        shop.RollOffers(1);
+
+        var rejected = Assert.IsType<ShopRejected>(shop.TryBuy("bandage_x3"));
+
+        Assert.Equal(ShopReject.NoRoom, rejected.Reason);
+        Assert.Equal(new Cents(200), wallet.Balance);
+        Assert.Equal(5, CountIn(inv, dest));
     }
 
     [Fact]
     public void RollOffers_Shift1_OmitsFromShift2()
     {
-        var fx = Fixture.WithStarter();
-        fx.Shop.RollOffers(1);
+        var defs = new[]
+        {
+            BandageRow(),
+            ItemRow("oil_can_x3", 160, "oil_can", 3, fromShift: 2)
+        };
+        var shop = new ShopSession(defs, new Wallet(new Cents(200)), seed: 1);
+        shop.RollOffers(1);
 
-        Assert.DoesNotContain(fx.Shop.Offers, o => o.Id == "oil_can_x3");
-        Assert.Contains(fx.Shop.Offers, o => o.Id == "bandage_x3");
+        Assert.Contains(shop.Offers, o => o.Id == "bandage_x3");
+        Assert.DoesNotContain(shop.Offers, o => o.Id == "oil_can_x3");
+
+        shop.RollOffers(2);
+        Assert.Contains(shop.Offers, o => o.Id == "oil_can_x3");
     }
 
     [Fact]
@@ -104,140 +189,127 @@ public sealed class ShopSessionTests
     {
         var defs = new[]
         {
-            Item("special_a", 10, "bandage", 1, ShopSlot.Rotating, once: false, "special"),
-            Item("special_b", 10, "bandage", 1, ShopSlot.Rotating, once: false, "special"),
-            Item("special_c", 10, "bandage", 1, ShopSlot.Rotating, once: false, "special")
+            SpecialRow("special_a", 10),
+            SpecialRow("special_b", 20),
+            SpecialRow("special_c", 30),
+            SpecialRow("special_d", 40)
         };
+        const uint seed = 0x51A7EED1;
+        var a = new ShopSession(defs, new Wallet(), seed);
+        var b = new ShopSession(defs, new Wallet(), seed);
+        a.RollOffers(1);
+        b.RollOffers(1);
 
-        var a = Fixture.With(defs);
-        var b = Fixture.With(defs);
-        a.Shop.RollOffers(1);
-        b.Shop.RollOffers(1);
-
-        Assert.Equal(Ids(a.Shop.Offers), Ids(b.Shop.Offers));
-        Assert.Equal(2, a.Shop.Offers.Count);
+        Assert.Equal(2, a.Offers.Count);
+        Assert.Equal(OfferIds(a), OfferIds(b));
     }
 
     [Fact]
     public void TryBuy_WalletAtMisdeliveryFloor_StillRequiresFullPrice()
     {
-        var fx = Fixture.WithStarter(new Wallet(new Cents(-400)));
+        var fx = BandageShop(new Cents(-400));
         fx.Shop.RollOffers(1);
 
         var rejected = Assert.IsType<ShopRejected>(fx.Shop.TryBuy("bandage_x3"));
         Assert.Equal(ShopReject.InsufficientFunds, rejected.Reason);
         Assert.Equal(new Cents(-400), fx.Wallet.Balance);
+        Assert.Equal(0, CountBandages(fx));
     }
 
-    private static List<string> Ids(IReadOnlyList<ShopOffer> offers)
+    [Fact]
+    public void RollOffers_UnlimitedFixed_HasNullRemaining()
     {
-        var ids = new List<string>(offers.Count);
-        for (int i = 0; i < offers.Count; i++)
-            ids.Add(offers[i].Id);
-        return ids;
+        var shop = new ShopSession(new[] { BandageRow() }, new Wallet(), seed: 1);
+        shop.RollOffers(1);
+
+        var offer = Assert.Single(shop.Offers);
+        Assert.Equal("bandage_x3", offer.Id);
+        Assert.Null(offer.Remaining);
+        Assert.False(offer.OncePerRun);
     }
 
-    private static ShopItemDef Item(
-        string id,
-        int price,
-        string grant,
-        int count,
-        ShopSlot slot,
-        bool once,
-        params string[] tags)
+    private static Fixture BandageShop(Cents balance, IReadOnlyList<ShopItemDef>? defs = null)
     {
-        return new ShopItemDef(
+        var catalog = new BandageStackCatalog();
+        var inv = new InventorySystem(catalog);
+        var dest = inv.CreateContainer(ContainerSpec.Chest);
+        var wallet = new Wallet(balance);
+        var shop = new ShopSession(
+            defs ?? new[] { BandageRow() },
+            wallet,
+            seed: 1,
+            inv,
+            dest,
+            new Dictionary<string, ItemDefId>(StringComparer.Ordinal) { ["bandage"] = BandageId });
+        return new Fixture(shop, wallet, inv, dest);
+    }
+
+    private static ShopItemDef BandageRow()
+        => new(
+            "bandage_x3",
+            "Bandages ×3",
+            ShopKind.Item,
+            80,
+            "bandage",
+            3,
+            null,
+            null,
+            1,
+            ShopSlot.Fixed,
+            false,
+            Array.Empty<string>());
+
+    private static ShopItemDef ItemRow(string id, int price, string grantItem, int count, int fromShift)
+        => new(
             id,
             id,
             ShopKind.Item,
             price,
-            grant,
+            grantItem,
             count,
             null,
             null,
-            1,
-            slot,
-            once,
-            tags);
-    }
-
-    private static ShopItemDef Blueprint(string id, int price)
-    {
-        return new ShopItemDef(
-            id,
-            id,
-            ShopKind.Blueprint,
-            price,
-            null,
-            null,
-            id,
-            null,
-            1,
+            fromShift,
             ShopSlot.Fixed,
-            true,
+            false,
             Array.Empty<string>());
+
+    private static ShopItemDef SpecialRow(string id, int price)
+        => new(
+            id,
+            id,
+            ShopKind.Item,
+            price,
+            "bandage",
+            1,
+            null,
+            null,
+            1,
+            ShopSlot.Rotating,
+            false,
+            new[] { "special" });
+
+    private static int CountBandages(Fixture fx) => CountIn(fx.Inv, fx.Dest);
+
+    private static int CountIn(InventorySystem inv, ContainerId dest)
+    {
+        Assert.True(inv.TryGetContainer(dest, out var grid));
+        int n = 0;
+        foreach (var entry in grid.Entries)
+        {
+            if (entry.Stack is ItemStack item && item.Item.Equals(BandageId))
+                n += item.Count;
+        }
+
+        return n;
     }
 
-    private sealed class Fixture
+    private static string[] OfferIds(ShopSession shop)
     {
-        private Fixture(ShopItemDef[] defs, Wallet wallet)
-        {
-            Wallet = wallet;
-            Catalog = new ShopItems();
-            Inv = new InventorySystem(Catalog);
-            GrantTo = Inv.CreateContainer(ContainerSpec.Depot);
-            ItemIds = new Dictionary<string, ItemDefId>(StringComparer.Ordinal)
-            {
-                ["bandage"] = Bandage
-            };
-            Shop = new ShopSession(defs, Wallet, Seed, Inv, GrantTo, ItemIds);
-        }
-
-        public static Fixture WithStarter(Wallet? wallet = null)
-        {
-            var defs = ShopCatalog.LoadDir(Path.Combine(FindContentRoot(), ShopCatalog.RelativeDir));
-            return new Fixture(defs, wallet ?? new Wallet(new Cents(200)));
-        }
-
-        public static Fixture With(params ShopItemDef[] defs) => new(defs, new Wallet(new Cents(200)));
-
-        public static Fixture With(ShopItemDef def, Wallet Wallet) => new(new[] { def }, Wallet);
-
-        public Wallet Wallet { get; }
-
-        public ShopItems Catalog { get; }
-
-        public InventorySystem Inv { get; }
-
-        public ContainerId GrantTo { get; }
-
-        public IReadOnlyDictionary<string, ItemDefId> ItemIds { get; }
-
-        public ShopSession Shop { get; }
-
-        public int Count(ItemDefId item)
-        {
-            int n = 0;
-            Assert.True(Inv.TryGetContainer(GrantTo, out var grid));
-            foreach (var entry in grid.Entries)
-            {
-                if (entry.Stack is ItemStack stack && stack.Item.Equals(item))
-                    n += stack.Count;
-            }
-
-            return n;
-        }
-    }
-
-    private sealed class ShopItems : IStackCatalog
-    {
-        public Footprint FootprintOf(StackKey key) => new(1, 1);
-
-        public int MaxStackOf(StackKey key) => 5;
-
-        public WeightClass WeightOf(StackKey key) => WeightClass.Light;
-
-        public StackCategory CategoryOf(StackKey key) => StackCategory.Consumable;
+        var ids = new string[shop.Offers.Count];
+        for (int i = 0; i < shop.Offers.Count; i++)
+            ids[i] = shop.Offers[i].Id;
+        return ids;
     }
 
     private static string FindContentRoot()
@@ -255,5 +327,34 @@ public sealed class ShopSessionTests
         }
 
         throw new FileNotFoundException("content/world/archetypes.json");
+    }
+
+    private readonly record struct Fixture(
+        ShopSession Shop,
+        Wallet Wallet,
+        InventorySystem Inv,
+        ContainerId Dest);
+
+    private sealed class BandageStackCatalog : IStackCatalog
+    {
+        public Footprint FootprintOf(StackKey key)
+        {
+            if (!key.IsMail && key.Def == BandageId.Value) return new Footprint(1, 1);
+            throw new ArgumentException("Unknown stack key.", nameof(key));
+        }
+
+        public int MaxStackOf(StackKey key)
+        {
+            if (!key.IsMail && key.Def == BandageId.Value) return 5;
+            throw new ArgumentException("Unknown stack key.", nameof(key));
+        }
+
+        public WeightClass WeightOf(StackKey key)
+        {
+            if (!key.IsMail && key.Def == BandageId.Value) return WeightClass.Light;
+            throw new ArgumentException("Unknown stack key.", nameof(key));
+        }
+
+        public StackCategory CategoryOf(StackKey key) => StackCategory.Consumable;
     }
 }
