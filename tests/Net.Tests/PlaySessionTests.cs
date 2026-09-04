@@ -182,7 +182,7 @@ public sealed class PlaySessionTests
     }
 
     [Fact]
-    public void GuestLeave_DespawnsOnHost()
+    public void GuestLeave_HoldsSeatOnHost()
     {
         var stack = new LoopbackStack();
         using var host = new PlaySessionMachine(stack);
@@ -197,7 +197,7 @@ public sealed class PlaySessionTests
         Assert.IsType<PlaySession.Menu>(guest.State);
         PumpBoth(host, guest, ref now, MoveIntent.Idle, 4);
 
-        Assert.Single(Assert.IsType<PlaySession.Playing>(host.State).Pawns);
+        Assert.Equal(2, Assert.IsType<PlaySession.Playing>(host.State).Pawns.Count);
     }
 
     [Fact]
