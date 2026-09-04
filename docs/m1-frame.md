@@ -16,11 +16,11 @@ This run cuts those gates into landable child issues. The current landable unit 
 
 Touch `.github/workflows/ci.yml`. Reuse `SeedViewer`, `WorldGen.GenerateSmallIsland`, `WorldHash.Compute`, and `WorldGenHashTests.GoldenWorldHash`. Keep U10.1 solo hand cells, U10.2 `FiveShiftRun`, U10.3 `JoinState` size, `HudBoot.Placeholder` inspect-only, HUD `mouse_filter` Ignore, and Host/Join clickable. Do not start M2–M5.
 
-U10.4 runs `SeedViewer` for seed `0x7F3A9C21` on `windows-latest` and `ubuntu-latest`. Both runners must print `worldHash 0x821670054873680E`. The job fails if either hash differs. The existing Ubuntu `test` job still runs the full suite. No generation rewrite, no Godot on Windows, no `SchemaHash` bump.
+U10.4 runs `SeedViewer` for seed `0x7F3A9C21` on `windows-latest` and `ubuntu-latest`. Both runners must print a `worldHash 0x…` line. `WorldGenHashTests.GenerateSmallIsland_FixedSeed_GoldenWorldHash` is the pin (`GoldenWorldHash`). The job fails if either runner's generate step drifts. The existing Ubuntu `test` job still runs the full suite. No generation rewrite, no Godot on Windows, no `SchemaHash` bump.
 
 ## Rigor
 
-High for the acceptance predicate. Both OS runners must print the same golden hex. `SeedViewer` is the print and the pin. The Ubuntu `test` job still runs `WorldGenHashTests`. U10.1 through U10.3 stay.
+High for the acceptance predicate. Both OS runners must print the same hex. `SeedViewer` prints. `WorldGenHashTests.GoldenWorldHash` pins. U10.1 through U10.3 stay.
 
 ## Blockers found while grounding
 

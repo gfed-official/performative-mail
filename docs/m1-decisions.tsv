@@ -309,3 +309,6 @@ ts	phase	decision	why	evidence	result
 2026-09-04T06:06:43Z	verify	U10 and no-regress filter 46 passed	JoinState FiveShiftRun SoloHand play boot HUD Ignore plus golden hash	dotnet test --filter JoinState|MainPlayBoot|HudBoot|HudScene|FiveShiftRun|SoloHand|GoldenWorldHash	VERIFIED
 2026-09-04T06:06:43Z	verify	BalanceSim and ContentValidator exit 0	U10.1 880/600 MET 810/1100 MISS; U10.2 five paydays duration 1450s	dotnet run --project tools/BalanceSim -- content	VERIFIED
 2026-09-04T06:06:43Z	verify	CI worldHash match on Windows and Linux	Both runners printed worldHash 0x821670054873680E; run 33842844049 all checks green	https://github.com/gfed-official/performative-mail/actions/runs/33842844049	VERIFIED
+2026-09-04T06:11:09Z	audit	Trail review flagged CI copies the golden hex	Frame said SeedViewer reuses GoldenWorldHash but YAML held a second pin	docs/m1-decisions.tsv	open
+2026-09-04T06:11:09Z	architect	Pin via WorldGenHashTests on both OS	SeedViewer prints; the test constant is the one golden	.github/workflows/ci.yml	accepted
+2026-09-04T06:11:17Z	audit	Dropped YAML GOLDEN_WORLD_HASH copy	WorldGenHashTests.GoldenWorldHash is the pin on both runners	.github/workflows/ci.yml	accepted

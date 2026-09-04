@@ -44,28 +44,32 @@ jobs:
         shell: bash
     env:
       FIXED_SEED: "0x7F3A9C21"
-      GOLDEN_WORLD_HASH: "0x821670054873680E"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
       - name: Restore
-        run: dotnet restore tools/SeedViewer/SeedViewer.csproj
+        run: |
+          dotnet restore tools/SeedViewer/SeedViewer.csproj
+          dotnet restore tests/Sim.Tests/PerformativeMail.Sim.Tests.csproj
       - name: Build
-        run: dotnet build tools/SeedViewer/SeedViewer.csproj --no-restore --configuration Release
-      - name: Golden worldHash
+        run: |
+          dotnet build tools/SeedViewer/SeedViewer.csproj --no-restore --configuration Release
+          dotnet build tests/Sim.Tests/PerformativeMail.Sim.Tests.csproj --no-restore --configuration Release
+      - name: Print worldHash
         run: |
           set -euo pipefail
           out=$(dotnet run --project tools/SeedViewer --configuration Release --no-build -- "$FIXED_SEED")
           printf '%s\n' "$out"
-          hash_line=$(printf '%s\n' "$out" | grep '^worldHash ' | head -n 1)
+          hash_line=$(printf '%s\n' "$out" | grep '^worldHash 0x' | head -n 1)
           printf 'runner %s %s\n' "${{ matrix.os }}" "$hash_line"
-          if [ "$hash_line" != "worldHash ${GOLDEN_WORLD_HASH}" ]; then
-            printf 'expected worldHash %s\n' "$GOLDEN_WORLD_HASH"
-            printf 'got %s\n' "${hash_line:-<missing>}"
-            exit 1
-          fi
+          test -n "$hash_line"
+      - name: Pin worldHash
+        run: >
+          dotnet test tests/Sim.Tests/PerformativeMail.Sim.Tests.csproj
+          --no-build --configuration Release --verbosity minimal
+          --filter FullyQualifiedName~GenerateSmallIsland_FixedSeed_GoldenWorldHash
 
   # Godot integration lives in this container, not on the agent host.
   # mono-* is the C# / .NET editor (filename still uses mono).
