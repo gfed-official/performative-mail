@@ -9,7 +9,6 @@ public enum MessageKind : byte
     Snapshot = 20,
     Ping = 30,
     Pong = 31,
-    // Channel 1. Next free after Hello/Input/Snapshot/Ping. Do not renumber the above.
     InventoryEvent = 40,
     WorldOffer = 50,
     RunSettings = 51,
