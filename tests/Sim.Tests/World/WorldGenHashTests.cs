@@ -11,8 +11,11 @@ public sealed class WorldGenHashTests
     // coastline + falloff, so the golden must move. Kept to prove this is not a rename.
     public const ulong U11SkeletonWorldHash = 0x24849E8EF0DBB228UL;
 
-    // Seed 0x7F3A9C21 after the U1.2 height field. Not 0x24849E8EF0DBB228.
-    public const ulong GoldenWorldHash = 0x936BE960EC16395AUL;
+    // Seed 0x7F3A9C21 after the U1.2 height field and empty addresses.
+    public const ulong U12HeightmapWorldHash = 0x936BE960EC16395AUL;
+
+    // Seed 0x7F3A9C21 after U1.3 fills the address table. Not 0x936BE960EC16395A.
+    public const ulong GoldenWorldHash = 0x631CE9A07B6A504FUL;
 
     [Fact]
     public void GenerateSmallIsland_SameSeed_SameWorldHash()
@@ -45,7 +48,7 @@ public sealed class WorldGenHashTests
         Assert.Equal(WorldGen.SmallIslandTiles, tables.Height);
         Assert.Equal(WorldGen.SmallIslandTileCm, tables.TileCm);
         Assert.Equal(WorldGen.SmallIslandTiles * WorldGen.SmallIslandTiles, tables.Heights.Length);
-        Assert.Empty(tables.Addresses);
+        Assert.NotEmpty(tables.Addresses);
         Assert.Equal(tables.Heights.Length, tables.Buildable.Length);
         foreach (var height in tables.Heights)
             Assert.InRange(height, short.MinValue, short.MaxValue);
@@ -56,6 +59,15 @@ public sealed class WorldGenHashTests
     {
         var hash = WorldHash.Compute(WorldGen.GenerateSmallIsland(FixedSeed));
         Assert.NotEqual(U11SkeletonWorldHash, hash);
+        Assert.NotEqual(U12HeightmapWorldHash, hash);
+        Assert.Equal(GoldenWorldHash, hash);
+    }
+
+    [Fact]
+    public void GenerateSmallIsland_FixedSeed_ReplacesU12HeightmapHash()
+    {
+        var hash = WorldHash.Compute(WorldGen.GenerateSmallIsland(FixedSeed));
+        Assert.NotEqual(U12HeightmapWorldHash, hash);
         Assert.Equal(GoldenWorldHash, hash);
     }
 

@@ -30,4 +30,20 @@ public sealed class RngStream
     }
 
     public uint NextUInt32() => _rng.NextUInt32();
+
+    public uint NextBounded(uint maxExclusive)
+    {
+        if (maxExclusive == 0)
+            throw new ArgumentOutOfRangeException(nameof(maxExclusive));
+        if (maxExclusive == 1)
+            return 0;
+
+        uint threshold = (0u - maxExclusive) % maxExclusive;
+        uint r;
+        do
+        {
+            r = _rng.NextUInt32();
+        } while (r < threshold);
+        return r % maxExclusive;
+    }
 }

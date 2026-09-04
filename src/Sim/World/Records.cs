@@ -43,3 +43,12 @@ public readonly record struct PostOfficeRecord(
 {
     public TileRect Footprint => new(Tile.X, Tile.Y, SizeTiles.X, SizeTiles.Y);
 }
+
+public readonly record struct StreetRecord(byte Id, string Name, byte District, TileCoord[] Tiles);
+
+public readonly record struct LotRecord(
+    int Id,
+    byte StreetId,
+    byte District,
+    TileRect Footprint,
+    bool Residential);
