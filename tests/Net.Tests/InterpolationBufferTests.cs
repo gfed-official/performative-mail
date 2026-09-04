@@ -71,6 +71,85 @@ public sealed class InterpolationBufferTests
     }
 
     [Fact]
+    public void PastNewestWithinExtrapolation_ContinuesAlongLastSegmentVelocity()
+    {
+        var buffer = new InterpolationBuffer();
+        buffer.Push(TimeSpan.Zero, new PlayerPose(0, 0, 0, 0));
+        buffer.Push(TimeSpan.FromMilliseconds(50), new PlayerPose(100, 0, 0, 0));
+
+        // present = now - Holdback = 75 ms: 25 ms past newest. Velocity 2 cm/ms → x = 150.
+        var now = InterpolationBuffer.Holdback + TimeSpan.FromMilliseconds(75);
+        Assert.True(buffer.TryPresent(now, out var pose));
+        Assert.Equal(150, pose.Xcm);
+    }
+
+    [Fact]
+    public void PastMaxExtrapolation_ClampsToNewest()
+    {
+        var buffer = new InterpolationBuffer();
+        buffer.Push(TimeSpan.Zero, new PlayerPose(0, 0, 0, 0));
+        buffer.Push(TimeSpan.FromMilliseconds(50), new PlayerPose(100, 0, 0, 0));
+
+        // present = newest + Holdback + 1 ms. Beyond the extrapolation window → clamp.
+        var now = InterpolationBuffer.Holdback
+            + TimeSpan.FromMilliseconds(50)
+            + InterpolationBuffer.Holdback
+            + TimeSpan.FromMilliseconds(1);
+        Assert.True(buffer.TryPresent(now, out var pose));
+        Assert.Equal(100, pose.Xcm);
+    }
+
+    [Fact]
+    public void SnapshotGaps_FrameToFrameDeltaStaysNearConstantVelocity()
+    {
+        // Unreliable 20 Hz snapshots; after the first pair, keep only every third packet (150 ms gaps).
+        // Holdback is 100 ms, so present overruns newest and clamp-past-newest freezes then jumps.
+        var buffer = new InterpolationBuffer();
+        const double VelCmPerMs = 2.0;
+        const double FrameMs = 1000.0 / 60.0;
+        const int SnapMs = 50;
+        var wall = TimeSpan.Zero;
+        int lastSnapIndex = -1;
+        int? prevX = null;
+        double maxAbsError = 0;
+
+        for (int frame = 0; frame < 180; frame++)
+        {
+            wall += TimeSpan.FromMilliseconds(FrameMs);
+            int snapIndex = (int)(wall.TotalMilliseconds / SnapMs);
+            if (snapIndex != lastSnapIndex)
+            {
+                lastSnapIndex = snapIndex;
+                if (snapIndex < 2 || snapIndex % 3 == 0)
+                {
+                    int snapAt = snapIndex * SnapMs;
+                    var poseAtSnap = new PlayerPose((int)Math.Round(VelCmPerMs * snapAt), 0, 0, 0);
+                    buffer.Push(TimeSpan.FromMilliseconds(snapAt), in poseAtSnap);
+                }
+            }
+
+            if (wall < InterpolationBuffer.Holdback)
+                continue;
+            if (!buffer.TryPresent(wall, out var presented))
+                continue;
+
+            if (prevX is int last)
+            {
+                double delta = presented.Xcm - last;
+                double ideal = VelCmPerMs * FrameMs;
+                maxAbsError = Math.Max(maxAbsError, Math.Abs(delta - ideal));
+            }
+
+            prevX = presented.Xcm;
+        }
+
+        Assert.True(prevX.HasValue, "Expected presented samples after holdback.");
+        Assert.True(
+            maxAbsError <= 4.0,
+            $"Frame delta drifted from constant velocity by {maxAbsError:F2} cm (limit 4 cm).");
+    }
+
+    [Fact]
     public void ClientRuntime_WiresRemoteThroughRemoteInterpolated_OwnerStaysPredicted()
     {
         var (server, client, transport) = Boot.CreateListenHost();
