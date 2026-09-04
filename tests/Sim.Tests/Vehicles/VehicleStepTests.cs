@@ -1,3 +1,4 @@
+using System;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Vehicles;
@@ -45,11 +46,23 @@ public sealed class VehicleStepTests
     }
 
     [Fact]
-    public void Displacement_UsesOnePointOneClamp()
+    public void Displacement_AboveMaxSpeedTimes1_1_IsClamped()
     {
+        var dt = TickClock.TickDurationSeconds;
+        var unclamped = 8.0 * Math.Sqrt(2.0) * dt;
+        var maxDisp = 8.0 * VehicleContext.SpeedClampFactor * dt;
         Assert.Equal(1.1f, VehicleContext.SpeedClampFactor);
-        Assert.Equal(8.0f, VehicleContext.BikeOnRoadMetersPerSecond);
-        Assert.Equal(5.0f, VehicleContext.BikeOffRoadMetersPerSecond);
+        Assert.True(unclamped > maxDisp);
+
+        var pose = VehicleStep.ApplyTick(
+            PlayerPose.Origin,
+            new InputCmd(0, MovementStep.AxisFull, MovementStep.AxisFull, 0, InputButtons.None),
+            VehicleContext.BikeOnRoad);
+
+        var expected = PlayerPose.QuantizeCm(maxDisp / Math.Sqrt(2.0));
+        Assert.Equal(expected, pose.Xcm);
+        Assert.Equal(expected, pose.Ycm);
+        Assert.Equal(0, pose.Zcm);
     }
 
     private static InputCmd Forward() =>

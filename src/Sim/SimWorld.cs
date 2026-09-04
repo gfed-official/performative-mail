@@ -65,10 +65,31 @@ public sealed class SimWorld
         if (bike.Driver.Value != 0 && bike.Driver != player)
             return false;
 
+        if (body.VehicleId.Value != 0 && body.VehicleId != vehicle)
+            ReleaseDriver(body.VehicleId, player);
+
         body.Mount(vehicle);
         bike.SetDriver(player);
         bike.SetPose(body.Pose);
         return true;
+    }
+
+    public bool TryDismount(EntityId player)
+    {
+        if (!Players.TryGet(player, out var body))
+            return false;
+        if (body.VehicleId.Value == 0)
+            return false;
+
+        ReleaseDriver(body.VehicleId, player);
+        body.Dismount();
+        return true;
+    }
+
+    private void ReleaseDriver(EntityId vehicle, EntityId player)
+    {
+        if (Vehicles.TryGet(vehicle, out var bike) && bike.Driver == player)
+            bike.ClearDriver();
     }
 
     public void ApplyInput(EntityId sender, in InputCmd cmd)

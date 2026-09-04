@@ -141,3 +141,6 @@ ts	phase	decision	why	evidence	result
 2026-09-04T00:46:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T00:46:00Z	verify	Acceptance filter passed	bike != walk; mounted predict; snapshot vehicleId; shop 120; Criterion2; ZeroDelay walk	dotnet test --filter OnRoadForward_DoesNotCallWalkStep|MountedPredict|MountedListenHost|TryBuy_Bike|Criterion2_200ms|ZeroDelay_PredictedPose	VERIFIED
 2026-09-04T00:47:30Z	verify	CI on c481b44 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33823088297	VERIFIED
+2026-09-04T00:52:00Z	architect	TryMount frees the prior bike; TryDismount clears both writers	PlayerBody.VehicleId and VehicleBody.Driver could diverge on remount	src/Sim/SimWorld.cs	accepted
+2026-09-04T00:52:00Z	subtract	Shop buy still returns grant string bike not a spawned id	ShopSession has no SimWorld; tests spawn via VehicleTable.SpawnBike	src/Sim/Run/ShopSession.cs	accepted
+2026-09-04T00:52:00Z	architect	Vehicle clamp stays 1.1; walk stays 1.15	ch06 vehicle table vs movement table; not one clamp for both paths	src/Sim/Vehicles/VehicleStep.cs	accepted
