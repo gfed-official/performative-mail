@@ -37,6 +37,8 @@ There is no `pawnCount` and no `schemaVersion`. jq uses `.pawns | length`.
 
 When `PlaySession.Playing.World` is null, `worldHash` is `0x0000000000000000` and every `worldEntityCounts` field is `0`.
 
+`--host --debug-world` writes the same Playing keys. `worldEntityCounts.houses` and `mailboxes` are `2`, and `worldHash` is `0x4CF184F2FA4D4EEE`.
+
 ## Example Playing object
 
 ```json

@@ -13,7 +13,16 @@ public static class ArcadeSession
     public static ArcadeBoot Create()
     {
         var settings = RunSettings.Arcade();
-        var tables = WorldGen.GenerateSmallIsland(settings.Seed);
+        return Boot(WorldGen.GenerateSmallIsland(settings.Seed), settings);
+    }
+
+    public static ArcadeBoot CreateDebug()
+    {
+        return Boot(DebugWorld.Tables(), RunSettings.Arcade());
+    }
+
+    private static ArcadeBoot Boot(WorldTables tables, RunSettings settings)
+    {
         ulong hash = WorldHash.Compute(tables);
         var atlas = WorldAtlas.FromTables(tables);
         var world = new SimWorld(atlas, MailStackCatalog.Default, unchecked((int)settings.Seed));

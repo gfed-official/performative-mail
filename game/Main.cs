@@ -592,11 +592,14 @@ public partial class Main : Node3D
     {
         string? join = null;
         bool host = false;
+        bool debugWorld = false;
         for (int i = 0; i < args.Length; i++)
         {
             var arg = args[i];
             if (arg == "--host")
                 host = true;
+            else if (arg == "--debug-world")
+                debugWorld = true;
             else if (arg == "--walk")
                 _walk = true;
             else if (arg.StartsWith("--join=", StringComparison.Ordinal))
@@ -628,7 +631,9 @@ public partial class Main : Node3D
                 _quitAfterMs = ms;
         }
 
-        if (host)
+        if (host && debugWorld)
+            _session.HostDebug();
+        else if (host)
             _session.Host();
         else if (join is not null && JoinTarget.TryParse(join, SessionOptions.DefaultPort, out var target))
             _session.Join(target);

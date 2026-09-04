@@ -15,6 +15,13 @@ public static class WorldHashCheck
 
     public static WorldHashVerdict Accept(uint seed, ulong expected, out WorldTables tables, out ulong local)
     {
+        if (expected == DebugWorld.Hash)
+        {
+            tables = DebugWorld.Tables();
+            local = WorldHash.Compute(tables);
+            return Compare(local, expected);
+        }
+
         tables = Regenerate(seed);
         local = WorldHash.Compute(tables);
         return Compare(local, expected);
