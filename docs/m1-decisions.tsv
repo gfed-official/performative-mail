@@ -152,3 +152,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T01:06:06Z	architect	Skip four-model arena	Chapter 08 and issue 94 settle the formula; two sketches compared in-thread	docs/m1-frame.md	accepted
 2026-09-04T01:06:06Z	subtract	No draft team grey-out vehicle apply or new Stat keys	U5.2 and U5.3 own those; U2.3 already closed the enum	src/Sim/Content/Stat.cs	accepted
 2026-09-04T01:06:06Z	architect	Fix chapter 07 Sigma-multipliers to Pi(mul)	Chapter 08 2.9 and the unit table are the contract; ch07 was the stale sum	spec/07-technical-architecture.md	accepted
+2026-09-04T01:08:46Z	verify	dotnet test Release 411 passed	Sim 275 Net 120 Bot 16; six new StatSheet tests; baseline U4.2 was 405	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T01:08:46Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T01:08:46Z	verify	Acceptance filter 6 passed	TwoMulsAndOneAdd is 34 not 39; no modifiers; adds; muls; other-stat isolation; unset base	dotnet test --filter TwoMulsAndOneAdd|NoModifiers|AddsOnly|MulsOnly|IgnoresOtherStats|UnsetBase	VERIFIED
+2026-09-04T01:08:46Z	u5.1	Owned StatSheet in-thread	Shape was settled; parent skipped nested code agents on prior units	src/Sim/Content/StatSheet.cs	accepted
