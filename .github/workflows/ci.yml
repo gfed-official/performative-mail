@@ -115,3 +115,5 @@ jobs:
         run: bash tools/godot/ci.sh worldstage
       - name: Headless Host interact pickup and deliver
         run: bash tools/godot/ci.sh interact
+      - name: Headless Host live inventory overlay dump
+        run: bash tools/godot/ci.sh live-overlay

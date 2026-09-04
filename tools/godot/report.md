@@ -39,9 +39,11 @@ When `PlaySession.Playing.World` is null, `worldHash` is `0x0000000000000000` an
 
 `--host --debug-world` writes the same Playing keys. `worldEntityCounts.houses` and `mailboxes` are `2`, and `worldHash` is `0x4CF184F2FA4D4EEE`.
 
-`--debug-helper=` does not add keys. `intake` and `mailbox` change `pawns[].x` / `pawns[].y`. `overlay` sets `overlayOpen` to true. `give-mail` is visible in inventory, not in this object. `interact` stocks Intake, picks up with Interact, delivers to the first mailbox, and leaves `wallet` at `8` and the local pawn at `200, 1600`.
+`--debug-helper=` does not add keys. `intake` and `mailbox` change `pawns[].x` / `pawns[].y`. `overlay` and `live-overlay` set `overlayOpen` to true. `give-mail` is visible in inventory, not in this object. `interact` stocks Intake, picks up with Interact, delivers to the first mailbox, and leaves `wallet` at `8` and the local pawn at `200, 1600`. `live-overlay` picks up the same Intake letter, opens the overlay, and leaves `overlayOpen` true with the letter still held.
 
 `--world-dump=` is a sidecar Label3D dump from `WorldStage.Dump`. It is not a SmokeReport key. `tools/godot/ci.sh worldstage` asserts `worldEntityCounts` here and the live labels in that dump.
+
+`--overlay-dump=` is a sidecar Control dump from `InventoryOverlay.Dump`. `--inspect-overlay` writes OverlayBootReplica cases `open` and `closed`. A Playing quit with `--overlay-dump=` writes case `live` from the bound replica. `tools/godot/ci.sh live-overlay` asserts `overlayOpen` here and the live hotbar cell in that dump.
 
 ## Example Playing object
 
