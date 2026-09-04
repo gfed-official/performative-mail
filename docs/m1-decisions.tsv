@@ -207,3 +207,11 @@ ts	phase	decision	why	evidence	result
 2026-09-04T02:49:52Z	verify	dotnet test Release 485 passed	Sim 332 Net 137 Bot 16; baseline U6.3 was 463; 22 new Results/XP tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
 2026-09-04T02:49:52Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T02:49:52Z	verify	Acceptance filter 22 passed	Award pins 100*shifts+50*victory+5*deliveries; seed PM1-SMALL-7F3A9C21-CM.DR; score 14375	dotnet test --filter PostalRankXp|ResultsPayload	VERIFIED
+2026-09-04T03:00:00Z	frame	Frame U7.2 as MetaProfile persist (XP only)	Issue 101; chapter 08 3.8 names profile.json; U7.1 award is the write	https://github.com/gfed-official/performative-mail/issues/101	open
+2026-09-04T03:00:00Z	architect	Chose MetaProfile plus MetaProfileStore Load/Save	Static store takes a path; tests use temp files; no hidden path state	src/Sim/Meta/MetaProfileStore.cs	accepted
+2026-09-04T03:00:00Z	architect	Skip four-model arena	Chapter 08 3.8 names the fields; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T03:00:00Z	subtract	No Steam Cloud unlock enforcement cosmetics stats recentRuns settings overlay	Issue names id name rankXp shallow unlocks; U9.3 owns overlay	spec/08-data-schemas.md	accepted
+2026-09-04T03:00:00Z	verify	dotnet test Release 491 passed	Sim 338 Net 137 Bot 16; baseline U7.1 was 485; 6 new persist tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T03:00:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T03:00:00Z	verify	Acceptance filter 28 passed	WriteResults 3400+650=4050; reload matches; file is valid JSON	dotnet test --filter MetaProfileStore|PostalRankXp|ResultsPayload	VERIFIED
+2026-09-04T03:00:00Z	verify	Read written profile.json rankXp 4050	Probe WriteResults then Load; payload XP 650 unchanged	/tmp/pm-u72-probe/profile.json	VERIFIED
