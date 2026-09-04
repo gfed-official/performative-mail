@@ -1,0 +1,14 @@
+[
+  {
+    "id": "small_island",
+    "weight": 50,
+    "sizeTiles": [300, 300],
+    "towns": [{ "size": "medium", "count": 1 }],
+    "districtHouseCounts": [10, 8, 10, 10, 12],
+    "apartmentComplexes": { "fromDistrict": 4, "max": 1 },
+    "businessDocks": { "fromDistrict": 4, "max": 1 },
+    "forestRatioMin": 0.25,
+    "resourceMultiplier": 3.0,
+    "rankRequired": 1
+  }
+]

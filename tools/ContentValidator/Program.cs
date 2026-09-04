@@ -45,4 +45,14 @@ catch (Exception ex)
     return 1;
 }
 
+try
+{
+    ContentFiles.Validate(contentRoot);
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine(ex.Message);
+    return 1;
+}
+
 return 0;
