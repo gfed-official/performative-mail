@@ -220,6 +220,75 @@ public sealed class PlaySessionTests
     }
 
     [Fact]
+    public void SoloHost_ClockPause_FreezesMovement()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        PumpHost(host, ref now, MoveIntent.Idle, 8);
+
+        var started = Assert.IsType<PlaySession.Playing>(host.State).Pawns[0].Pose;
+        var forward = new MoveIntent(0, sbyte.MaxValue, 0, InputButtons.None);
+        PumpHost(host, ref now, forward, 15);
+        var moved = Assert.IsType<PlaySession.Playing>(host.State).Pawns[0].Pose;
+        Assert.NotEqual(started, moved);
+
+        Assert.True(host.TrySetClockPaused(true));
+        Assert.True(host.ClockPaused);
+        PumpHost(host, ref now, forward, 15);
+        Assert.Equal(moved, Assert.IsType<PlaySession.Playing>(host.State).Pawns[0].Pose);
+
+        Assert.True(host.TrySetClockPaused(false));
+        Assert.False(host.ClockPaused);
+        PumpHost(host, ref now, forward, 15);
+        Assert.NotEqual(moved, Assert.IsType<PlaySession.Playing>(host.State).Pawns[0].Pose);
+    }
+
+    [Fact]
+    public void TwoPlayers_ClockPause_RejectedAndRunContinues()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        using var guest = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        guest.Join(stack.LocalTarget);
+        PumpBoth(host, guest, ref now, MoveIntent.Idle, 8);
+
+        Assert.False(host.TrySetClockPaused(true));
+        Assert.False(host.ClockPaused);
+        Assert.False(guest.TrySetClockPaused(true));
+        Assert.False(guest.ClockPaused);
+
+        var guestBefore = Assert.IsType<PlaySession.Playing>(guest.State);
+        var remoteBefore = Assert.Single(guestBefore.Pawns, p => p.Role == PawnRole.Remote).Pose;
+        var forward = new MoveIntent(0, sbyte.MaxValue, 0, InputButtons.None);
+        PumpBoth(host, guest, ref now, forward, 30);
+        var remoteAfter = Assert.Single(
+            Assert.IsType<PlaySession.Playing>(guest.State).Pawns,
+            p => p.Role == PawnRole.Remote).Pose;
+        Assert.NotEqual(remoteBefore, remoteAfter);
+    }
+
+    [Fact]
+    public void SecondPlayerJoin_ClearsSoloClockPause()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        using var guest = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        PumpHost(host, ref now, MoveIntent.Idle, 8);
+        Assert.True(host.TrySetClockPaused(true));
+
+        guest.Join(stack.LocalTarget);
+        PumpBoth(host, guest, ref now, MoveIntent.Idle, 8);
+        Assert.False(host.ClockPaused);
+        Assert.IsType<PlaySession.Playing>(guest.State);
+    }
+
+    [Fact]
     public void SecondHost_FailsPortInUse()
     {
         var stack = new LoopbackStack();
@@ -245,6 +314,19 @@ public sealed class PlaySessionTests
         var failed = Assert.IsType<PlaySession.Failed>(guest.State);
         Assert.IsType<FailReason.Unreachable>(failed.Reason);
         Assert.Contains("127.0.0.1:7777", failed.Reason.Message());
+    }
+
+    private static void PumpHost(
+        PlaySessionMachine host,
+        ref TimeSpan now,
+        in MoveIntent intent,
+        int steps)
+    {
+        for (int i = 0; i < steps; i++)
+        {
+            now += Tick;
+            host.Pump(now, in intent);
+        }
     }
 
     private static void PumpBoth(

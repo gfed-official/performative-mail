@@ -27,6 +27,23 @@ public sealed class PlaySessionMachine : IDisposable
 
     public PlaySession State => _state;
 
+    public bool ClockPaused { get; private set; }
+
+    public bool TrySetClockPaused(bool paused)
+    {
+        if (!paused)
+        {
+            ClockPaused = false;
+            return true;
+        }
+
+        if (_live.Server is not { } server || server.JoinedCount != 1)
+            return false;
+
+        ClockPaused = true;
+        return true;
+    }
+
     public void Host()
     {
         Leave();
@@ -60,6 +77,7 @@ public sealed class PlaySessionMachine : IDisposable
 
     public void Leave()
     {
+        ClockPaused = false;
         _live.Dispose();
         _live = Live.None.Instance;
         _pawns.Clear();
@@ -268,7 +286,17 @@ public sealed class PlaySessionMachine : IDisposable
                 return Fail(new FailReason.HostLost());
         }
 
+        if (ClockPaused && _live.Server is { } hosting && hosting.JoinedCount > 1)
+            ClockPaused = false;
+
         int ticks = _pacer.Advance(wallNow);
+        if (ClockPaused)
+        {
+            _live.Server?.TickOnce(advanceSim: false);
+            client.Receive();
+            return PresentPlaying(client, _live.Role, wallNow);
+        }
+
         for (int i = 0; i < ticks; i++)
         {
             var cmd = new InputCmd(0, intent.AxisX, intent.AxisY, intent.Yaw, intent.Buttons);
@@ -309,6 +337,7 @@ public sealed class PlaySessionMachine : IDisposable
 
     private PlaySession Fail(FailReason reason)
     {
+        ClockPaused = false;
         _live.Dispose();
         _live = Live.None.Instance;
         _pawns.Clear();
