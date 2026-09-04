@@ -262,3 +262,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:13:20Z	verify	Godot overlays inspect printed live Control text	Earned 640; quota 2214; insured quick_hands union_rep; score 14375; seed PM1-SMALL-7F3A9C21-CM.DR; live-ui-verified	https://github.com/gfed-official/performative-mail/actions/runs/33839491027	VERIFIED
 2026-09-04T05:13:20Z	audit	Kept draft cards as offer ids	Issue 106 says bind phase payload only; DraftOffer ids are the payload names; PerkDef lookup is not the payload	src/Client/UI/DraftFrame.cs	accepted
 2026-09-04T05:13:20Z	audit	Kept play boot unbound	Same as U9.1 and U9.2; inspect owns the bind so Host/Join stay clickable	tests/Net.Tests/UI/MainPlayBootTests.cs	accepted
+2026-09-04T05:20:00Z	frame	Frame U10.1 as solo hand shift 1 win / shift 2 fail	Issue 107; chapter 11 4 names the two cells; U9.3 overlays stay	https://github.com/gfed-official/performative-mail/issues/107	open
+2026-09-04T05:20:00Z	architect	Chose ShiftRecord plus HandOnly rates over a Destinations bot path	Chapter 11 agents are value/min; a mailbox walk invents a second model	src/Sim/Balance/BalanceSim.cs	accepted
+2026-09-04T05:20:00Z	architect	Skip four-model arena	Chapter 11 4 already names 220/180 and 880>=600 / 810<1100	docs/m1-frame.md	accepted
+2026-09-04T05:20:00Z	subtract	No bike truck belt 4p or shift 3+ agents	Issue 107 is hand only; bike win and U10.2 wait	spec/11-balance.md	accepted
