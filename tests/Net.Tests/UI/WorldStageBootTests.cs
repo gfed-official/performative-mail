@@ -13,7 +13,9 @@ public sealed class WorldStageBootTests
         Assert.Contains("AddLabeledBox", source);
         Assert.Contains("Sync(WorldTables", source);
         Assert.Contains("WorldLabelPlacement.AboveStreetFace", source);
-        Assert.Contains("TowardNearestStreet", source);
+        Assert.Contains("WorldTilePlacement.TileCenter", source);
+        Assert.Contains("WorldTilePlacement.FootprintOrigin", source);
+        Assert.Contains("WorldTilePlacement.TowardNearestStreet", source);
         Assert.Contains("Billboard = BaseMaterial3D.BillboardModeEnum.Enabled", source);
         Assert.DoesNotContain("new Vector3(0f, 1.6f, 0f)", source);
         Assert.DoesNotContain("new Vector3(0f, 1.4f, 0f)", source);

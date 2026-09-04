@@ -60,9 +60,9 @@ public partial class WorldStage : Node3D
 
     private void SpawnPostOffice(PostOfficeRecord po, StreetRecord[] streets, float tileM)
     {
-        var origin = FootprintOrigin(po.Tile, po.SizeTiles, tileM);
+        var origin = Vec(WorldTilePlacement.FootprintOrigin(po.Tile, po.SizeTiles, tileM));
         var size = new Vector3(po.SizeTiles.X * tileM, 2.4f, po.SizeTiles.Y * tileM);
-        var toward = TowardNearestStreet(origin, streets, tileM);
+        var toward = WorldTilePlacement.TowardNearestStreet(origin.X, origin.Z, streets, tileM);
         AddLabeledBox(
             PostOfficeName,
             origin,
@@ -73,7 +73,7 @@ public partial class WorldStage : Node3D
             toward.X,
             toward.Z);
         AddBox(
-            TileCenter(po.SpawnPadTile, tileM),
+            Vec(WorldTilePlacement.TileCenter(po.SpawnPadTile, tileM)),
             new Vector3(tileM * 0.9f, 0.12f, tileM * 0.9f),
             new Color(0.72f, 0.62f, 0.28f),
             0.06f);
@@ -83,7 +83,7 @@ public partial class WorldStage : Node3D
     {
         AddLabeledBox(
             MailIntakeName,
-            TileCenter(po.IntakeTile, tileM),
+            Vec(WorldTilePlacement.TileCenter(po.IntakeTile, tileM)),
             new Vector3(0.9f, 1.0f, 0.9f),
             new Color(0.95f, 0.82f, 0.2f),
             0.5f,
@@ -114,7 +114,7 @@ public partial class WorldStage : Node3D
                 continue;
             for (int t = 0; t < tiles.Length; t++)
             {
-                var at = TileCenter(tiles[t], tileM);
+                var at = Vec(WorldTilePlacement.TileCenter(tiles[t], tileM));
                 multi.SetInstanceTransform(i, new Transform3D(Basis.Identity, new Vector3(at.X, 0.04f, at.Z)));
                 i++;
             }
@@ -135,12 +135,12 @@ public partial class WorldStage : Node3D
         {
             var house = houses[i];
             string address = AddressText.Format(house.Address, streets);
-            var origin = FootprintOrigin(house.LotTile, house.LotSizeTiles, tileM);
+            var origin = Vec(WorldTilePlacement.FootprintOrigin(house.LotTile, house.LotSizeTiles, tileM));
             var size = new Vector3(
                 house.LotSizeTiles.X * tileM * 0.7f,
                 1.8f,
                 house.LotSizeTiles.Y * tileM * 0.7f);
-            var toward = TowardNearestStreet(origin, streets, tileM);
+            var toward = WorldTilePlacement.TowardNearestStreet(origin.X, origin.Z, streets, tileM);
             AddLabeledBox(
                 HousePrefix + house.Address.Number,
                 origin,
@@ -209,33 +209,6 @@ public partial class WorldStage : Node3D
         _spawned.Add(root);
     }
 
-    private static Vector3 TowardNearestStreet(Vector3 origin, StreetRecord[] streets, float tileM)
-    {
-        float best = float.MaxValue;
-        float dx = 0f;
-        float dz = 0f;
-        for (int s = 0; s < streets.Length; s++)
-        {
-            var tiles = streets[s].Tiles;
-            if (tiles is null)
-                continue;
-            for (int t = 0; t < tiles.Length; t++)
-            {
-                var at = TileCenter(tiles[t], tileM);
-                float ex = at.X - origin.X;
-                float ez = at.Z - origin.Z;
-                float d = ex * ex + ez * ez;
-                if (d >= best)
-                    continue;
-                best = d;
-                dx = ex;
-                dz = ez;
-            }
-        }
-
-        return best == float.MaxValue ? Vector3.Zero : new Vector3(dx, 0f, dz);
-    }
-
     private void AddBox(Vector3 origin, Vector3 size, Color color, float heightCenter)
     {
         var node = new MeshInstance3D
@@ -248,25 +221,5 @@ public partial class WorldStage : Node3D
         _spawned.Add(node);
     }
 
-    private static Vector3 TileCenter(TileCoord tile, float tileM)
-    {
-        var view = ViewFrame.From(new PlayerPose(
-            (int)((tile.X + 0.5f) * tileM * 100f),
-            (int)((tile.Y + 0.5f) * tileM * 100f),
-            0,
-            0));
-        return new Vector3(view.X, 0f, view.Z);
-    }
-
-    private static Vector3 FootprintOrigin(TileCoord tile, TileCoord sizeTiles, float tileM)
-    {
-        float cx = tile.X + sizeTiles.X * 0.5f;
-        float cy = tile.Y + sizeTiles.Y * 0.5f;
-        var view = ViewFrame.From(new PlayerPose(
-            (int)(cx * tileM * 100f),
-            (int)(cy * tileM * 100f),
-            0,
-            0));
-        return new Vector3(view.X, 0f, view.Z);
-    }
+    private static Vector3 Vec((float X, float Y, float Z) p) => new(p.X, p.Y, p.Z);
 }

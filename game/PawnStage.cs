@@ -99,11 +99,12 @@ public partial class PawnStage : Node3D
         };
         root.AddChild(mesh);
 
+        var labelAt = PawnLabelPlacement.AbovePawn();
         var label = new Label3D
         {
             Name = LabelName,
             Text = pawn.DisplayName,
-            Position = new Vector3(0f, 2.0f, 0f),
+            Position = new Vector3(labelAt.X, labelAt.Y, labelAt.Z),
             FontSize = 48,
             OutlineSize = 8,
             Modulate = Colors.White,
