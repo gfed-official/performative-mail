@@ -248,3 +248,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:02:28Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T05:02:28Z	verify	Acceptance filter 29 passed	Quota 640 / 2214; +surplus when met; complaint 0 and 100; Shift 3 / 5; scene Ignore; play boot unbound	dotnet test --filter HudFrame|HudBoot|HudScene|MainPlayBoot	VERIFIED
 2026-09-04T05:02:29Z	verify	Godot inspect pending CI	No godot binary on the agent host; inspect-hud.sh now greps quota and complaint	tools/godot/inspect-hud.sh	INCONCLUSIVE
+2026-09-04T05:08:04Z	frame	Frame U9.3 as payday draft and results overlays	Issue 106; chapter 09 2.9-2.11; bind existing payloads; U9.2 HUD stays	https://github.com/gfed-official/performative-mail/issues/106	open
+2026-09-04T05:08:04Z	architect	Chose PaydaySnapshot plus DraftFrame.From(DraftOffer) plus ResultsFrame.From(ResultsPayload)	HUD bind path; inspect dumps Control text; play boot stays unbound	src/Client/UI/PhaseOverlayBoot.cs	accepted
+2026-09-04T05:08:04Z	architect	Skip four-model arena	Chapter 09 2.9-2.11 and the HUD bind path already name the shape	docs/m1-frame.md	accepted
+2026-09-04T05:08:04Z	subtract	No shop MVP forecast play-again PerkDef lookup or play-boot BindHud	Verify is earned/quota card ids score and seed; issue 137 forbids Placeholder on play	spec/09-ui-ux.md	accepted

@@ -10,13 +10,13 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues. The current landable unit is U9.2 (issue 105): HUD shift, quota, and complaint. Do not start U9.3+.
+This run cuts those gates into landable child issues. The current landable unit is U9.3 (issue 106): payday, draft, and results overlays. Do not start U10+.
 
 ## Scope
 
-Touch chapter 09 §2.4. Reuse the M0 HUD bind path. Keep `HudBoot.Placeholder` inspect-only, and HUD `mouse_filter` Ignore. Do not start M2–M5.
+Touch chapter 09 §2.9–2.11. Reuse the M0 HUD bind path. Keep `HudBoot.Placeholder` inspect-only, and HUD `mouse_filter` Ignore. Do not start M2–M5.
 
-U9.2 extends `HudSnapshot` with replicated earnings, quota, and complaint. `HudFrame.From` formats shift n/5, `Quota E / Q`, `+surplus` when met, and complaint points. No payday overlay, no draft, no results, no play-boot `BindHud`.
+U9.3 binds payday earned/quota, draft card ids, and results score plus seed string onto Ignore overlays. No shop, MVP, forecast, play-again, or play-boot `BindHud`.
 
 ## Rigor
 
@@ -130,7 +130,7 @@ Riskiest unknown first: cross-platform generation determinism. Smallest landable
 | U10.3 | Join state size after 3 shifts | ≤ 200 KB; world and containers match | U6.2, U1.5 |
 | U10.4 | Windows and Linux `worldHash` CI | Same golden hash on both runners | U1.1 (full after U1.5) |
 
-Architect arena runs before U1.2 (OpenSimplex2 and coastline are a one-way door) and before U3.1 (run phases). U1.1 shape is already concrete in chapter 02 §2 (PCG32, int16 cm, 0.5 m lattice, 64-bit FNV), so arena is skipped for the skeleton. U7.2 shape is already concrete in chapter 08 §3.8, so arena is skipped for persist. U8.1 shape is already concrete in chapter 02 §3.9, so arena is skipped for harvest. U8.2 shape is already concrete in chapter 04 §1.2 and chapter 07 `Constructs.TryPlace`, so arena is skipped for placement. U9.1 shape is already concrete in chapter 09 §2.2 and the HUD bind path, so arena is skipped for the lobby screen. U9.2 shape is already concrete in chapter 09 §2.4 and the same bind path, so arena is skipped for HUD quota and complaint.
+Architect arena runs before U1.2 (OpenSimplex2 and coastline are a one-way door) and before U3.1 (run phases). U1.1 shape is already concrete in chapter 02 §2 (PCG32, int16 cm, 0.5 m lattice, 64-bit FNV), so arena is skipped for the skeleton. U7.2 shape is already concrete in chapter 08 §3.8, so arena is skipped for persist. U8.1 shape is already concrete in chapter 02 §3.9, so arena is skipped for harvest. U8.2 shape is already concrete in chapter 04 §1.2 and chapter 07 `Constructs.TryPlace`, so arena is skipped for placement. U9.1 shape is already concrete in chapter 09 §2.2 and the HUD bind path, so arena is skipped for the lobby screen. U9.2 shape is already concrete in chapter 09 §2.4 and the same bind path, so arena is skipped for HUD quota and complaint. U9.3 shape is already concrete in chapter 09 §2.9–2.11 and the same bind path, so arena is skipped for the overlays.
 
 ## GitHub issues
 
