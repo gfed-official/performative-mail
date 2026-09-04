@@ -36,8 +36,14 @@ public partial class PawnStage : Node3D
 
             var pose = pawn.Pose;
             node.Transform = PawnTransform.Of(in pose);
+            bool showBody = pawn.Role != PawnRole.Local;
+            if (node.GetNodeOrNull<MeshInstance3D>("Body") is MeshInstance3D body)
+                body.Visible = showBody;
             if (node.GetNodeOrNull<Label3D>("Label") is Label3D label)
+            {
                 label.Text = pawn.DisplayName;
+                label.Visible = showBody;
+            }
         }
 
         if (_nodes.Count == seen.Count)
@@ -57,18 +63,18 @@ public partial class PawnStage : Node3D
         }
     }
 
-    public bool TryLocalOrigin(IReadOnlyList<PawnView> pawns, out Vector3 origin)
+    public bool TryLocalEye(IReadOnlyList<PawnView> pawns, out ViewPose eye)
     {
         for (int i = 0; i < pawns.Count; i++)
         {
             if (pawns[i].Role != PawnRole.Local)
                 continue;
             var pose = pawns[i].Pose;
-            origin = PawnTransform.Of(in pose).Origin;
+            eye = FirstPersonLook.EyePose(ViewFrame.From(in pose));
             return true;
         }
 
-        origin = default;
+        eye = default;
         return false;
     }
 
@@ -84,13 +90,16 @@ public partial class PawnStage : Node3D
         var (r, g, b) = PawnPalette.Rgb(pawn.Palette);
         var color = new Color(r / 255f, g / 255f, b / 255f);
         var root = new Node3D { Name = $"Pawn_{pawn.Id.Value}" };
+        bool showBody = pawn.Role != PawnRole.Local;
 
         var mesh = new MeshInstance3D
         {
+            Name = "Body",
             Mesh = new CapsuleMesh { Radius = 0.35f, Height = 1.6f },
             MaterialOverride = new StandardMaterial3D { AlbedoColor = color },
+            Position = new Vector3(0f, 0.8f, 0f),
+            Visible = showBody,
         };
-        mesh.Position = new Vector3(0f, 0.8f, 0f);
         root.AddChild(mesh);
 
         var label = new Label3D
@@ -102,6 +111,7 @@ public partial class PawnStage : Node3D
             OutlineSize = 8,
             Modulate = Colors.White,
             Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+            Visible = showBody,
         };
         root.AddChild(label);
         return root;

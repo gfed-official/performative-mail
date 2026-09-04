@@ -20,9 +20,10 @@ Godot 4.7.2 .NET. Friend A hosts; Friend B joins by LAN IP. Default port is UDP 
 godot --path game
 ```
 
-1. Friend A clicks **Host**. The status line shows the LAN address to read out.
+1. Friend A clicks **Host**. Host/Join chrome hides; Esc pause shows the LAN join address.
 2. Friend B types that address (`192.168.1.20` or `192.168.1.20:7777`) and clicks **Join**.
-3. Both walk with WASD (Shift sprints). You are the pawn labelled **You**; the friend is a different colour.
+3. First-person WASD + mouse look. Shift sprints. E interacts. Esc opens Leave / Controls / Options.
+4. The live world labels the Post Office, Mail intake, house addresses, and mailboxes.
 
 ## Test
 

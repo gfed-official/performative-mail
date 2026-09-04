@@ -7,6 +7,11 @@ namespace PerformativeMail.Game;
 
 public partial class WorldStage : Node3D
 {
+    public const string PostOfficeName = "PostOffice";
+    public const string MailIntakeName = "MailIntake";
+    public const string HousePrefix = "House_";
+    public const string MailboxPrefix = "Mailbox_";
+
     private WorldTables? _bound;
     private readonly List<Node> _spawned = new();
 
@@ -23,8 +28,8 @@ public partial class WorldStage : Node3D
         float tileM = tables.TileCm / 100f;
         SpawnPostOffice(tables.PostOffice, tileM);
         SpawnStreets(tables.Streets, tileM);
-        SpawnHouses(tables.Houses, tileM);
-        SpawnMailboxes(tables.Houses);
+        SpawnHouses(tables.Houses, tables.Streets, tileM);
+        SpawnMailboxes(tables.Houses, tables.Streets);
         SpawnIntake(tables.PostOffice, tileM);
     }
 
@@ -38,11 +43,14 @@ public partial class WorldStage : Node3D
 
     private void SpawnPostOffice(PostOfficeRecord po, float tileM)
     {
-        AddBox(
+        AddLabeledBox(
+            PostOfficeName,
             FootprintOrigin(po.Tile, po.SizeTiles, tileM),
             new Vector3(po.SizeTiles.X * tileM, 2.4f, po.SizeTiles.Y * tileM),
             new Color(0.55f, 0.28f, 0.22f),
-            1.2f);
+            1.2f,
+            "Post Office",
+            new Vector3(0f, 1.6f, 0f));
         AddBox(
             TileCenter(po.SpawnPadTile, tileM),
             new Vector3(tileM * 0.9f, 0.12f, tileM * 0.9f),
@@ -52,11 +60,14 @@ public partial class WorldStage : Node3D
 
     private void SpawnIntake(PostOfficeRecord po, float tileM)
     {
-        AddBox(
+        AddLabeledBox(
+            MailIntakeName,
             TileCenter(po.IntakeTile, tileM),
             new Vector3(0.9f, 1.0f, 0.9f),
             new Color(0.95f, 0.82f, 0.2f),
-            0.5f);
+            0.5f,
+            "Mail",
+            new Vector3(0f, 1.0f, 0f));
     }
 
     private void SpawnStreets(StreetRecord[] streets, float tileM)
@@ -98,31 +109,75 @@ public partial class WorldStage : Node3D
         _spawned.Add(node);
     }
 
-    private void SpawnHouses(HouseRecord[] houses, float tileM)
+    private void SpawnHouses(HouseRecord[] houses, StreetRecord[] streets, float tileM)
     {
         for (int i = 0; i < houses.Length; i++)
         {
             var house = houses[i];
-            AddBox(
+            string address = AddressText.Format(house.Address, streets);
+            AddLabeledBox(
+                HousePrefix + house.Address.Number,
                 FootprintOrigin(house.LotTile, house.LotSizeTiles, tileM),
                 new Vector3(house.LotSizeTiles.X * tileM * 0.7f, 1.8f, house.LotSizeTiles.Y * tileM * 0.7f),
                 new Color(0.78f, 0.7f, 0.55f),
-                0.9f);
+                0.9f,
+                address,
+                new Vector3(0f, 1.4f, 0f));
         }
     }
 
-    private void SpawnMailboxes(HouseRecord[] houses)
+    private void SpawnMailboxes(HouseRecord[] houses, StreetRecord[] streets)
     {
         for (int i = 0; i < houses.Length; i++)
         {
-            var pose = houses[i].Mailbox;
+            var house = houses[i];
+            var pose = house.Mailbox;
             var view = ViewFrame.From(new PlayerPose(pose.XCm, pose.YCm, pose.ZCm, 0));
-            AddBox(
+            string address = AddressText.Format(house.Address, streets);
+            AddLabeledBox(
+                MailboxPrefix + house.Address.Number,
                 new Vector3(view.X, 0f, view.Z),
                 new Vector3(0.28f, 1.15f, 0.28f),
-                new Color(0.18f, 0.2f, 0.28f),
-                0.57f);
+                new Color(0.18f, 0.2f, 0.55f),
+                0.57f,
+                address,
+                new Vector3(0f, 1.35f, 0f));
         }
+    }
+
+    private void AddLabeledBox(
+        string name,
+        Vector3 origin,
+        Vector3 size,
+        Color color,
+        float heightCenter,
+        string labelText,
+        Vector3 labelOffset)
+    {
+        var root = new Node3D
+        {
+            Name = name,
+            Position = origin,
+        };
+        var mesh = new MeshInstance3D
+        {
+            Mesh = new BoxMesh { Size = size },
+            MaterialOverride = new StandardMaterial3D { AlbedoColor = color },
+            Position = new Vector3(0f, heightCenter, 0f),
+        };
+        root.AddChild(mesh);
+        root.AddChild(new Label3D
+        {
+            Name = "Label",
+            Text = labelText,
+            Position = labelOffset,
+            FontSize = 42,
+            OutlineSize = 6,
+            Modulate = Colors.White,
+            Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+        });
+        AddChild(root);
+        _spawned.Add(root);
     }
 
     private void AddBox(Vector3 origin, Vector3 size, Color color, float heightCenter)
