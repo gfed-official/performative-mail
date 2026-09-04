@@ -186,3 +186,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T01:56:00Z	verify	dotnet test Release 442 passed	Sim 301 Net 125 Bot 16; eight RunSettings plus five wire/join; baseline U5.3 was 429	dotnet test PerformativeMail.sln -c Release	VERIFIED
 2026-09-04T01:56:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T01:56:00Z	verify	Acceptance filter 15 passed	Arcade pins hashes; goldens kind 0x33; Hello_GoldenRoundTrip; join Arcade and custom	dotnet test --filter RunSettings|Hello_GoldenRoundTrip|Protocol_Hash	VERIFIED
+2026-09-04T02:04:00Z	verify	CI on 359b09e all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33827973562	VERIFIED
