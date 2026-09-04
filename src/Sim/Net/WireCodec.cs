@@ -313,6 +313,7 @@ public static class WireCodec
         {
             writer.WriteUInt32(stamps[i].Id.Value);
             writer.WriteUInt32(stamps[i].Version.Value);
+            writer.WriteUInt64(stamps[i].Hash);
         }
 
         return writer.ToArray();
@@ -396,7 +397,8 @@ public static class WireCodec
         {
             if (!reader.TryReadUInt32(out var id)) return false;
             if (!reader.TryReadUInt32(out var version)) return false;
-            stamps[i] = new ContainerStamp(new ContainerId(id), new ContainerVersion(version));
+            if (!reader.TryReadUInt64(out var hash)) return false;
+            stamps[i] = new ContainerStamp(new ContainerId(id), new ContainerVersion(version), hash);
         }
 
         return true;

@@ -249,6 +249,23 @@ public sealed class WireCodecTests
     }
 
     [Fact]
+    public void JoinState_OneStamp_RoundTripsHash()
+    {
+        var stamp = new ContainerStamp(new ContainerId(7), new ContainerVersion(3), 0xA1B2C3D4E5F60718UL);
+        var join = new JoinState(
+            0x7F3A9C21,
+            0x821670054873680EUL,
+            WorldDeltas.Empty,
+            new RunState(RunPhase.Prep, 3, 0),
+            new[] { stamp });
+        byte[] encoded = WireCodec.Encode(join);
+        Assert.True(encoded.Length <= JoinState.MaxEncodedBytes);
+        Assert.True(WireCodec.TryDecode(encoded, out JoinState decoded));
+        Assert.Equal(join, decoded);
+        Assert.Equal(stamp.Hash, decoded.Containers[0].Hash);
+    }
+
+    [Fact]
     public void AccountHello_GoldenRoundTrip()
     {
         var hello = new AccountHello(7);
