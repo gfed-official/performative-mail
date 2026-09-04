@@ -157,6 +157,18 @@ public sealed class ServerRuntime
         return QuotaBudget.For(Balance, shift, players).Quota;
     }
 
+    public bool TryPickupAddress(EntityId player, out string address)
+    {
+        address = "";
+        if (!World.Players.TryGet(player, out var body))
+            return false;
+        if (!CanPickup(body, out var mail))
+            return false;
+
+        address = AddressText.Format(mail.Address, Tables?.Streets ?? Array.Empty<StreetRecord>());
+        return true;
+    }
+
     public bool TryInteractAddresses(EntityId player, out string held, out string target)
     {
         held = "";
@@ -416,26 +428,49 @@ public sealed class ServerRuntime
             return;
         }
 
+        if (CanPickup(body, out _))
+        {
+            if (bags.HoldTicks == 0)
+                TryPickup(player, bags.Hotbar);
+            _bags[player.Value] = bags.WithHold(1);
+            return;
+        }
+
+        if (!CanDeliver(body, bags.Hotbar))
+        {
+            _bags[player.Value] = bags.ResetHold();
+            return;
+        }
+
         int held = bags.HoldTicks + 1;
         _bags[player.Value] = bags.WithHold(held);
         if (held != InteractHoldTicks)
             return;
 
-        if (TryPickup(player, body, bags.Hotbar))
-            return;
-
         TryDeliver(player, body, bags.Hotbar);
+        _bags[player.Value] = bags.ResetHold();
     }
 
-    private bool TryPickup(EntityId player, PlayerBody body, ContainerId hotbar)
+    private bool CanPickup(PlayerBody body, out MailStack mail)
     {
-        if (World.Inventory is not InventorySystem inv)
-            return false;
+        mail = null!;
         if (World.Intake.Value == 0)
             return false;
         if (World.Atlas is not WorldAtlas atlas)
             return false;
         if (!NearTile(body, atlas.PostOffice.IntakeTile, atlas.TileCm))
+            return false;
+        return TryFirstMail(World.Intake, out _, out mail);
+    }
+
+    private bool CanDeliver(PlayerBody body, ContainerId hotbar)
+        => TryHeldMail(hotbar, out _, out var mail)
+           && mail.Ids.Count > 0
+           && TryNearestMailbox(body, out _, out _);
+
+    private bool TryPickup(EntityId player, ContainerId hotbar)
+    {
+        if (World.Inventory is not InventorySystem inv)
             return false;
         if (!TryFirstMail(World.Intake, out var entry, out _))
             return false;

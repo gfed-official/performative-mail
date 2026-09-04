@@ -72,6 +72,8 @@ public readonly record struct HudFrame(
         {
             case InteractPrompt.None:
                 return ("", "", MatchMark.None);
+            case InteractPrompt.Pickup pickup:
+                return (pickup.Address ?? "", "", MatchMark.None);
             case InteractPrompt.Deliver deliver:
                 bool match = string.Equals(deliver.HeldAddress, deliver.TargetAddress, StringComparison.Ordinal);
                 return (deliver.HeldAddress ?? "", deliver.TargetAddress ?? "", match ? MatchMark.Tick : MatchMark.Cross);
