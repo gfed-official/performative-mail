@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Run;
@@ -13,13 +14,20 @@ public readonly record struct HudFrame(
     string WalletLabel,
     string HeldAddress,
     string TargetAddress,
-    MatchMark Match)
+    MatchMark Match,
+    string QuotaLabel,
+    string SurplusLabel,
+    string ComplaintLabel,
+    bool QuotaMet,
+    int QuotaEarnings,
+    int QuotaTarget)
 {
     public const int ShiftCount = 5;
     public const int AmberSeconds = 60;
     public const int RedSeconds = 15;
     public const string TickText = "tick";
     public const string CrossText = "cross";
+    public const string SurplusText = "+surplus";
 
     public string MatchLabel => Match switch
     {
@@ -36,6 +44,10 @@ public readonly record struct HudFrame(
             : 0;
         int remainingSeconds = (int)(remainingTicks / TickClock.TickHz);
 
+        int earnings = snapshot.Earnings.Value;
+        int quota = snapshot.Quota.Value;
+        bool quotaMet = earnings >= quota;
+
         var (held, target, mark) = Prompt(snapshot.Interact);
         return new HudFrame(
             $"Shift {snapshot.Shift} / {ShiftCount}",
@@ -45,7 +57,13 @@ public readonly record struct HudFrame(
             FormatWallet(snapshot.Wallet),
             held,
             target,
-            mark);
+            mark,
+            $"Quota {earnings} / {quota}",
+            quotaMet ? SurplusText : "",
+            snapshot.Complaint.ToString(CultureInfo.InvariantCulture),
+            quotaMet,
+            earnings,
+            quota);
     }
 
     private static (string Held, string Target, MatchMark Mark) Prompt(InteractPrompt interact)

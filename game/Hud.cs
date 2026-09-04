@@ -9,6 +9,10 @@ public partial class Hud : Control
     public const string PhasePath = "PhaseLabel";
     public const string TimerPath = "TimerLabel";
     public const string WalletPath = "WalletLabel";
+    public const string QuotaPath = "QuotaLabel";
+    public const string QuotaBarPath = "QuotaBar";
+    public const string SurplusPath = "SurplusLabel";
+    public const string ComplaintPath = "ComplaintEnvelope";
     public const string HeldPath = "HeldAddress";
     public const string TargetPath = "TargetAddress";
     public const string MatchPath = "MatchMark";
@@ -21,6 +25,10 @@ public partial class Hud : Control
     private Label _phase = null!;
     private Label _timer = null!;
     private Label _wallet = null!;
+    private Label _quota = null!;
+    private ProgressBar _quotaBar = null!;
+    private Label _surplus = null!;
+    private Label _complaint = null!;
     private Label _held = null!;
     private Label _target = null!;
     private Label _match = null!;
@@ -40,6 +48,14 @@ public partial class Hud : Control
             _ => Colors.White,
         };
         _wallet.Text = frame.WalletLabel;
+        _quota.Text = frame.QuotaLabel;
+        double max = Math.Max(1, frame.QuotaTarget);
+        _quotaBar.MinValue = 0;
+        _quotaBar.MaxValue = max;
+        _quotaBar.Value = Math.Clamp((double)frame.QuotaEarnings, 0d, max);
+        _quotaBar.Modulate = frame.QuotaMet ? Green : Colors.White;
+        _surplus.Text = frame.SurplusLabel;
+        _complaint.Text = frame.ComplaintLabel;
         _held.Text = frame.HeldAddress;
         _target.Text = frame.TargetAddress;
         _match.Text = frame.MatchLabel;
@@ -60,6 +76,9 @@ public partial class Hud : Control
             $"PhaseLabel={_phase.Text}\n" +
             $"TimerLabel={_timer.Text}\n" +
             $"WalletLabel={_wallet.Text}\n" +
+            $"QuotaLabel={_quota.Text}\n" +
+            $"SurplusLabel={_surplus.Text}\n" +
+            $"ComplaintLabel={_complaint.Text}\n" +
             $"HeldAddress={_held.Text}\n" +
             $"TargetAddress={_target.Text}\n" +
             $"MatchMark={_match.Text}";
@@ -73,6 +92,10 @@ public partial class Hud : Control
         _phase = GetNode<Label>("%" + PhasePath);
         _timer = GetNode<Label>("%" + TimerPath);
         _wallet = GetNode<Label>("%" + WalletPath);
+        _quota = GetNode<Label>("%" + QuotaPath);
+        _quotaBar = GetNode<ProgressBar>("%" + QuotaBarPath);
+        _surplus = GetNode<Label>("%" + SurplusPath);
+        _complaint = GetNode<Label>("%" + ComplaintPath);
         _held = GetNode<Label>("%" + HeldPath);
         _target = GetNode<Label>("%" + TargetPath);
         _match = GetNode<Label>("%" + MatchPath);

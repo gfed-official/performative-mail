@@ -320,7 +320,8 @@ public partial class Main : Node3D
         DeliveryStub(new InteractPrompt.Deliver("13 Larch Lane", "8 Oak Street"));
 
     private static HudSnapshot DeliveryStub(InteractPrompt interact) =>
-        new(RunPhase.Delivery, 1, 0, 2700, new Cents(1820), interact);
+        new(RunPhase.Delivery, 1, 0, 2700, new Cents(1820), interact,
+            new Cents(640), new Cents(2214), 23);
 
     private void OnJoinPressed()
     {
