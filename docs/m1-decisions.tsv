@@ -293,3 +293,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:52:00Z	verify	Acceptance filter passed	JoinState size 59B; OneStamp hash round-trip; Prep join hashes	dotnet test --filter JoinState	VERIFIED
 2026-09-04T05:52:00Z	verify	U10.1 and U10.2 filter 12 passed	solo hand cells; FiveShiftRun 1450s; 4p hashes	dotnet test --filter RunHand_Shift1|FiveShiftRun|FourPlayer|SoloHand	VERIFIED
 2026-09-04T05:52:00Z	verify	No-regress filter 26 passed	play boot unbound; HUD Ignore; overlay Ignore	dotnet test --filter MainPlayBoot|HudBoot|HudScene|PaydayFrame|DraftFrame|ResultsFrame|PhaseOverlay	VERIFIED
+2026-09-04T05:55:00Z	verify	CI on d41379a all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33842122108	VERIFIED
