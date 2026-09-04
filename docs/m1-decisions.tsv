@@ -130,3 +130,5 @@ ts	phase	decision	why	evidence	result
 2026-09-04T00:27:00Z	verify	dotnet test Release 385 passed	Sim 255 Net 114 Bot 16; eight ShopSession tests	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-04T00:27:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T00:27:00Z	verify	Acceptance filter 3 passed	DebitsWalletAndGrantsItem; OncePerRun second reject; LastCard one grant	dotnet test --filter TryBuy_OfferedItem|TryBuy_OncePerRun|TryBuy_LastCard	VERIFIED
+2026-09-04T00:31:00Z	verify	dotnet test Release 389 passed	Sim 259 Net 114 Bot 16; twelve ShopSession tests	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-04T00:31:00Z	verify	CI on 1d81360 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33821987153	VERIFIED
