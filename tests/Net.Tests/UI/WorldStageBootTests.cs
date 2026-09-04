@@ -20,6 +20,18 @@ public sealed class WorldStageBootTests
         Assert.DoesNotContain("new Vector3(0f, 1.0f, 0f)", source);
     }
 
+    [Fact]
+    public void WorldStage_DumpWalksLiveLabel3DText()
+    {
+        var source = ReadWorldStage();
+        Assert.Contains("public string Dump()", source);
+        Assert.Contains("WORLD_DUMP", source);
+        Assert.Contains("GetNodeOrNull<Label3D>(\"Label\")", source);
+        Assert.Contains("Label=", source);
+        Assert.Contains("WORLD_DUMP_END", source);
+        Assert.DoesNotContain("ReadAllText", source);
+    }
+
     private static string ReadWorldStage()
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })

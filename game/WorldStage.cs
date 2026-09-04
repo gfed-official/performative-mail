@@ -1,3 +1,4 @@
+using System.Text;
 using Godot;
 using PerformativeMail.App;
 using PerformativeMail.Sim.Movement;
@@ -39,6 +40,22 @@ public partial class WorldStage : Node3D
             _spawned[i].QueueFree();
         _spawned.Clear();
         _bound = null;
+    }
+
+    public string Dump()
+    {
+        var dump = new StringBuilder();
+        dump.AppendLine("WORLD_DUMP");
+        foreach (var child in GetChildren())
+        {
+            if (child.GetNodeOrNull<Label3D>("Label") is not { } label)
+                continue;
+            dump.Append(child.Name);
+            dump.Append(" Label=");
+            dump.AppendLine(label.Text);
+        }
+        dump.Append("WORLD_DUMP_END");
+        return dump.ToString();
     }
 
     private void SpawnPostOffice(PostOfficeRecord po, StreetRecord[] streets, float tileM)

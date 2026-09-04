@@ -46,6 +46,7 @@ Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4
 - `play` runs a solo Host play report with the golden worldHash, HUD, and world entity counts listed in [`tools/godot/report.md`](tools/godot/report.md).
 - `debug-world` runs a solo Host play report with `--debug-world`. It asserts Playing, PREP, two houses, and debug worldHash `0x4CF184F2FA4D4EEE`.
 - `debug-helpers` runs `--host --debug-world --debug-helper=intake` and asserts the local pawn is at Intake (`1100`, `500`). DebugMenu (F3 or backtick) buttons also teleport to Intake or a mailbox, give mail if the hotbar is empty, and open the inventory overlay.
+- `worldstage` runs `--host --debug-world --report= --world-dump=` and asserts live WorldStage Label3D text for Post Office, Mail, and the debug addresses, plus SmokeReport `worldEntityCounts.mailboxes >= 2`.
 
 `all` runs every command above. `all` is the default when you omit the argument. The command list and the steps to add a Control-text smoke are in [`tools/godot/README.md`](tools/godot/README.md).
 
