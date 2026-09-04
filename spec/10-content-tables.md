@@ -175,7 +175,7 @@ Rarity: C common, U uncommon, R rare. Scope: T team, P personal.
 
 | id | Name | Rarity | Effect | Notes |
 | :-: | :-: | :-: | :-: | :-: |
-| express_lane | Express Lane | U | Belt speed +50% |  |
+| express_lane | Express Lane | U | Belt speed +50% | Prereq: belt_mk1 or belt_mk2 |
 | extra_labels | Extra Labels | C | Sorter filter slots per output 1 → 3 | Prereq: bp_sorting |
 | greased_inserters | Greased Inserters | C | Inserter rate ×2 |  |
 | presort | Presort | U | PO Intake outfeed groups items by street |  |
