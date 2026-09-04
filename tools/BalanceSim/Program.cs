@@ -25,4 +25,13 @@ var shift1 = BalanceSim.RunHand(balance, 1);
 var shift2 = BalanceSim.RunHand(balance, 2);
 Console.WriteLine(BalanceSim.Line(in shift1));
 Console.WriteLine(BalanceSim.Line(in shift2));
-return BalanceSim.SoloHandShift1WinShift2Fail(balance) ? 0 : 1;
+
+var run = FiveShiftRun.Drive(balance);
+for (byte shift = 1; shift <= 5; shift++)
+{
+    var payday = run.Payday(shift);
+    Console.WriteLine(BalanceSim.PaydayLine(in payday));
+}
+
+Console.WriteLine(BalanceSim.DurationLine(run.DurationSeconds));
+return BalanceSim.SoloHandShift1WinShift2Fail(balance) && run.GateHolds ? 0 : 1;
