@@ -10,13 +10,13 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues. The current landable unit is U6.2 (issue 98): join-in-progress in Prep with `worldHash`. Do not start U6.3+.
+This run cuts those gates into landable child issues. The current landable unit is U6.3 (issue 99): disconnect grace. Do not start U7+.
 
 ## Scope
 
-Touch chapters 08 §3.9 (`JoinState`) and 06 §6 (join-in-progress in Prep). Reuse U6.1 `RunSettings` on Hello, U1.1 `worldHash`, and U3.1 `RunState`. Keep U5 draft and U4 bike. Do not start M2–M5.
+Touch chapters 06 §6 (disconnect hold and resume) and 01 §7 (all-disconnect). Reuse U6.2 `JoinState` and U3.5 death-bag drop. Keep U6.1 Hello goldens and U6.2 Prep join. Do not start M2–M5.
 
-U6.2 is a typed `JoinState` on an additive kind after `HelloOk` and `RunSettings`. Join is allowed in Lobby and Prep. Other phases reject. The joiner regenerates the world and compares `worldHash`. Empty deltas are fine. No lobby UI, no disconnect grace, no 64 KB chunking.
+U6.3 holds a disconnected seat for 120 s. Inventory stays on the body. The same account resumes the same entity. After 120 s the body drops a U3.5 bag and despawns. When no seat is connected the run ends after 60 s without Results. No lobby UI, no host-lost screen, no Results payload, no 64 KB chunking.
 
 ## Rigor
 
