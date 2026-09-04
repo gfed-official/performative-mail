@@ -96,6 +96,20 @@ public sealed class DeathSessionTests
     }
 
     [Fact]
+    public void Drop_EmptiesPlayerContainers_WithoutRespawn()
+    {
+        var fx = new Fixture();
+        fx.Put(fx.Inventory, fx.Letter(Oak, 1));
+
+        Assert.True(fx.Death.Drop(fx.Player.Id, DeathTile, 0));
+        Assert.False(fx.Death.IsDead(fx.Player.Id));
+        Assert.True(fx.Death.TryGetBag(fx.Player.Id, out var bag));
+        Assert.Equal(DeathTile, bag.Tile);
+        Assert.Empty(fx.Grid(fx.Inventory).Entries);
+        Assert.Single(fx.Death.StacksIn(bag));
+    }
+
+    [Fact]
     public void Die_WhileDead_IsNoOp()
     {
         var fx = new Fixture();
