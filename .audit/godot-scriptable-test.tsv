@@ -1,0 +1,7 @@
+ts	decision	reason
+2026-09-04T16:10Z	no-gdunit	Existing CI is bash+CLI Dump/WriteReport; game stays out of sln so GodotSharp never loads under dotnet test
+2026-09-04T16:10Z	extend-ci-sh	tools/godot/ci.sh already owns verify/import/boot/inspect/join/play; formalize rather than replace
+2026-09-04T16:10Z	debug-world-cli	Full Small Island is awkward for interact smokes; stub WorldTables via --debug-world gives stable PO/intake/mailbox poses
+2026-09-04T16:10Z	json-report	Grepping Control dumps is brittle; structured --report fields let jq assert wallet/entity counts
+2026-09-04T16:10Z	xunit-pure-helpers	Label/placement math belongs in App/Client helpers; Godot keeps thin mesh wrappers
+2026-09-04T16:10Z	issue-prefix-test-play	Match repo taxonomy: [test] for harness/smokes, [play] for debug world/menu surface
