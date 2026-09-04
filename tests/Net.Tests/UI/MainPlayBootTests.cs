@@ -146,9 +146,10 @@ public sealed class MainPlayBootTests
     [Fact]
     public void OpenPause_SurfacesHostAdvertisement()
     {
-        var body = MethodBody(ReadMain(), "OpenPause");
+        var body = MethodBody(ReadMain(), "BindPause");
         Assert.Contains("listening.Advertisement", body);
         Assert.Contains("Join ", body);
+        Assert.Contains("BindPause(state)", MethodBody(ReadMain(), "OpenPause"));
     }
 
     private static string ReadMain()

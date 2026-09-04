@@ -381,7 +381,7 @@ public partial class Main : Node3D
         if (_pause.IsOpen && _pause.Snapshot.ClockPaused != _session.ClockPaused)
         {
             _pause.SetClockPaused(_session.ClockPaused);
-            _pauseMenu.Bind(_pause.Frame, true);
+            BindPause(state);
         }
 
         bool held = InputSampler.MenuHeld();
@@ -399,13 +399,18 @@ public partial class Main : Node3D
         if (!_pause.Back())
             ClosePause();
         else
-            _pauseMenu.Bind(_pause.Frame, true);
+            BindPause(state);
     }
 
     private void OpenPause(PlaySession state)
     {
         _overlay.Close();
         _pause.Open(_session.TrySetClockPaused(true));
+        BindPause(state);
+    }
+
+    private void BindPause(PlaySession state)
+    {
         var frame = _pause.Frame;
         if (state is PlaySession.Playing { Role: SessionRole.Listening listening })
         {
@@ -443,7 +448,7 @@ public partial class Main : Node3D
             return;
         }
 
-        _pauseMenu.Bind(_pause.Frame, true);
+        BindPause(_session.State);
     }
 
     private void BuildDebugMenu()
