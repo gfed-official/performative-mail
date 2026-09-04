@@ -239,3 +239,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T04:55:00Z	verify	dotnet test Release 536 passed	Sim 366 Net 154 Bot 16; baseline U8.2 was 519; 15 new lobby tests plus HUD pins	dotnet test PerformativeMail.sln -c Release	VERIFIED
 2026-09-04T04:55:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T04:55:00Z	verify	Acceptance filter 17 passed	Arcade seed 0x7F3A9C21 ready/not ready; scene Ignore; play boot unbound	dotnet test --filter LobbyFrame|LobbyBoot|LobbyScene|MainPlayBoot|HudBoot|HudScene	VERIFIED
+2026-09-04T04:52:00Z	verify	CI on 9109067 all 4 checks green	test and Godot lobby inspect live-ui-verified; host/join still Playing	https://github.com/gfed-official/performative-mail/actions/runs/33838257334	VERIFIED
