@@ -12,6 +12,12 @@ public sealed class WorldStageBootTests
         Assert.Contains("AddressText.Format", source);
         Assert.Contains("AddLabeledBox", source);
         Assert.Contains("Sync(WorldTables", source);
+        Assert.Contains("WorldLabelPlacement.AboveStreetFace", source);
+        Assert.Contains("TowardNearestStreet", source);
+        Assert.Contains("Billboard = BaseMaterial3D.BillboardModeEnum.Enabled", source);
+        Assert.DoesNotContain("new Vector3(0f, 1.6f, 0f)", source);
+        Assert.DoesNotContain("new Vector3(0f, 1.4f, 0f)", source);
+        Assert.DoesNotContain("new Vector3(0f, 1.0f, 0f)", source);
     }
 
     private static string ReadWorldStage()
