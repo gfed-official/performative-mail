@@ -41,7 +41,7 @@ docker run --rm -e REQUIRE_DOTNET_8=0 -v "$PWD":/src -w /src \
 
 ## Validate content
 
-From the repo root, ContentValidator loads the M0 test map plus `streets.json`, `world/archetypes.json`, and `balance.json`. Unknown ids and district-house sums outside the grown town band fail the process.
+From the repo root, ContentValidator loads the M0 test map plus `streets.json`, `world/archetypes.json`, `balance.json`, and the item, mail, building, recipe, and shop defs. Unknown ids and district-house sums outside the grown town band fail the process. A recipe whose `produces.building` does not name a loaded building also fails.
 
 ```bash
 dotnet run --project tools/ContentValidator -- content

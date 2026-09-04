@@ -1,0 +1,18 @@
+{
+  "id": "wall_wood",
+  "name": "Wooden Wall",
+  "footprint": [1, 1],
+  "rotations": 4,
+  "hp": 300,
+  "placement": {
+    "onStreet": false,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": true
+  },
+  "behaviour": "wall",
+  "params": { "blocksAir": false, "wallBreakerResist": 0 },
+  "recipe": "recipe_wall_wood",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["defense"]
+}

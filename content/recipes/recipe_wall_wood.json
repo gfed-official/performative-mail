@@ -1,0 +1,6 @@
+{
+  "id": "recipe_wall_wood",
+  "produces": { "building": "wall_wood" },
+  "inputs": [{ "item": "log", "count": 3 }],
+  "unlockShift": 1
+}
