@@ -49,6 +49,8 @@ public sealed class ClientRuntime
 
     public RunSettings? AcceptedSettings { get; private set; }
 
+    public JoinState? AcceptedJoin { get; private set; }
+
     public InventorySystem? Inventory { get; }
 
     public int InventoryEventCount { get; private set; }
@@ -142,6 +144,9 @@ public sealed class ClientRuntime
             case MessageKind.RunSettings:
                 ApplyRunSettings(payload);
                 break;
+            case MessageKind.JoinState:
+                ApplyJoinState(payload);
+                break;
             case MessageKind.Hello:
             case MessageKind.Input:
             case MessageKind.Ping:
@@ -194,6 +199,26 @@ public sealed class ClientRuntime
 
         GeneratedWorld = tables;
         AcceptedWorldHash = hash;
+    }
+
+    private void ApplyJoinState(byte[] payload)
+    {
+        if (!WireCodec.TryDecode(payload, out JoinState join))
+            return;
+
+        var verdict = WorldHashCheck.Accept(join.Seed, join.WorldHash, out var tables, out var hash);
+        if (verdict != WorldHashVerdict.Match)
+        {
+            LastReject = new HelloReject(HelloRejectReason.VersionMismatch);
+            GeneratedWorld = null;
+            AcceptedWorldHash = null;
+            AcceptedJoin = null;
+            return;
+        }
+
+        GeneratedWorld = tables;
+        AcceptedWorldHash = hash;
+        AcceptedJoin = join;
     }
 
     private void ApplyPong(byte[] payload)

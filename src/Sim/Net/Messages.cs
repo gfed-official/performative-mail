@@ -13,6 +13,7 @@ public enum HelloRejectReason : byte
 {
     ProtocolMismatch = 1,
     VersionMismatch = 2,
+    WrongPhase = 3,
 }
 
 public readonly record struct HelloReject(HelloRejectReason Reason);

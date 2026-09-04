@@ -54,6 +54,21 @@ public sealed class WireCodecTests
         0x00, 0x00, 0x00, 0x00,
     };
 
+    private static readonly byte[] JoinStateEmptyPrepBytes =
+    {
+        0x34,
+        0x21, 0x9C, 0x3A, 0x7F,
+        0x0E, 0x68, 0x73, 0x48,
+        0x05, 0x70, 0x16, 0x82,
+        0x02,
+        0x03,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+    };
+
     private static readonly byte[] RunSettingsCustomBytes =
     {
         0x33,
@@ -218,6 +233,22 @@ public sealed class WireCodecTests
     }
 
     [Fact]
+    public void JoinState_EmptyPrepShift3_GoldenRoundTrip()
+    {
+        var join = new JoinState(
+            0x7F3A9C21,
+            0x821670054873680EUL,
+            WorldDeltas.Empty,
+            new RunState(RunPhase.Prep, 3, 0),
+            Array.Empty<ContainerStamp>());
+        Assert.Equal(JoinStateEmptyPrepBytes, WireCodec.Encode(join));
+        Assert.True(WireCodec.TryDecode(JoinStateEmptyPrepBytes, out JoinState decoded));
+        Assert.Equal(join, decoded);
+        Assert.Equal(0x34, JoinStateEmptyPrepBytes[0]);
+        Assert.Equal(52, (byte)MessageKind.JoinState);
+    }
+
+    [Fact]
     public void InputPacket_OneCmd_GoldenRoundTrip()
     {
         var cmd = new InputCmd(7, -127, 127, 32768, InputButtons.Sprint | InputButtons.Interact);
@@ -277,6 +308,7 @@ public sealed class WireCodecTests
         Assert.False(WireCodec.TryDecode(WorldOfferBytes.AsSpan(0, WorldOfferBytes.Length - 1), out WorldOffer _));
         Assert.False(WireCodec.TryDecode(RunSettingsArcadeBytes.AsSpan(0, RunSettingsArcadeBytes.Length - 1), out RunSettings _));
         Assert.False(WireCodec.TryDecode(RunSettingsCustomBytes.AsSpan(0, RunSettingsCustomBytes.Length - 1), out RunSettings _));
+        Assert.False(WireCodec.TryDecode(JoinStateEmptyPrepBytes.AsSpan(0, JoinStateEmptyPrepBytes.Length - 1), out JoinState _));
         Assert.False(WireCodec.TryDecode(InputOneBytes.AsSpan(0, InputOneBytes.Length - 1), out InputPacket? _));
         Assert.False(WireCodec.TryDecode(SnapshotOneBytes.AsSpan(0, SnapshotOneBytes.Length - 1), out SnapshotPacket? _));
         Assert.False(WireCodec.TryDecode(ReadOnlySpan<byte>.Empty, out Hello _));
@@ -290,6 +322,19 @@ public sealed class WireCodecTests
         Assert.False(WireCodec.TryDecode(AppendByte(SnapshotOneBytes), out SnapshotPacket? _));
         Assert.False(WireCodec.TryDecode(AppendByte(RunSettingsArcadeBytes), out RunSettings _));
         Assert.False(WireCodec.TryDecode(AppendByte(RunSettingsCustomBytes), out RunSettings _));
+        Assert.False(WireCodec.TryDecode(AppendByte(JoinStateEmptyPrepBytes), out JoinState _));
+    }
+
+    [Fact]
+    public void JoinState_InvalidPhaseOrShift_FailsDecode()
+    {
+        var badPhase = (byte[])JoinStateEmptyPrepBytes.Clone();
+        badPhase[13] = 0xFF;
+        Assert.False(WireCodec.TryDecode(badPhase, out JoinState _));
+
+        var badShift = (byte[])JoinStateEmptyPrepBytes.Clone();
+        badShift[14] = 0x00;
+        Assert.False(WireCodec.TryDecode(badShift, out JoinState _));
     }
 
     [Fact]

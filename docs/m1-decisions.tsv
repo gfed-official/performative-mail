@@ -186,3 +186,9 @@ ts	phase	decision	why	evidence	result
 2026-09-04T01:56:00Z	verify	dotnet test Release 442 passed	Sim 301 Net 125 Bot 16; eight RunSettings plus five wire/join; baseline U5.3 was 429	dotnet test PerformativeMail.sln -c Release	VERIFIED
 2026-09-04T01:56:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T01:56:00Z	verify	Acceptance filter 15 passed	Arcade pins hashes; goldens kind 0x33; Hello_GoldenRoundTrip; join Arcade and custom	dotnet test --filter RunSettings|Hello_GoldenRoundTrip|Protocol_Hash	VERIFIED
+2026-09-04T02:10:00Z	frame	Frame U6.2 as join-in-progress in Prep with worldHash	Issue 98; chapter 08 3.9 names JoinState; reuse U6.1 Hello and U1.1 hash	https://github.com/gfed-official/performative-mail/issues/98	open
+2026-09-04T02:10:00Z	architect	Chose additive JoinState=52 after RunSettings	Hello goldens and SchemaHash 0x4112C9FA stay; WorldOffer stays lobby regen	/tmp/u62-architect/synthesis.md	accepted
+2026-09-04T02:10:00Z	architect	Skip four-model arena	Chapter 08 3.9 names the fields; U6.1 already chose additive kinds	docs/m1-frame.md	accepted
+2026-09-04T02:10:00Z	subtract	No disconnect grace chunking lobby UI or full container Reset lists	U6.3 and U10.3 own those; stamps are id plus version	spec/08-data-schemas.md	accepted
+2026-09-04T02:20:00Z	verify	dotnet test Release 448 passed	Sim 301 Net 131 Bot 16; baseline U6.1 was 442	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T02:20:00Z	verify	Acceptance filter 8 passed	Third client Prep hash matches 0x821670054873680E; container versions match; Delivery WrongPhase	dotnet test --filter PrepJoin_ThirdClientHashMatchesHost|PrepJoin_ThirdClientContainerVersionsMatchHost|DeliveryHello_RejectsWrongPhase	VERIFIED

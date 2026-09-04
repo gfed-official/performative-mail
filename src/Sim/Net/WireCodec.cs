@@ -259,6 +259,130 @@ public static class WireCodec
         }
     }
 
+    public static byte[] Encode(in JoinState message)
+    {
+        var writer = new BitWriter();
+        writer.WriteByte((byte)MessageKind.JoinState);
+        writer.WriteUInt32(message.Seed);
+        writer.WriteUInt64(message.WorldHash);
+        writer.WriteByte((byte)message.Run.Phase);
+        writer.WriteByte(message.Run.Shift);
+        writer.WriteUInt32(message.Run.PhaseDeadlineTick);
+
+        var depleted = message.Deltas.DepletedNodes;
+        writer.WriteUInt16((ushort)depleted.Count);
+        for (int i = 0; i < depleted.Count; i++)
+            writer.WriteUInt32(depleted[i]);
+
+        var tiles = message.Deltas.FlattenedTiles;
+        writer.WriteUInt16((ushort)tiles.Count);
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            writer.WriteInt32(tiles[i].X);
+            writer.WriteInt32(tiles[i].Y);
+            writer.WriteInt32(tiles[i].H);
+        }
+
+        var ruins = message.Deltas.Ruins;
+        writer.WriteUInt16((ushort)ruins.Count);
+        for (int i = 0; i < ruins.Count; i++)
+            writer.WriteUInt32(ruins[i]);
+
+        var stamps = message.Containers;
+        writer.WriteUInt16((ushort)stamps.Count);
+        for (int i = 0; i < stamps.Count; i++)
+        {
+            writer.WriteUInt32(stamps[i].Id.Value);
+            writer.WriteUInt32(stamps[i].Version.Value);
+        }
+
+        return writer.ToArray();
+    }
+
+    public static bool TryDecode(ReadOnlySpan<byte> payload, out JoinState message)
+    {
+        message = default;
+        var reader = new BitReader(payload);
+        if (!TryReadKind(reader, MessageKind.JoinState)) return false;
+        if (!reader.TryReadUInt32(out var seed)) return false;
+        if (!reader.TryReadUInt64(out var worldHash)) return false;
+        if (!reader.TryReadByte(out var phase)) return false;
+        if (!reader.TryReadByte(out var shift)) return false;
+        if (!reader.TryReadUInt32(out var deadline)) return false;
+        if (!TryReadUInt32List(reader, out var depleted)) return false;
+        if (!TryReadTiles(reader, out var tiles)) return false;
+        if (!TryReadUInt32List(reader, out var ruins)) return false;
+        if (!TryReadStamps(reader, out var stamps)) return false;
+        if (!reader.AtEnd) return false;
+        if (phase > (byte)RunPhase.Victory) return false;
+
+        try
+        {
+            message = new JoinState(
+                seed,
+                worldHash,
+                new WorldDeltas(depleted, tiles, ruins),
+                new RunState((RunPhase)phase, shift, deadline),
+                stamps);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            message = default;
+            return false;
+        }
+    }
+
+    private static bool TryReadUInt32List(BitReader reader, out uint[] values)
+    {
+        values = Array.Empty<uint>();
+        if (!reader.TryReadUInt16(out var count)) return false;
+        if (count == 0) return true;
+
+        values = new uint[count];
+        for (int i = 0; i < count; i++)
+        {
+            if (!reader.TryReadUInt32(out values[i])) return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryReadTiles(BitReader reader, out FlattenedTile[] tiles)
+    {
+        tiles = Array.Empty<FlattenedTile>();
+        if (!reader.TryReadUInt16(out var count)) return false;
+        if (count == 0) return true;
+
+        tiles = new FlattenedTile[count];
+        for (int i = 0; i < count; i++)
+        {
+            if (!reader.TryReadInt32(out var x)) return false;
+            if (!reader.TryReadInt32(out var y)) return false;
+            if (!reader.TryReadInt32(out var h)) return false;
+            tiles[i] = new FlattenedTile(x, y, h);
+        }
+
+        return true;
+    }
+
+    private static bool TryReadStamps(BitReader reader, out ContainerStamp[] stamps)
+    {
+        stamps = Array.Empty<ContainerStamp>();
+        if (!reader.TryReadUInt16(out var count)) return false;
+        if (count == 0) return true;
+
+        stamps = new ContainerStamp[count];
+        for (int i = 0; i < count; i++)
+        {
+            if (!reader.TryReadUInt32(out var id)) return false;
+            if (!reader.TryReadUInt32(out var version)) return false;
+            stamps[i] = new ContainerStamp(new ContainerId(id), new ContainerVersion(version));
+        }
+
+        return true;
+    }
+
     private static void WriteCommand(BitWriter writer, in InputCmd command)
     {
         writer.WriteUInt32(command.Tick);
