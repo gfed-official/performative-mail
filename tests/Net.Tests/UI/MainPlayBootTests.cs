@@ -196,6 +196,19 @@ public sealed class MainPlayBootTests
     }
 
     [Fact]
+    public void MaybeFinish_WritesLiveHudDumpOnPlayingQuit()
+    {
+        var finish = MethodBody(ReadMain(), "MaybeFinish");
+        Assert.Contains("_hudDumpPath", finish);
+        Assert.Contains("Dump(\"live\")", finish);
+        Assert.Contains("HUD_DUMP_END", finish);
+        Assert.Contains("PlaySession.Playing", finish);
+        Assert.DoesNotContain("HudBoot.Placeholder", finish);
+        Assert.DoesNotContain("InspectHud", finish);
+        Assert.DoesNotContain("InspectMismatch", finish);
+    }
+
+    [Fact]
     public void PhysicsProcess_AppliesDebugHelperAfterPump()
     {
         var body = MethodBody(ReadMain(), "_PhysicsProcess");

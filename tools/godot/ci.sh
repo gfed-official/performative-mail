@@ -228,6 +228,9 @@ host_play_smoke() {
     and .worldEntityCounts.intakes == 1
     and .worldEntityCounts.houses == 50
     and .worldEntityCounts.mailboxes == 50
+    and .hudPhase == "PREP"
+    and .hudShift == "Shift 1 / 5"
+    and (.hudTimer | test("^[0-9]{2}:[0-9]{2}$"))
     and .overlayOpen == false
     and .debugOpen == false
   ' "$report" >/dev/null \
@@ -476,9 +479,77 @@ host_live_overlay_smoke() {
   fi
 }
 
+host_live_hud_smoke() {
+  echo "==> headless host live HUD dump from Playing"
+  local reports report dump log
+  reports="$(mktemp -d)"
+  report="$reports/report.json"
+  dump="$reports/hud-dump.txt"
+  log="$(mktemp)"
+  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+    --host --debug-world --quit-after-ms=8000 \
+    --report="$report" --hud-dump="$dump" \
+    >"$log" 2>&1; then
+    cat "$log"
+    fail "host live-hud process exited non-zero"
+  fi
+  if [[ ! -f "$report" ]]; then
+    cat "$log"
+    fail "host live-hud did not write a report"
+  fi
+  if [[ ! -f "$dump" ]]; then
+    cat "$log"
+    fail "host live-hud did not write a HUD dump"
+  fi
+  cat "$report"
+  echo
+  echo "---- $dump ----"
+  cat "$dump"
+  echo
+  grep -q '"state":"Playing"' "$report" || fail "host live-hud report is not Playing: $(cat "$report")"
+  grep -q '"worldHash":"0x4CF184F2FA4D4EEE"' "$report" \
+    || fail "host live-hud report missing debug worldHash: $(cat "$report")"
+  need_jq
+  jq -e '
+    .state == "Playing"
+    and .phase == "Prep"
+    and .shift == 1
+    and .worldHash == "0x4CF184F2FA4D4EEE"
+    and .hudPhase == "PREP"
+    and .hudShift == "Shift 1 / 5"
+    and (.hudTimer | test("^[0-9]{2}:[0-9]{2}$"))
+    and (.pawns | length) >= 1
+    and .worldEntityCounts.postOffices == 1
+    and .worldEntityCounts.intakes == 1
+    and .worldEntityCounts.houses == 2
+    and .worldEntityCounts.mailboxes == 2
+    and .overlayOpen == false
+    and .debugOpen == false
+  ' "$report" >/dev/null \
+    || fail "host live-hud report failed jq schema: $(cat "$report")"
+  grep -q 'HUD_DUMP case=live' "$dump" || fail "missing live HUD dump: $(cat "$dump")"
+  grep -q 'HUD_DUMP_END' "$dump" || fail "missing HUD_DUMP_END: $(cat "$dump")"
+  grep -Fqx "PhaseLabel=PREP" "$dump" || fail "live HUD dump is not PREP: $(cat "$dump")"
+  grep -Fqx "ShiftLabel=Shift 1 / 5" "$dump" || fail "live HUD dump missing shift: $(cat "$dump")"
+  local timer
+  timer="$(jq -r .hudTimer "$report")"
+  test -n "$timer" || fail "host live-hud report missing hudTimer: $(cat "$report")"
+  grep -Fqx "TimerLabel=$timer" "$dump" \
+    || fail "live HUD dump timer '$timer' does not match replica: $(cat "$dump")"
+  if grep -q 'HUD_DUMP case=match' "$dump"; then
+    fail "live HUD dump still has inspect Placeholder path: $(cat "$dump")"
+  fi
+  if grep -Fqx "PhaseLabel=DELIVERY" "$dump"; then
+    fail "live HUD dump still has HudBoot.Placeholder DELIVERY: $(cat "$dump")"
+  fi
+  if grep -Fq "13 Larch Lane" "$dump"; then
+    fail "live HUD dump still has HudBoot.Placeholder Larch: $(cat "$dump")"
+  fi
+}
+
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay|live-hud]
 
   verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import   godot --import + dotnet build of game/
@@ -495,6 +566,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debu
   worldstage solo Host --debug-world report plus WorldStage Label3D dump (PO, Mail, addresses)
   interact solo Host --debug-world --debug-helper=interact; pickup Intake mail, deliver, wallet 8
   live-overlay solo Host --debug-world --debug-helper=live-overlay; pickup, open overlay, dump live cell text
+  live-hud solo Host --debug-world report plus live HUD dump (Playing / HudSnapshot, not Placeholder)
   all      all of the above (default)
 EOF
 }
@@ -547,6 +619,9 @@ case "$cmd" in
   live-overlay)
     host_live_overlay_smoke
     ;;
+  live-hud)
+    host_live_hud_smoke
+    ;;
   all)
     verify_godot
     verify_dotnet
@@ -564,6 +639,7 @@ case "$cmd" in
     host_worldstage_smoke
     host_interact_smoke
     host_live_overlay_smoke
+    host_live_hud_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;
   -h|--help)

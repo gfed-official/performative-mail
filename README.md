@@ -49,6 +49,7 @@ Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4
 - `worldstage` runs `--host --debug-world --report= --world-dump=` and asserts live WorldStage Label3D text for Post Office, Mail, and the debug addresses, plus SmokeReport `worldEntityCounts.mailboxes >= 2`.
 - `interact` runs `--host --debug-world --debug-helper=interact`. It stocks Intake, teleports, holds Interact through pickup and mailbox deliver, and asserts SmokeReport `wallet` is `8`.
 - `live-overlay` runs `--host --debug-world --debug-helper=live-overlay` with `--overlay-dump=`. It picks up Intake mail, opens the inventory overlay on the Playing replica, and asserts live hotbar cell text, not the OverlayBootReplica placeholder.
+- `live-hud` runs `--host --debug-world --report= --hud-dump=`. It asserts HUD Control text came from Playing / `HudSnapshot` (phase PREP, shift, timer matching the replica), not `HudBoot.Placeholder`.
 
 `all` runs every command above. `all` is the default when you omit the argument. The command list and the steps to add a Control-text smoke are in [`tools/godot/README.md`](tools/godot/README.md).
 
