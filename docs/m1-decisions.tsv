@@ -223,3 +223,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T03:06:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T03:06:00Z	verify	Acceptance filter passed	Axe 2 Log 5 hits stump; Hand 3 Fiber 3 hits regrow; chapter 02 table	dotnet test --filter Axe_OnWood|Hand_OnFiber|Table_Chapter02	VERIFIED
 2026-09-04T03:06:00Z	verify	Generated wood node yields 2 Log	Fixed seed 0x7F3A9C21 first wood tile	tests/Sim.Tests/World/HarvestSessionTests.cs	VERIFIED
+2026-09-04T03:20:00Z	frame	Frame U8.2 as Wooden Wall and Chest placement	Issue 103; chapter 04 1.1-1.2 names consume and Construct; U2.2 defs stay	https://github.com/gfed-official/performative-mail/issues/103	open
+2026-09-04T03:20:00Z	architect	Chose ConstructRegistry.TryPlace	Place is one-shot; a session wrapper would pass through to the registry	/tmp/u82-architect/synthesis.md	accepted
+2026-09-04T03:20:00Z	architect	Skip four-model arena	Chapter 04 1.2 and chapter 07 name Construct and TryPlace; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T03:20:00Z	subtract	No drag line flatten chest GridContainer MessageKind PO Depot SimWorld hook	Issue verify is recipe consume plus registry plus street and slope reject	spec/04-automation.md	accepted
