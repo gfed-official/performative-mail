@@ -109,3 +109,5 @@ jobs:
         run: bash tools/godot/ci.sh play
       - name: Headless Host debug-world report
         run: bash tools/godot/ci.sh debug-world
+      - name: Headless Host debug-helper intake teleport
+        run: bash tools/godot/ci.sh debug-helpers

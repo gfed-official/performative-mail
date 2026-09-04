@@ -275,9 +275,47 @@ host_debug_world_smoke() {
     || fail "host debug-world report failed jq schema: $(cat "$report")"
 }
 
+host_debug_helpers_smoke() {
+  echo "==> headless host debug-helper=intake report"
+  local report log
+  report="$(mktemp)"
+  log="$(mktemp)"
+  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+    --host --debug-world --debug-helper=intake --quit-after-ms=8000 --report="$report" \
+    >"$log" 2>&1; then
+    cat "$log"
+    fail "host debug-helpers process exited non-zero"
+  fi
+  if [[ ! -f "$report" ]]; then
+    cat "$log"
+    fail "host debug-helpers did not write a report"
+  fi
+  cat "$report"
+  echo
+  grep -q '"state":"Playing"' "$report" || fail "host debug-helpers report is not Playing: $(cat "$report")"
+  grep -q '"worldHash":"0x4CF184F2FA4D4EEE"' "$report" \
+    || fail "host debug-helpers report missing debug worldHash: $(cat "$report")"
+  need_jq
+  jq -e '
+    .state == "Playing"
+    and .phase == "Prep"
+    and .shift == 1
+    and .worldHash == "0x4CF184F2FA4D4EEE"
+    and (.pawns | length) >= 1
+    and (.pawns[] | select(.role == "Local") | .x == 1100 and .y == 500)
+    and .worldEntityCounts.postOffices == 1
+    and .worldEntityCounts.intakes == 1
+    and .worldEntityCounts.houses == 2
+    and .worldEntityCounts.mailboxes == 2
+    and .overlayOpen == false
+    and .debugOpen == false
+  ' "$report" >/dev/null \
+    || fail "host debug-helpers report failed intake teleport: $(cat "$report")"
+}
+
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join|play|debug-world]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join|play|debug-world|debug-helpers]
 
   verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import   godot --import + dotnet build of game/
@@ -290,6 +328,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debu
   join     two-process LAN host/join on 127.0.0.1:7777
   play     solo Host play report with golden worldHash and HUD
   debug-world solo Host --debug-world report (2 houses, hash 0x4CF184F2FA4D4EEE)
+  debug-helpers solo Host --debug-world --debug-helper=intake; local pawn at Intake (1100, 500)
   all      all of the above (default)
 EOF
 }
@@ -330,6 +369,9 @@ case "$cmd" in
   debug-world)
     host_debug_world_smoke
     ;;
+  debug-helpers)
+    host_debug_helpers_smoke
+    ;;
   all)
     verify_godot
     verify_dotnet
@@ -343,6 +385,7 @@ case "$cmd" in
     host_join_smoke
     host_play_smoke
     host_debug_world_smoke
+    host_debug_helpers_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;
   -h|--help)

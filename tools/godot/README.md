@@ -19,6 +19,7 @@
 | `join` | Two-process LAN host and join on `127.0.0.1:7777`. Asserts both reports are Playing with at least two pawns. |
 | `play` | Solo Host play report. Asserts Playing, golden `worldHash` `0x821670054873680E`, HUD phase PREP, and shift `Shift 1 / 5`. Keys, units, and jq are in [report.md](report.md). |
 | `debug-world` | Solo Host play report with `--debug-world`. Asserts Playing, PREP, 2 houses / 2 mailboxes, and debug `worldHash` `0x4CF184F2FA4D4EEE`. |
+| `debug-helpers` | Solo Host `--debug-world --debug-helper=intake`. Asserts the local pawn report is at Intake tile centre `1100, 500`. |
 | `all` | Every command above, in that order. `all` is the default. |
 | `-h`, `--help` | Print the command list. |
 
@@ -32,7 +33,9 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 | `overlays` | `inspect-overlays.sh` | `--inspect-overlays` | `--overlays-dump=` |
 | `debug` | `inspect-debug.sh` | `--inspect-debug` | `--debug-dump=` |
 
-`join`, `play`, and `debug-world` live inline in `ci.sh`.
+`join`, `play`, `debug-world`, and `debug-helpers` live inline in `ci.sh`.
+
+`--debug-helper=` runs one host cheat on the first Playing frame. Values are `intake`, `mailbox`, `give-mail`, and `overlay`. F3 and `` ` `` still toggle DebugMenu for the same cheats.
 
 ## Environment
 
@@ -40,7 +43,7 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 
 ## CI
 
-The `godot` job in `.github/workflows/ci.yml` runs each command as its own step. It does not call `all`. The steps are `verify`, `import`, `boot`, `hud`, `overlay`, `lobby`, `overlays`, `debug`, `join`, `play`, and `debug-world`.
+The `godot` job in `.github/workflows/ci.yml` runs each command as its own step. It does not call `all`. The steps are `verify`, `import`, `boot`, `hud`, `overlay`, `lobby`, `overlays`, `debug`, `join`, `play`, `debug-world`, and `debug-helpers`.
 
 ## Add a Control-text smoke
 
