@@ -26,13 +26,16 @@ public partial class Main : Node3D
     private bool _reported;
     private bool _inspectHud;
     private bool _inspectOverlay;
+    private bool _inspectLobby;
     private bool _overlayHeld;
     private string? _reportPath;
     private string? _hudDumpPath;
     private string? _overlayDumpPath;
+    private string? _lobbyDumpPath;
     private int _quitAfterMs;
     private ulong _startedUsec;
     private Hud _hud = null!;
+    private Lobby _lobby = null!;
     private InventoryOverlay _overlay = null!;
 
     public override void _Ready()
@@ -42,6 +45,7 @@ public partial class Main : Node3D
         BuildWorld();
         BuildMenu();
         BuildHud();
+        BuildLobby();
         BuildOverlay();
         ApplyArgs(OS.GetCmdlineUserArgs());
         if (_inspectHud)
@@ -53,6 +57,12 @@ public partial class Main : Node3D
         if (_inspectOverlay)
         {
             InspectOverlay();
+            return;
+        }
+
+        if (_inspectLobby)
+        {
+            InspectLobby();
             return;
         }
 
@@ -221,6 +231,19 @@ public partial class Main : Node3D
     private void BindHud(in HudSnapshot snapshot) =>
         _hud.Bind(HudFrame.From(in snapshot));
 
+    private void BuildLobby()
+    {
+        var packed = GD.Load<PackedScene>("res://scenes/lobby.tscn");
+        _lobby = packed.Instantiate<Lobby>();
+        var layer = new CanvasLayer { Layer = 9 };
+        AddChild(layer);
+        layer.AddChild(_lobby);
+        _lobby.Visible = false;
+    }
+
+    private void BindLobby(in LobbySnapshot snapshot) =>
+        _lobby.Bind(LobbyFrame.From(in snapshot));
+
     private void BuildOverlay()
     {
         _overlay = new InventoryOverlay();
@@ -277,6 +300,22 @@ public partial class Main : Node3D
         GetTree().Quit();
     }
 
+    private void InspectLobby()
+    {
+        _lobby.Visible = true;
+        var dump = new StringBuilder();
+        BindLobby(LobbyBoot.Arcade());
+        dump.AppendLine(_lobby.Dump("arcade"));
+        BindLobby(LobbyBoot.ArcadeReady());
+        dump.AppendLine(_lobby.Dump("ready"));
+        dump.AppendLine("LOBBY_DUMP_END");
+        var text = dump.ToString();
+        GD.Print(text);
+        if (_lobbyDumpPath is not null)
+            File.WriteAllText(_lobbyDumpPath, text);
+        GetTree().Quit();
+    }
+
     private static HudSnapshot InspectMismatch() =>
         DeliveryStub(new InteractPrompt.Deliver("13 Larch Lane", "8 Oak Street"));
 
@@ -313,10 +352,14 @@ public partial class Main : Node3D
                 _inspectHud = true;
             else if (arg == "--inspect-overlay")
                 _inspectOverlay = true;
+            else if (arg == "--inspect-lobby")
+                _inspectLobby = true;
             else if (arg.StartsWith("--hud-dump=", StringComparison.Ordinal))
                 _hudDumpPath = arg.Substring("--hud-dump=".Length);
             else if (arg.StartsWith("--overlay-dump=", StringComparison.Ordinal))
                 _overlayDumpPath = arg.Substring("--overlay-dump=".Length);
+            else if (arg.StartsWith("--lobby-dump=", StringComparison.Ordinal))
+                _lobbyDumpPath = arg.Substring("--lobby-dump=".Length);
             else if (arg.StartsWith("--quit-after-ms=", StringComparison.Ordinal) &&
                      int.TryParse(arg.AsSpan("--quit-after-ms=".Length), out var ms))
                 _quitAfterMs = ms;

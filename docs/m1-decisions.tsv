@@ -232,3 +232,10 @@ ts	phase	decision	why	evidence	result
 2026-09-04T03:25:00Z	verify	Acceptance filter 6 passed	Wall 3 Log; Chest 4 Log; street reject; slope reject; harvest then place	dotnet test --filter Wall_ThreeLog|Chest_FourLog|Street_Rejected|Slope_AtOrAbove|HarvestThenPlace|RepoDefs_WallAndChest	VERIFIED
 2026-09-04T03:25:00Z	verify	ConstructRegistry 10 passed	entity id 50331649; generated street reject; under-15 place	dotnet test --filter ConstructRegistry	VERIFIED
 2026-09-04T03:25:00Z	verify	CI on 541022b all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions	VERIFIED
+2026-09-04T04:50:00Z	frame	Frame U9.1 as Lobby screen bound to RunSettings	Issue 104; chapter 09 2.2 names regions; U6.1 settings stay	https://github.com/gfed-official/performative-mail/issues/104	open
+2026-09-04T04:50:00Z	architect	Chose LobbySnapshot plus LobbyFrame.From	HUD bind path; inspect dumps seed and ready; play boot stays unbound	src/Client/UI/LobbyFrame.cs	accepted
+2026-09-04T04:50:00Z	architect	Skip four-model arena	Chapter 09 2.2 and the HUD bind path already name the shape	docs/m1-frame.md	accepted
+2026-09-04T04:50:00Z	subtract	No stamp grid live session wire payday draft HUD quota BootPlaceholder on play	Empty stamps; Host/Join stay on the menu; inspect owns the bind	spec/09-ui-ux.md	accepted
+2026-09-04T04:55:00Z	verify	dotnet test Release 536 passed	Sim 366 Net 154 Bot 16; baseline U8.2 was 519; 15 new lobby tests plus HUD pins	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T04:55:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T04:55:00Z	verify	Acceptance filter 17 passed	Arcade seed 0x7F3A9C21 ready/not ready; scene Ignore; play boot unbound	dotnet test --filter LobbyFrame|LobbyBoot|LobbyScene|MainPlayBoot|HudBoot|HudScene	VERIFIED
