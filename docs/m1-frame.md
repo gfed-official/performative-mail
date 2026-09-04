@@ -10,13 +10,13 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues and implements only U1.1.
+This run cuts those gates into landable child issues. The current landable unit is U4.2 (issue 93): bike vehicle and driver prediction. Do not start U5+.
 
 ## Scope
 
-Touch chapters 01 (run structure), 02 (world generation), 03 (mail already on main), 08 (content loading), 09 (lobby, HUD, payday, draft, results). Keep M0 netcode. Do not start M2–M5.
+Touch chapters 04 (bike table), 06 (driver prediction), 07 (Vehicles.Step), and 08 (shop vehicle grant). Keep M0 walk netcode. Do not start M2–M5.
 
-First landable unit is world generation skeleton plus `worldHash`. No run state machine, shop, bike, perk pool, or lobby in U1.1.
+U4.2 adds a bike path beside walk `MovementStep`. Mounted snapshots carry `vehicleId`. Shop may grant a parked bike. No StatSheet apply, draft, truck, or NPC driver.
 
 ## Rigor
 

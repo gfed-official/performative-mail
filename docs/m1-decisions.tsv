@@ -132,3 +132,11 @@ ts	phase	decision	why	evidence	result
 2026-09-04T00:27:00Z	verify	Acceptance filter 3 passed	DebitsWalletAndGrantsItem; OncePerRun second reject; LastCard one grant	dotnet test --filter TryBuy_OfferedItem|TryBuy_OncePerRun|TryBuy_LastCard	VERIFIED
 2026-09-04T00:31:00Z	verify	dotnet test Release 389 passed	Sim 259 Net 114 Bot 16; twelve ShopSession tests	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-04T00:31:00Z	verify	CI on 1d81360 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33821987153	VERIFIED
+2026-09-04T00:45:00Z	architect	Kept optional vehicleId trailer keyed on EntityClass	Next player id is class 1 so a class-2 peek is not ambiguous; walk goldens and SchemaHash stay	src/Sim/Net/WireCodec.cs	accepted
+2026-09-04T00:45:00Z	architect	Did not bump SchemaHash	Supersedes the 0x540CE9F1 row; unmounted snapshot bytes are unchanged	src/Sim/Net/Protocol.cs	accepted
+2026-09-04T00:36:00Z	frame	Frame U4.2 as bike vehicle and driver prediction	Issue 93; prediction uses the bike path; walk harness stays; no U5+	https://github.com/gfed-official/performative-mail/issues/93	open
+2026-09-04T00:38:00Z	architect	Chose VehicleStep beside MovementStep	Issue forbids reuse of the walk step; speeds 8/5 and clamp 1.1 live on VehicleContext	src/Sim/Vehicles/VehicleStep.cs	accepted
+2026-09-04T00:38:00Z	subtract	Unlocked shop vehicle for bike only	Hire and service still throw; truck grant rejected; no inventory stack	src/Sim/Content/ShopCatalog.cs	accepted
+2026-09-04T00:46:00Z	verify	dotnet test Release 402 passed	Sim 266 Net 120 Bot 16; baseline 389	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-04T00:46:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T00:46:00Z	verify	Acceptance filter passed	bike != walk; mounted predict; snapshot vehicleId; shop 120; Criterion2; ZeroDelay walk	dotnet test --filter OnRoadForward_DoesNotCallWalkStep|MountedPredict|MountedListenHost|TryBuy_Bike|Criterion2_200ms|ZeroDelay_PredictedPose	VERIFIED
