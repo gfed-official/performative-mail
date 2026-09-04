@@ -91,6 +91,41 @@ public sealed class MainPlayBootTests
         Assert.Contains("InputSampler.Sample", body);
     }
 
+    [Fact]
+    public void Playing_HidesMenuChromeAndUsesFirstPersonCamera()
+    {
+        var render = MethodBody(ReadMain(), "Render");
+        Assert.Contains("ShowMenuChrome(false)", render);
+        Assert.Contains("ApplyFirstPersonCamera", render);
+        Assert.DoesNotContain("0f, 9f, 8f", ReadMain());
+        Assert.DoesNotContain("_leave", ReadMain());
+        Assert.Contains("ShowMenuChrome(true)", MethodBody(ReadMain(), "Render"));
+    }
+
+    [Fact]
+    public void BuildWorld_StagesAtlasMarkers()
+    {
+        var build = MethodBody(ReadMain(), "BuildWorld");
+        Assert.Contains("WorldStage", build);
+        Assert.Contains("FirstPersonLook.EyeHeightMeters", build);
+    }
+
+    [Fact]
+    public void PauseChoice_StillLeavesSession()
+    {
+        var body = MethodBody(ReadMain(), "OnPauseChoice");
+        Assert.Contains("_session.Leave()", body);
+        Assert.Contains("_pause.WantsLeave", body);
+    }
+
+    [Fact]
+    public void InspectWorld_DumpsWorldStage()
+    {
+        var inspect = MethodBody(ReadMain(), "InspectWorld");
+        Assert.Contains("_world.Dump()", inspect);
+        Assert.Contains("--inspect-world", MethodBody(ReadMain(), "ApplyArgs"));
+    }
+
     private static string ReadMain()
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })

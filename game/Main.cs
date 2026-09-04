@@ -14,13 +14,15 @@ public partial class Main : Node3D
 {
     private PlaySessionMachine _session = null!;
     private PawnStage _pawns = null!;
+    private WorldStage _world = null!;
     private Camera3D _camera = null!;
     private LineEdit _address = null!;
     private Label _status = null!;
     private Button _host = null!;
     private Button _join = null!;
-    private Button _leave = null!;
+    private Control _menuChrome = null!;
     private Control _form = null!;
+    private FirstPersonLookState _look;
 
     private bool _walk;
     private bool _reported;
@@ -28,6 +30,7 @@ public partial class Main : Node3D
     private bool _inspectOverlay;
     private bool _inspectLobby;
     private bool _inspectOverlays;
+    private bool _inspectWorld;
     private bool _overlayHeld;
     private bool _pauseHeld;
     private string? _reportPath;
@@ -35,6 +38,7 @@ public partial class Main : Node3D
     private string? _overlayDumpPath;
     private string? _lobbyDumpPath;
     private string? _overlaysDumpPath;
+    private string? _worldDumpPath;
     private int _quitAfterMs;
     private ulong _startedUsec;
     private Hud _hud = null!;
@@ -86,6 +90,12 @@ public partial class Main : Node3D
             return;
         }
 
+        if (_inspectWorld)
+        {
+            InspectWorld();
+            return;
+        }
+
         if (OS.IsDebugBuild() || _inspectDebug)
             BuildDebugMenu();
 
@@ -101,13 +111,22 @@ public partial class Main : Node3D
 
     public override void _ExitTree() => _session.Dispose();
 
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (_pause.IsOpen || _menuChrome.Visible)
+            return;
+        if (@event is not InputEventMouseMotion motion)
+            return;
+        FirstPersonLook.ApplyMouse(ref _look, motion.Relative.X, motion.Relative.Y);
+    }
+
     public override void _PhysicsProcess(double delta)
     {
         var intent = _pause.IsOpen
-            ? MoveIntent.Idle
+            ? new MoveIntent(0, 0, _look.Yaw, InputButtons.None)
             : _walk
-                ? new MoveIntent(0, sbyte.MaxValue, 0, InputButtons.None)
-                : InputSampler.Sample();
+                ? new MoveIntent(0, sbyte.MaxValue, _look.Yaw, InputButtons.None)
+                : InputSampler.Sample(in _look);
         var state = _session.Pump(WallNow(), in intent);
         Render(state);
         if (!_pause.IsOpen)
@@ -124,29 +143,25 @@ public partial class Main : Node3D
         switch (state)
         {
             case PlaySession.Menu:
-                ShowForm(enabled: true);
+                ShowMenuChrome(true);
+                SetMouseCaptured(false);
                 _pawns.DespawnAll();
                 _status.Text = "Host a game, or join a friend by LAN IP.";
                 break;
-            case PlaySession.Connecting connecting:
-                ShowForm(enabled: false);
-                _leave.Disabled = false;
+            case PlaySession.Connecting:
+                ShowMenuChrome(false);
+                SetMouseCaptured(false);
                 _pawns.DespawnAll();
-                _status.Text = connecting.Describe();
                 break;
             case PlaySession.Playing playing:
-                ShowForm(enabled: false);
-                _leave.Disabled = false;
+                ShowMenuChrome(false);
+                SetMouseCaptured(!_pause.IsOpen);
                 _pawns.Sync(playing.Pawns);
-                _status.Text = StatusFor(playing);
-                if (_pawns.TryLocalOrigin(playing.Pawns, out var focus))
-                {
-                    _camera.Position = focus + new Vector3(0f, 9f, 8f);
-                    _camera.LookAt(focus);
-                }
+                ApplyFirstPersonCamera(playing);
                 break;
             case PlaySession.Failed failed:
-                ShowForm(enabled: true);
+                ShowMenuChrome(true);
+                SetMouseCaptured(false);
                 _pawns.DespawnAll();
                 _status.Text = failed.Reason.Message();
                 break;
@@ -155,19 +170,27 @@ public partial class Main : Node3D
         }
     }
 
-    private void ShowForm(bool enabled)
+    private void ShowMenuChrome(bool visible)
     {
-        _form.Visible = true;
-        _host.Disabled = !enabled;
-        _join.Disabled = !enabled;
-        _leave.Disabled = enabled;
+        _menuChrome.Visible = visible;
+        _host.Disabled = !visible;
+        _join.Disabled = !visible;
+        _lobby.Visible = false;
     }
 
-    private static string StatusFor(PlaySession.Playing playing)
+    private void ApplyFirstPersonCamera(PlaySession.Playing playing)
     {
-        if (playing.Role is SessionRole.Listening listening)
-            return $"Hosting. Friends join {listening.Advertisement}. WASD to walk.";
-        return $"Joined. {playing.Pawns.Count} pawn(s) in view. WASD to walk.";
+        if (!_pawns.TryLocalEye(playing.Pawns, out var eye))
+            return;
+        _camera.Position = new Vector3(eye.X, eye.Y, eye.Z);
+        _camera.Rotation = new Vector3(_look.PitchRadians, eye.YawRadians, 0f);
+    }
+
+    private void SetMouseCaptured(bool captured)
+    {
+        Input.MouseMode = captured
+            ? Input.MouseModeEnum.Captured
+            : Input.MouseModeEnum.Visible;
     }
 
     private void BuildWorld()
@@ -194,18 +217,20 @@ public partial class Main : Node3D
 
         var ground = new MeshInstance3D
         {
-            Mesh = new PlaneMesh { Size = new Vector2(40f, 40f) },
+            Mesh = new PlaneMesh { Size = new Vector2(80f, 80f) },
             MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.22f, 0.38f, 0.22f) },
         };
         AddChild(ground);
 
+        _world = new WorldStage();
+        AddChild(_world);
+
         _camera = new Camera3D
         {
-            Position = new Vector3(0f, 9f, 8f),
+            Position = new Vector3(0f, FirstPersonLook.EyeHeightMeters, 0f),
             Current = true,
         };
         AddChild(_camera);
-        _camera.LookAt(Vector3.Zero);
 
         _pawns = new PawnStage();
         AddChild(_pawns);
@@ -216,16 +241,16 @@ public partial class Main : Node3D
         var layer = new CanvasLayer();
         AddChild(layer);
 
-        var root = new MarginContainer();
-        root.SetAnchorsPreset(Control.LayoutPreset.TopWide);
-        root.AddThemeConstantOverride("margin_left", 16);
-        root.AddThemeConstantOverride("margin_top", 16);
-        root.AddThemeConstantOverride("margin_right", 16);
-        layer.AddChild(root);
+        _menuChrome = new MarginContainer();
+        _menuChrome.SetAnchorsPreset(Control.LayoutPreset.TopWide);
+        _menuChrome.AddThemeConstantOverride("margin_left", 16);
+        _menuChrome.AddThemeConstantOverride("margin_top", 16);
+        _menuChrome.AddThemeConstantOverride("margin_right", 16);
+        layer.AddChild(_menuChrome);
 
         var column = new VBoxContainer();
         column.AddThemeConstantOverride("separation", 8);
-        root.AddChild(column);
+        _menuChrome.AddChild(column);
 
         _status = new Label { Text = "Host a game, or join a friend by LAN IP." };
         column.AddChild(_status);
@@ -249,10 +274,6 @@ public partial class Main : Node3D
         _join = new Button { Text = "Join" };
         _join.Pressed += OnJoinPressed;
         _form.AddChild(_join);
-
-        _leave = new Button { Text = "Leave", Disabled = true };
-        _leave.Pressed += () => _session.Leave();
-        column.AddChild(_leave);
     }
 
     private void BuildHud()
@@ -532,6 +553,7 @@ public partial class Main : Node3D
     {
         if (!JoinTarget.TryParse(_address.Text, SessionOptions.DefaultPort, out var target))
         {
+            ShowMenuChrome(true);
             _status.Text = "Enter a host like 192.168.1.20 or 192.168.1.20:7777.";
             return;
         }
@@ -562,6 +584,8 @@ public partial class Main : Node3D
                 _inspectLobby = true;
             else if (arg == "--inspect-overlays")
                 _inspectOverlays = true;
+            else if (arg == "--inspect-world")
+                _inspectWorld = true;
             else if (arg == "--inspect-debug")
                 _inspectDebug = true;
             else if (arg.StartsWith("--hud-dump=", StringComparison.Ordinal))
@@ -572,6 +596,8 @@ public partial class Main : Node3D
                 _lobbyDumpPath = arg.Substring("--lobby-dump=".Length);
             else if (arg.StartsWith("--overlays-dump=", StringComparison.Ordinal))
                 _overlaysDumpPath = arg.Substring("--overlays-dump=".Length);
+            else if (arg.StartsWith("--world-dump=", StringComparison.Ordinal))
+                _worldDumpPath = arg.Substring("--world-dump=".Length);
             else if (arg.StartsWith("--debug-dump=", StringComparison.Ordinal))
                 _debugDumpPath = arg.Substring("--debug-dump=".Length);
             else if (arg.StartsWith("--quit-after-ms=", StringComparison.Ordinal) &&
@@ -583,6 +609,15 @@ public partial class Main : Node3D
             _session.Host();
         else if (join is not null && JoinTarget.TryParse(join, SessionOptions.DefaultPort, out var target))
             _session.Join(target);
+    }
+
+    private void InspectWorld()
+    {
+        var text = _world.Dump();
+        GD.Print(text);
+        if (_worldDumpPath is not null)
+            File.WriteAllText(_worldDumpPath, text);
+        GetTree().Quit();
     }
 
     private void MaybeFinish(PlaySession state)

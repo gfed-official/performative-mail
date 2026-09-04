@@ -1,0 +1,9 @@
+ts	phase	decision	why	evidence	result
+2026-09-04T08:04:43Z	frame	Done when Host/Join chrome is gone in Playing, camera is eye-height FP, M0 atlas markers show PO/mail/addresses, Leave only via Esc	User asleep; prove-it-works needs falsifiable checks not vibes	issues 163-167	framed
+2026-09-04T08:04:43Z	frame	Rigor medium; no Godot binary on host so gates are source contracts + dotnet test + CI Godot later	Godot not installed on this VM	which godot empty	accepted
+2026-09-04T08:04:43Z	design	Skip architect arena; FP and Esc-leave already named in PauseBoot and spec 09	laziness: shape is concrete, second arena is over-engineering	PauseBoot.Binds Move/look; spec/09-ui-ux.md 2.12	skipped arena
+2026-09-04T08:04:43Z	design	Stage authored m0 atlas now; let U11.5 replace with WorldTables later	experience-first readable markers today; redesign-from-first-principles for camera	issue 158; issue 164	chosen
+2026-09-04T08:08:51Z	unit2	Hide menu chrome in Connecting/Playing; remove Leave button from top bar	experience-first: Esc owns Leave; overlapping Host/Join was ShowForm always visible	game/Main.cs ShowMenuChrome; issues 165-167	tests green
+2026-09-04T08:08:51Z	unit3	Eye-height camera + mouse yaw via FirstPersonLook; hide local body	redesign-from-first-principles; PauseBoot already promised mouse look	src/App/FirstPersonLook.cs; PawnStage Body visible	FirstPersonLookTests pass
+2026-09-04T08:08:51Z	unit4	WorldStage labels PO, Mail, houses, mailboxes from m0 atlas	experience-first readable markers; U11.5 still owns generated WorldTables	game/WorldStage.cs; issue 164	WorldStageBootTests pass
+2026-09-04T08:08:51Z	verify	dotnet test PerformativeMail.sln all green 637	prove-it-works on harness; Godot binary absent so live FP not on this VM	dotnet test exit 0	VERIFIED harness; Godot live INCONCLUSIVE here
