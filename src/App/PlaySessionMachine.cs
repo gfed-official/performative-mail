@@ -360,7 +360,9 @@ public sealed class PlaySessionMachine : IDisposable
             uint now = server.Clock?.Now ?? server.World.CurrentTick;
             uint deadline = server.Clock?.State.PhaseDeadlineTick ?? server.Session.PhaseDeadlineTick;
             InteractPrompt interact = InteractPrompt.None.Instance;
-            if (server.TryInteractAddresses(local, out var held, out var target))
+            if (server.TryPickupAddress(local, out var incoming))
+                interact = new InteractPrompt.Pickup(incoming);
+            else if (server.TryInteractAddresses(local, out var held, out var target))
                 interact = new InteractPrompt.Deliver(held, target);
             return new HudSnapshot(
                 phase,

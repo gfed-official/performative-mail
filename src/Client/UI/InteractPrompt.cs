@@ -11,5 +11,7 @@ public abstract record InteractPrompt
         public static None Instance { get; } = new();
     }
 
+    public sealed record Pickup(string Address) : InteractPrompt;
+
     public sealed record Deliver(string HeldAddress, string TargetAddress) : InteractPrompt;
 }

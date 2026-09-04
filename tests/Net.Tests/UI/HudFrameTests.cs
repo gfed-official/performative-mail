@@ -11,6 +11,17 @@ public sealed class HudFrameTests
     private const string Other = "8 Oak Street";
 
     [Fact]
+    public void From_Pickup_ShowsMailAddressWithoutMatch()
+    {
+        var frame = HudFrame.From(Snapshot(new InteractPrompt.Pickup(Held)));
+
+        Assert.Equal(Held, frame.HeldAddress);
+        Assert.Equal("", frame.TargetAddress);
+        Assert.Equal(MatchMark.None, frame.Match);
+        Assert.Equal("", frame.MatchLabel);
+    }
+
+    [Fact]
     public void From_DeliverMatch_ShiftDeliveryTimerWalletAndTick()
     {
         var frame = HudFrame.From(Snapshot(
