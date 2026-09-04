@@ -27,6 +27,8 @@ public sealed class SimWorld
 
     public ComplaintMeter Complaint { get; } = new();
 
+    public Wallet Wallet { get; } = new();
+
     public ContainerId Intake { get; }
 
     public SimWorld()

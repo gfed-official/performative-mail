@@ -1,7 +1,11 @@
 using PerformativeMail.Client;
+using PerformativeMail.Client.UI;
 using PerformativeMail.Server;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Net;
+using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.App;
 
@@ -83,6 +87,90 @@ public sealed class PlaySessionMachine : IDisposable
     }
 
     public void Dispose() => Leave();
+
+    public DebugSnapshot Inspect()
+    {
+        switch (_state)
+        {
+            case PlaySession.Menu:
+                return DebugSnapshot.Idle(DebugConnection.Menu);
+            case PlaySession.Failed:
+                return DebugSnapshot.Idle(DebugConnection.Failed);
+            case PlaySession.Connecting connecting:
+                return InspectLive(DebugConnection.Connecting, connecting.Role, canCheat: false);
+            case PlaySession.Playing playing:
+                return InspectLive(DebugConnection.Playing, playing.Role, canCheat: playing.Role is SessionRole.Listening);
+            default:
+                throw new ArgumentOutOfRangeException(nameof(_state), _state, null);
+        }
+    }
+
+    public bool TryGiveWallet(Cents amount)
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+        if (_live.Server is not ServerRuntime server)
+            return false;
+        if (amount.Value <= 0)
+            return false;
+
+        server.World.Wallet.Credit(amount);
+        return true;
+    }
+
+    public bool TryAdvancePhase()
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+        return _live.Server is ServerRuntime server && server.TryAdvancePhase();
+    }
+
+    public bool TryResetLocalPawn()
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+        if (_live.Server is not ServerRuntime server)
+            return false;
+        if (_live.Client.LocalPlayer is not EntityId local)
+            return false;
+        if (!server.World.Players.TryGet(local, out var body))
+            return false;
+
+        var spawn = SpawnRing.Pose(SpawnRing.CentreOf(server.World.Atlas), body.SpawnSlot);
+        body.SetPose(spawn);
+        _live.Client.Prediction.Reconcile(in spawn, uint.MaxValue);
+        return true;
+    }
+
+    private DebugSnapshot InspectLive(DebugConnection connection, SessionRole role, bool canCheat)
+    {
+        var client = _live.Client;
+        var server = _live.Server;
+        uint? local = client.LocalPlayer is EntityId id ? id.Value : null;
+        uint? tick = server is not null
+            ? server.World.CurrentTick
+            : client.LastSnapshot?.ServerTick ?? client.ServerTickEstimate;
+        RunPhase? phase = server?.Session.Phase ?? client.AcceptedJoin?.Run.Phase;
+        byte? shift = server is not null
+            ? server.Session.Shift
+            : client.AcceptedJoin?.Run.Shift;
+        uint? seed = server?.OfferedSettings.Seed
+            ?? client.AcceptedSettings?.Seed
+            ?? client.AcceptedJoin?.Seed;
+        ulong? hash = server?.OfferedWorld?.WorldHash ?? client.AcceptedWorldHash;
+        Cents? wallet = server?.World.Wallet.Balance;
+        return new DebugSnapshot(
+            connection,
+            role is SessionRole.Listening,
+            local,
+            tick,
+            phase,
+            shift,
+            seed,
+            hash,
+            wallet,
+            canCheat);
+    }
 
     private PlaySession PumpConnecting(PlaySession.Connecting connecting, TimeSpan wallNow)
     {

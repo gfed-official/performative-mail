@@ -24,7 +24,7 @@ public sealed class ServerRuntime
 
     public RunSettings OfferedSettings { get; }
 
-    public RunState Session { get; }
+    public RunState Session { get; private set; }
 
     public IReadOnlyList<ContainerDelta> LastFlushedDeltas { get; private set; } = Array.Empty<ContainerDelta>();
 
@@ -81,6 +81,17 @@ public sealed class ServerRuntime
         OfferedWorld = offeredWorld;
         OfferedSettings = offeredSettings ?? RunSettings.Arcade();
         Session = session ?? RunState.InLobby();
+    }
+
+    public bool TryAdvancePhase()
+    {
+        if (!RunTransitions.TryPrimaryNext(Session.Phase, Session.Shift, out var next))
+            return false;
+        if (!Session.TryTransition(next, out var advanced))
+            return false;
+
+        Session = advanced;
+        return true;
     }
 
     public void Start()

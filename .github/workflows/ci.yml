@@ -61,5 +61,7 @@ jobs:
         run: bash tools/godot/ci.sh lobby
       - name: Payday draft results Control text inspect
         run: bash tools/godot/ci.sh overlays
+      - name: Debug menu Control text inspect
+        run: bash tools/godot/ci.sh debug
       - name: Headless host/join smoke
         run: bash tools/godot/ci.sh join

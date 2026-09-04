@@ -1,3 +1,5 @@
+using System;
+
 namespace PerformativeMail.Sim.Run;
 
 public static class RunTransitions
@@ -26,5 +28,24 @@ public static class RunTransitions
             (RunPhase.Results, RunPhase.Lobby) => true,
             _ => false,
         };
+    }
+
+    public static bool TryPrimaryNext(RunPhase from, byte shift, out RunPhase to)
+    {
+        to = from switch
+        {
+            RunPhase.Lobby => RunPhase.Generating,
+            RunPhase.Generating => RunPhase.Prep,
+            RunPhase.Prep => RunPhase.Delivery,
+            RunPhase.Delivery => shift == 1 ? RunPhase.Payday : RunPhase.Raid,
+            RunPhase.Raid => RunPhase.Payday,
+            RunPhase.Payday => RunPhase.Draft,
+            RunPhase.Draft => shift < RunState.ShiftCount ? RunPhase.Prep : RunPhase.Victory,
+            RunPhase.RunOver => RunPhase.Results,
+            RunPhase.Victory => RunPhase.Results,
+            RunPhase.Results => RunPhase.Lobby,
+            _ => throw new ArgumentOutOfRangeException(nameof(from), from, null),
+        };
+        return IsLegal(from, to, shift);
     }
 }

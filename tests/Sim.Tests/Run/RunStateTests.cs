@@ -155,6 +155,26 @@ public sealed class RunStateTests
         Assert.Equal(1, state.Shift);
     }
 
+    [Theory]
+    [InlineData(RunPhase.Lobby, 1, RunPhase.Generating)]
+    [InlineData(RunPhase.Generating, 1, RunPhase.Prep)]
+    [InlineData(RunPhase.Prep, 1, RunPhase.Delivery)]
+    [InlineData(RunPhase.Delivery, 1, RunPhase.Payday)]
+    [InlineData(RunPhase.Delivery, 2, RunPhase.Raid)]
+    [InlineData(RunPhase.Raid, 2, RunPhase.Payday)]
+    [InlineData(RunPhase.Payday, 1, RunPhase.Draft)]
+    [InlineData(RunPhase.Draft, 1, RunPhase.Prep)]
+    [InlineData(RunPhase.Draft, 5, RunPhase.Victory)]
+    [InlineData(RunPhase.Victory, 5, RunPhase.Results)]
+    [InlineData(RunPhase.RunOver, 1, RunPhase.Results)]
+    [InlineData(RunPhase.Results, 5, RunPhase.Lobby)]
+    public void TryPrimaryNext_HappyPath(RunPhase from, byte shift, RunPhase expected)
+    {
+        Assert.True(RunTransitions.TryPrimaryNext(from, shift, out var next));
+        Assert.Equal(expected, next);
+        Assert.True(RunTransitions.IsLegal(from, next, shift));
+    }
+
     private static bool ExpectedLegal(RunPhase from, RunPhase to, byte shift)
     {
         return (from, to) switch
