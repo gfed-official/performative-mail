@@ -41,6 +41,8 @@ When `PlaySession.Playing.World` is null, `worldHash` is `0x0000000000000000` an
 
 `--debug-helper=` does not add keys. `intake` and `mailbox` change `pawns[].x` / `pawns[].y`. `overlay` sets `overlayOpen` to true. `give-mail` is visible in inventory, not in this object.
 
+`--world-dump=` is a sidecar Label3D dump from `WorldStage.Dump`. It is not a SmokeReport key. `tools/godot/ci.sh worldstage` asserts `worldEntityCounts` here and the live labels in that dump.
+
 ## Example Playing object
 
 ```json

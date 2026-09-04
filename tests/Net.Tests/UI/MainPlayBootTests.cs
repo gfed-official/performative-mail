@@ -171,6 +171,16 @@ public sealed class MainPlayBootTests
         Assert.Contains("HostDebug()", apply);
         Assert.Contains("_session.Host()", apply);
         Assert.Contains("\"--debug-helper=\"", apply);
+        Assert.Contains("\"--world-dump=\"", apply);
+    }
+
+    [Fact]
+    public void MaybeFinish_WritesWorldStageDumpOnPlayingQuit()
+    {
+        var finish = MethodBody(ReadMain(), "MaybeFinish");
+        Assert.Contains("_worldDumpPath", finish);
+        Assert.Contains("_world.Dump()", finish);
+        Assert.Contains("PlaySession.Playing", finish);
     }
 
     [Fact]

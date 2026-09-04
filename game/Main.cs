@@ -50,6 +50,7 @@ public partial class Main : Node3D
     private bool _debugHeld;
     private bool _inspectDebug;
     private string? _debugDumpPath;
+    private string? _worldDumpPath;
     private string? _debugHelper;
 
     public override void _Ready()
@@ -636,6 +637,8 @@ public partial class Main : Node3D
                 _overlaysDumpPath = arg.Substring("--overlays-dump=".Length);
             else if (arg.StartsWith("--debug-dump=", StringComparison.Ordinal))
                 _debugDumpPath = arg.Substring("--debug-dump=".Length);
+            else if (arg.StartsWith("--world-dump=", StringComparison.Ordinal))
+                _worldDumpPath = arg.Substring("--world-dump=".Length);
             else if (arg.StartsWith("--debug-helper=", StringComparison.Ordinal))
                 _debugHelper = arg.Substring("--debug-helper=".Length);
             else if (arg.StartsWith("--quit-after-ms=", StringComparison.Ordinal) &&
@@ -669,6 +672,8 @@ public partial class Main : Node3D
 
         if (_reportPath is not null && !_reported)
             WriteReport(state, _reportPath);
+        if (_worldDumpPath is not null && state is PlaySession.Playing)
+            File.WriteAllText(_worldDumpPath, _world.Dump());
         GetTree().Quit();
     }
 
