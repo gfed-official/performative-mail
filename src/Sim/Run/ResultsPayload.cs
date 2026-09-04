@@ -91,7 +91,7 @@ public readonly record struct ResultsPayload
             shiftsCompleted,
             deliveries,
             ScoreFrom(totalEarnedCents, copy),
-            PostalRankXp.Award(shiftsCompleted, victory, deliveries),
+            global::PerformativeMail.Sim.Run.PostalRankXp.Award(shiftsCompleted, victory, deliveries),
             FormatSeed(archetype, seed, copy),
             copy);
     }
