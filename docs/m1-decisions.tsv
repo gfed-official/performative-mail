@@ -183,3 +183,6 @@ ts	phase	decision	why	evidence	result
 2026-09-04T01:50:00Z	architect	Chose additive RunSettings=51 after HelloOk	Hello goldens and SchemaHash 0x4112C9FA stay; WorldOffer stays regen-only	/tmp/u61-architect/synthesis.md	accepted
 2026-09-04T01:50:00Z	architect	Skip four-model arena	Chapter 08 §3.1 names the fields; U1.5 already chose additive kinds	docs/m1-frame.md	accepted
 2026-09-04T01:50:00Z	subtract	No JoinState lobby UI disconnect grace PlaySessionMachine	U6.2+; default Host gets Arcade via ServerRuntime	src/App/PlaySessionMachine.cs	accepted
+2026-09-04T01:56:00Z	verify	dotnet test Release 442 passed	Sim 301 Net 125 Bot 16; eight RunSettings plus five wire/join; baseline U5.3 was 429	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T01:56:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T01:56:00Z	verify	Acceptance filter 15 passed	Arcade pins hashes; goldens kind 0x33; Hello_GoldenRoundTrip; join Arcade and custom	dotnet test --filter RunSettings|Hello_GoldenRoundTrip|Protocol_Hash	VERIFIED
