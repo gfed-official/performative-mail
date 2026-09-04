@@ -90,10 +90,10 @@ public sealed class InterpolationBufferTests
         buffer.Push(TimeSpan.Zero, new PlayerPose(0, 0, 0, 0));
         buffer.Push(TimeSpan.FromMilliseconds(50), new PlayerPose(100, 0, 0, 0));
 
-        // present = newest + Holdback + 1 ms. Beyond the extrapolation window → clamp.
+        // present = newest + MaxExtrapolation + 1 ms. Beyond the extrapolation window → clamp.
         var now = InterpolationBuffer.Holdback
             + TimeSpan.FromMilliseconds(50)
-            + InterpolationBuffer.Holdback
+            + InterpolationBuffer.MaxExtrapolation
             + TimeSpan.FromMilliseconds(1);
         Assert.True(buffer.TryPresent(now, out var pose));
         Assert.Equal(100, pose.Xcm);
