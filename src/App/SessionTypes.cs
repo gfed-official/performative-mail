@@ -1,7 +1,4 @@
 using System.Globalization;
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Net;
 
@@ -75,36 +72,6 @@ public readonly record struct HostAdvertisement(string Address, ushort Port)
         new(LanAddress.FirstNonLoopbackIPv4(), port);
 
     public override string ToString() => $"{Address}:{Port}";
-}
-
-public static class LanAddress
-{
-    public static string FirstNonLoopbackIPv4()
-    {
-        foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
-        {
-            if (nic.OperationalStatus != OperationalStatus.Up)
-                continue;
-            if (nic.NetworkInterfaceType == NetworkInterfaceType.Loopback)
-                continue;
-
-            foreach (var addr in nic.GetIPProperties().UnicastAddresses)
-            {
-                if (addr.Address.AddressFamily != AddressFamily.InterNetwork)
-                    continue;
-                if (IPAddress.IsLoopback(addr.Address))
-                    continue;
-
-                var bytes = addr.Address.GetAddressBytes();
-                if (bytes[0] == 169 && bytes[1] == 254)
-                    continue;
-
-                return addr.Address.ToString();
-            }
-        }
-
-        return "127.0.0.1";
-    }
 }
 
 public sealed record SessionOptions(
