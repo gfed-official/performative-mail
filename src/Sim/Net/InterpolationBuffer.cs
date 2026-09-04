@@ -12,6 +12,9 @@ public sealed class InterpolationBuffer
     // chapter 06 §3: interpolation buffer 100 ms (3 snapshots). Do not invent another holdback.
     public static readonly TimeSpan Holdback = TimeSpan.FromMilliseconds(100);
 
+    // Bound past-newest extrapolation to the same window so loss does not freeze remotes.
+    public static readonly TimeSpan MaxExtrapolation = Holdback;
+
     private readonly List<Sample> _samples = new List<Sample>(Capacity);
 
     public int Count => _samples.Count;
@@ -70,7 +73,7 @@ public sealed class InterpolationBuffer
         var newest = _samples[_samples.Count - 1];
         if (present >= newest.Time)
         {
-            pose = newest.Pose;
+            pose = ExtrapolateOrClamp(present, newest);
             return true;
         }
 
@@ -97,6 +100,23 @@ public sealed class InterpolationBuffer
 
         pose = newest.Pose;
         return true;
+    }
+
+    private PlayerPose ExtrapolateOrClamp(TimeSpan present, Sample newest)
+    {
+        var overdue = present - newest.Time;
+        if (overdue > MaxExtrapolation || _samples.Count < 2)
+            return newest.Pose;
+
+        var previous = _samples[_samples.Count - 2];
+        var span = newest.Time - previous.Time;
+        if (span <= TimeSpan.Zero)
+            return newest.Pose;
+
+        var t = 1.0 + overdue.TotalSeconds / span.TotalSeconds;
+        var leftPose = previous.Pose;
+        var rightPose = newest.Pose;
+        return Lerp(leftPose, rightPose, t);
     }
 
     private static int CompareTime(Sample left, Sample right) =>
