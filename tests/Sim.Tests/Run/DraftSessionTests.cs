@@ -51,7 +51,7 @@ public sealed class DraftSessionTests
     public void Roll_GoldenSeed_OffersInsuredQuickHandsUnionRep()
     {
         var draft = new DraftSession(LoadRepoPerks(), seed: 0x7F3A9C21, playerCount: 1);
-        var offer = draft.Roll(1);
+        var offer = draft.Roll(1, ArcadeWithBelt);
         Assert.Equal("insured", offer.First);
         Assert.Equal("quick_hands", offer.Second);
         Assert.Equal("union_rep", offer.Third);
@@ -62,7 +62,7 @@ public sealed class DraftSessionTests
     {
         var perks = LoadRepoPerks();
         var draft = new DraftSession(perks, seed: 0x7F3A9C21, playerCount: 1);
-        var offer = draft.Roll(1);
+        var offer = draft.Roll(1, ArcadeWithBelt);
         var expected = Walk(perks, 0x7F3A9C21, shift: 1, common: 60, uncommon: 30, rare: 10);
 
         Assert.Equal(expected, offer);
@@ -74,7 +74,7 @@ public sealed class DraftSessionTests
     {
         var perks = LoadRepoPerks();
         var draft = new DraftSession(perks, seed: 0x7F3A9C21, playerCount: 1);
-        var offer = draft.Roll(2);
+        var offer = draft.Roll(2, ArcadeWithBelt);
         var expected = Walk(perks, 0x7F3A9C21, shift: 2, common: 60, uncommon: 30, rare: 15);
 
         Assert.Equal(expected, offer);
@@ -157,6 +157,8 @@ public sealed class DraftSessionTests
         var expected = Walk(defs, 11, shift: 1, common: 60, uncommon: 30, rare: 10);
         Assert.Equal(expected, draft.Roll(1));
     }
+
+    private static DraftRules ArcadeWithBelt { get; } = new(new[] { "belt_mk1" });
 
     private static PerkDef[] LoadRepoPerks()
         => PerkCatalog.LoadDir(Path.Combine(FindContentRoot(), PerkCatalog.RelativeDir));

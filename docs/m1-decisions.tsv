@@ -172,3 +172,10 @@ ts	phase	decision	why	evidence	result
 2026-09-04T01:26:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T01:26:00Z	verify	Acceptance filter 9 passed	Golden seed offers insured quick_hands union_rep; same seed reproduces; stream name perks; shift 2 rare 15	dotnet test --filter DraftSession	VERIFIED
 2026-09-04T01:23:30Z	verify	CI on 9ddd331 both jobs green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33825442353	VERIFIED
+2026-09-04T01:35:00Z	frame	Frame U5.3 as prereq exclusion and team vs personal	Issue 96; chapter 01 2.5 and 4.2; reuse U5.2 DraftSession	https://github.com/gfed-official/performative-mail/issues/96	open
+2026-09-04T01:35:00Z	architect	Chose DraftSession pick plus internal PerkGate	Offer stays 3 ids; grey and eligibility live on the session; split DraftPicks lost	docs/m1-frame.md	accepted
+2026-09-04T01:35:00Z	architect	Skip four-model arena	Chapter 01 already names pick grey filter and cap; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T01:35:00Z	subtract	No StatSheet apply no reroll no U6+	Issue 96 verify is grey belt-absent and excludes; apply waits	src/Sim/Content/StatSheet.cs	accepted
+2026-09-04T01:42:00Z	verify	dotnet test Release 429 passed	Sim 293 Net 120 Bot 16; seven DraftPick tests; baseline U5.2 was 422	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T01:42:00Z	verify	ContentValidator exits 0 on repo content	express_lane builtAny does not break the CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T01:42:00Z	verify	Acceptance filter 16 passed	Team grey after one pick; belt absent until built; excludes never co-occur	dotnet test --filter DraftPick|DraftSession	VERIFIED

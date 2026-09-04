@@ -10,13 +10,13 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues. The current landable unit is U5.2 (issue 95): twelve Arcade perks and the shared draft offer. Do not start U5.3+.
+This run cuts those gates into landable child issues. The current landable unit is U5.3 (issue 96): prerequisites, exclusions, and team vs personal pick rules. Do not start U6+.
 
 ## Scope
 
-Touch chapters 01 §2.5 (shared 3-card draft), 07 (`perks` stream), 08 §2.9 (PerkDef), and 10 §4 (Arcade twelve). Reuse U2.3 perk JSON and U5.1 `StatSheet`. Keep U4 bike and shop. Do not start M2–M5.
+Touch chapters 01 §2.5 (shared 3-card draft and pick rules), 01 §4.2 (personal cap, team unique), 08 §2.9 (`prerequisites`, `excludes`, `scope`), and 10 §4 (Arcade twelve). Reuse U5.2 `DraftSession` and U2.3 perk JSON. Keep U4 bike and shop. Do not start M2–M5.
 
-U5.2 adds `DraftSession` that rolls a shared 3-card offer from the perks stream. Rarity weights are Common 60 / Uncommon 30 / Rare 10, with Rare +5 per shift after shift 1. No pick, team grey-out, prerequisite filter, or apply into `StatSheet`.
+U5.3 filters the roll by prerequisites and exclusion ids, records picks, and greys a team perk after one take. Personal perks stack per player up to 5. No apply into `StatSheet`, no reroll, no U6+.
 
 ## Rigor
 
