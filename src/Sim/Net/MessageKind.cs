@@ -13,4 +13,5 @@ public enum MessageKind : byte
     InventoryEvent = 40,
     WorldOffer = 50,
     RunSettings = 51,
+    JoinState = 52,
 }

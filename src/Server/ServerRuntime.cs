@@ -5,6 +5,7 @@ using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Server;
 
@@ -20,6 +21,8 @@ public sealed class ServerRuntime
     public WorldOffer? OfferedWorld { get; }
 
     public RunSettings OfferedSettings { get; }
+
+    public RunState Session { get; }
 
     public IReadOnlyList<ContainerDelta> LastFlushedDeltas { get; private set; } = Array.Empty<ContainerDelta>();
 
@@ -54,11 +57,22 @@ public sealed class ServerRuntime
     }
 
     public ServerRuntime(IServerLink link, SimWorld world, WorldOffer? offeredWorld, RunSettings? offeredSettings)
+        : this(link, world, offeredWorld, offeredSettings, session: null)
+    {
+    }
+
+    public ServerRuntime(
+        IServerLink link,
+        SimWorld world,
+        WorldOffer? offeredWorld,
+        RunSettings? offeredSettings,
+        RunState? session)
     {
         _link = link ?? throw new ArgumentNullException(nameof(link));
         World = world ?? throw new ArgumentNullException(nameof(world));
         OfferedWorld = offeredWorld;
         OfferedSettings = offeredSettings ?? RunSettings.Arcade();
+        Session = session ?? RunState.InLobby();
     }
 
     public void Start()
@@ -135,12 +149,54 @@ public sealed class ServerRuntime
             return;
         }
 
+        if (!JoinGate.Allows(Session.Phase))
+        {
+            _link.Send(from, NetChannels.Handshake, WireCodec.Encode(new HelloReject(HelloRejectReason.WrongPhase)));
+            _link.Close(from, DisconnectReason.Rejected);
+            return;
+        }
+
         var body = World.SpawnPlayer();
         _seats[from] = new Seat(from, body.Id);
         _link.Send(from, NetChannels.Handshake, WireCodec.Encode(new HelloOk(body.Id, _tick)));
         _link.Send(from, NetChannels.Handshake, WireCodec.Encode(OfferedSettings));
+        if (Session.Phase == RunPhase.Prep)
+        {
+            _link.Send(from, NetChannels.Handshake, WireCodec.Encode(BuildJoinState()));
+            return;
+        }
+
         if (OfferedWorld is WorldOffer offer)
             _link.Send(from, NetChannels.Handshake, WireCodec.Encode(offer));
+    }
+
+    private JoinState BuildJoinState()
+    {
+        uint seed;
+        ulong hash;
+        if (OfferedWorld is WorldOffer offer)
+        {
+            seed = offer.Seed;
+            hash = offer.WorldHash;
+        }
+        else
+        {
+            seed = OfferedSettings.Seed;
+            hash = WorldHash.Compute(WorldGen.GenerateSmallIsland(seed));
+        }
+
+        return new JoinState(seed, hash, WorldDeltas.Empty, Session, CollectContainerStamps());
+    }
+
+    private ContainerStamp[] CollectContainerStamps()
+    {
+        if (World.Inventory is not InventorySystem inventory)
+            return Array.Empty<ContainerStamp>();
+
+        var stamps = new List<ContainerStamp>();
+        foreach (var container in inventory.Containers)
+            stamps.Add(new ContainerStamp(container.Id, container.Version));
+        return stamps.ToArray();
     }
 
     private void ApplyInputPacket(ConnectionId from, InputPacket packet)
