@@ -294,3 +294,8 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:52:00Z	verify	U10.1 and U10.2 filter 12 passed	solo hand cells; FiveShiftRun 1450s; 4p hashes	dotnet test --filter RunHand_Shift1|FiveShiftRun|FourPlayer|SoloHand	VERIFIED
 2026-09-04T05:52:00Z	verify	No-regress filter 26 passed	play boot unbound; HUD Ignore; overlay Ignore	dotnet test --filter MainPlayBoot|HudBoot|HudScene|PaydayFrame|DraftFrame|ResultsFrame|PhaseOverlay	VERIFIED
 2026-09-04T05:55:00Z	verify	CI on d41379a all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33842122108	VERIFIED
+2026-09-04T05:56:00Z	audit	Trail review flagged 59B is stamp-only and not grown by play	Clock walk now lands Prep 3; containers stay planted intake plus chest	tests/Net.Tests/JoinStateSizeTests.cs	accepted
+2026-09-04T05:56:00Z	audit	Dropped BotWorld atlas from the size test	Host world for hash is the Small Island WorldOffer; atlas seed 1 was a mix	tests/Net.Tests/JoinStateSizeTests.cs	accepted
+2026-09-04T05:56:00Z	audit	Kept stamp hashes not full ContainerState	Issue 109 measures encoded JoinState; chapter 08 3.9 waits	src/Sim/Net/JoinState.cs	accepted
+2026-09-04T05:56:00Z	audit	Kept SchemaHash 0x4112C9FA	JoinState itself landed without a bump; empty golden stays	src/Sim/Net/Protocol.cs	accepted
+2026-09-04T05:56:00Z	audit	Left U10.2 GateHolds quota miss on later shifts	Not this unit; chapter 11 bike 200 cannot meet 4p shifts 3-5	docs/m1-decisions.tsv	open

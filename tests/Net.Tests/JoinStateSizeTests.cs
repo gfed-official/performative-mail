@@ -19,7 +19,7 @@ public sealed class JoinStateSizeTests
     [Fact]
     public void PrepShift3_TypicalContainers_EncodedJoinStateAtMost200KB()
     {
-        var world = TypicalShift3World();
+        var world = TypicalContainers();
         var catalog = world.Inventory!.Catalog;
         var hub = LoopbackHub.ForSeats(3);
         var server = new ServerRuntime(
@@ -27,7 +27,7 @@ public sealed class JoinStateSizeTests
             world,
             new WorldOffer(FixedSeed, GoldenWorldHash),
             offeredSettings: null,
-            new RunState(RunPhase.Prep, 3, 0));
+            PrepOfShift3());
 
         var clients = new ClientRuntime[3];
         for (int i = 0; i < clients.Length; i++)
@@ -53,27 +53,47 @@ public sealed class JoinStateSizeTests
         Assert.Equal(GoldenWorldHash, joiner.AcceptedWorldHash);
         Assert.NotNull(joiner.GeneratedWorld);
         Assert.Equal(GoldenWorldHash, WorldHash.Compute(joiner.GeneratedWorld));
+        Assert.Equal(GoldenWorldHash, server.OfferedWorld!.Value.WorldHash);
         AssertContainerHashesMatch(world.Inventory, joiner.AcceptedJoin.Value);
     }
 
-    private static SimWorld TypicalShift3World()
+    private static RunState PrepOfShift3()
     {
-        var world = BotWorld.CreateShift1World();
-        BotWorld.DepositShift1Letter(world);
-        var chest = world.Inventory!.CreateContainer(ContainerSpec.Chest);
-        var address = world.Atlas!.DeliverableAddresses[0];
-        var mailId = world.Mail!.Allocate();
-        var item = new MailItem(
-            mailId,
-            MailKinds.Letter,
-            address,
-            MailKinds.ValueAtSpawn(MailKinds.Letter, world.Atlas.DistrictId, MailSpawnConstants.Shift1),
-            MailSpawnConstants.Shift1,
-            MailSpawnConstants.Shift1);
-        Assert.True(world.Mail.Register(item));
+        var balance = BalanceCatalog.LoadFile(Path.Combine(FindContentRoot(), BalanceCatalog.RelativePath));
+        var clock = new ShiftClock(balance, RunState.InLobby());
+        if (!clock.TryEnter(RunPhase.Generating) || !clock.TryEnter(RunPhase.Prep))
+            throw new InvalidOperationException("Could not enter Prep.");
+
+        clock.Connect(1);
+        for (byte shift = 1; shift <= 2; shift++)
+        {
+            clock.SetReady(1, true);
+            if (clock.State.Phase != RunPhase.Delivery)
+                throw new InvalidOperationException($"Ready did not start Delivery on shift {shift}.");
+            clock.AdvanceTo(clock.State.PhaseDeadlineTick);
+            if (clock.State.Phase == RunPhase.Raid)
+                clock.AdvanceTo(clock.State.PhaseDeadlineTick);
+            if (!clock.TryEnter(RunPhase.Draft) || !clock.TryAllPicked())
+                throw new InvalidOperationException($"Could not reach next Prep after shift {shift}.");
+        }
+
+        if (clock.State.Phase != RunPhase.Prep || clock.State.Shift != 3)
+            throw new InvalidOperationException("Clock did not land in Prep of shift 3.");
+        return clock.State;
+    }
+
+    private static SimWorld TypicalContainers()
+    {
+        var world = new SimWorld(BotCatalog.Default);
+        var intake = world.Inventory!.CreateContainer(ContainerSpec.Intake);
+        var chest = world.Inventory.CreateContainer(ContainerSpec.Chest);
+        var address = new AddressId(1, 4, 13, 0);
         Assert.IsType<Accepted>(world.Inventory.Apply(
             Actor.System,
-            new Deposit(chest, MailStack.Single(item.Kind, item.Address, item.Id))));
+            new Deposit(intake, MailStack.Single(MailKinds.Letter, address, new MailId(1)))));
+        Assert.IsType<Accepted>(world.Inventory.Apply(
+            Actor.System,
+            new Deposit(chest, MailStack.Single(MailKinds.Letter, address, new MailId(2)))));
         return world;
     }
 
@@ -92,5 +112,22 @@ public sealed class JoinStateSizeTests
             Assert.Equal(grid.Version, stamp.Version);
             Assert.Equal(grid.Hash, stamp.Hash);
         }
+    }
+
+    private static string FindContentRoot()
+    {
+        foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
+        {
+            var dir = new DirectoryInfo(Path.GetFullPath(start));
+            while (dir != null)
+            {
+                var candidate = Path.Combine(dir.FullName, "content");
+                if (File.Exists(Path.Combine(candidate, BalanceCatalog.RelativePath)))
+                    return Path.GetFullPath(candidate);
+                dir = dir.Parent;
+            }
+        }
+
+        throw new FileNotFoundException("content/balance.json");
     }
 }
