@@ -10,17 +10,17 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues. The current landable unit is U10.1 (issue 107): solo shift 1 win / shift 2 fail by hand delivery. Do not start U10.2+.
+This run cuts those gates into landable child issues. The current landable unit is U10.2 (issue 108): four-player five-shift bot run. Do not start U10.3+.
 
 ## Scope
 
-Touch chapter 11 §4 and chapter 07 `tools/BalanceSim`. Reuse `QuotaBudget` and `balance.json`. Keep `HudBoot.Placeholder` inspect-only, HUD `mouse_filter` Ignore, and Host/Join clickable. Do not start M2–M5.
+Touch chapter 11 §4, `ShiftClock`, and the four-client loopback hash pulse. Reuse `QuotaBudget`, `BalanceSim` hand cells, and soak `HashTrace`. Keep `HudBoot.Placeholder` inspect-only, HUD `mouse_filter` Ignore, and Host/Join clickable. Do not start M2–M5.
 
-U10.1 records solo hand-only earnings against live quota for shift 1 and shift 2. No bike agent, four-player run, join-state size, or Windows hash.
+U10.2 records five paydays, Ready-exit duration under 32 min, and no desync hashes. Four-player earnings use chapter 11 hand and bike rates against live `QuotaBudget`. No join-state size, Windows hash, mailbox-walk rewrite, or raid combat.
 
 ## Rigor
 
-High for the acceptance predicate. Recorded earnings must come from the chapter 11 hand rates and live `QuotaBudget`, not a hardcoded pass. Generation determinism stays a one-way door from U1.
+High for the acceptance predicate. The harness log must show five paydays, duration under 32 min, and zero hash mismatches. U10.1 solo hand cells stay. Chapter 11 bike 200 ¢/min cannot meet 4-player quotas on shifts 3–5; those lines record MISS. Do not invent a truck-level rate.
 
 ## Blockers found while grounding
 
@@ -130,7 +130,7 @@ Riskiest unknown first: cross-platform generation determinism. Smallest landable
 | U10.3 | Join state size after 3 shifts | ≤ 200 KB; world and containers match | U6.2, U1.5 |
 | U10.4 | Windows and Linux `worldHash` CI | Same golden hash on both runners | U1.1 (full after U1.5) |
 
-Architect arena runs before U1.2 (OpenSimplex2 and coastline are a one-way door) and before U3.1 (run phases). U1.1 shape is already concrete in chapter 02 §2 (PCG32, int16 cm, 0.5 m lattice, 64-bit FNV), so arena is skipped for the skeleton. U7.2 shape is already concrete in chapter 08 §3.8, so arena is skipped for persist. U8.1 shape is already concrete in chapter 02 §3.9, so arena is skipped for harvest. U8.2 shape is already concrete in chapter 04 §1.2 and chapter 07 `Constructs.TryPlace`, so arena is skipped for placement. U9.1 shape is already concrete in chapter 09 §2.2 and the HUD bind path, so arena is skipped for the lobby screen. U9.2 shape is already concrete in chapter 09 §2.4 and the same bind path, so arena is skipped for HUD quota and complaint. U9.3 shape is already concrete in chapter 09 §2.9–2.11 and the same bind path, so arena is skipped for the overlays. U10.1 shape is already concrete in chapter 11 §4 (hand agent rates and the two viability cells), so arena is skipped for BalanceSim.
+Architect arena runs before U1.2 (OpenSimplex2 and coastline are a one-way door) and before U3.1 (run phases). U1.1 shape is already concrete in chapter 02 §2 (PCG32, int16 cm, 0.5 m lattice, 64-bit FNV), so arena is skipped for the skeleton. U7.2 shape is already concrete in chapter 08 §3.8, so arena is skipped for persist. U8.1 shape is already concrete in chapter 02 §3.9, so arena is skipped for harvest. U8.2 shape is already concrete in chapter 04 §1.2 and chapter 07 `Constructs.TryPlace`, so arena is skipped for placement. U9.1 shape is already concrete in chapter 09 §2.2 and the HUD bind path, so arena is skipped for the lobby screen. U9.2 shape is already concrete in chapter 09 §2.4 and the same bind path, so arena is skipped for HUD quota and complaint. U9.3 shape is already concrete in chapter 09 §2.9–2.11 and the same bind path, so arena is skipped for the overlays. U10.1 shape is already concrete in chapter 11 §4 (hand agent rates and the two viability cells), so arena is skipped for BalanceSim. U10.2 composes `FiveShiftRun`, live 4-player `QuotaBudget`, and a 4-seat hash pulse. Arena is skipped; two sketches compared in-thread. The mailbox walk lost (second throughput model). Invented shift-5 rates lost (not in chapter 11).
 
 ## GitHub issues
 

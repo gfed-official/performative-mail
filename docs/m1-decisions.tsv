@@ -271,3 +271,8 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:21:00Z	verify	BalanceSim prints 880/600 MET and 810/1100 MISS	exit 0; live QuotaBudget 600 and 1100	dotnet run --project tools/BalanceSim -- content	VERIFIED
 2026-09-04T05:21:00Z	verify	Acceptance filter 3 passed	shift 1 >= quota; shift 2 < quota; SoloHandShift1WinShift2Fail	dotnet test --filter RunHand_Shift1|RunHand_Shift2|SoloHandShift1WinShift2Fail	VERIFIED
 2026-09-04T05:21:00Z	verify	No-regress filter 26 passed	play boot unbound; HUD Ignore; overlay Ignore	dotnet test --filter MainPlayBoot|HudBoot|HudScene|PaydayFrame|DraftFrame|ResultsFrame|PhaseOverlay	VERIFIED
+2026-09-04T05:36:39Z	frame	Frame U10.2 as four-player five-shift bot run	Issue 108; five paydays duration hashes; U10.1 stays	https://github.com/gfed-official/performative-mail/issues/108	open
+2026-09-04T05:36:39Z	architect	Chose FiveShiftRun plus 4-seat hash pulse over a mailbox walk	Chapter 11 agents stay the throughput model; a Destinations walk invents a second one	src/Sim/Balance/FiveShiftRun.cs	accepted
+2026-09-04T05:36:40Z	architect	Skip four-model arena	Shape is composition of ShiftClock QuotaBudget and HashTrace; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T05:36:40Z	subtract	No Delivery to Payday table change and no BotBrain bike	Raid already overlaps Delivery; bike 200 is the chapter 11 rate	src/Sim/Run/RunTransitions.cs	accepted
+2026-09-04T05:36:40Z	subtract	Did not invent a truck-level 4p shift 5 rate	Chapter 11 bike 200 cannot meet 9840; later paydays record MISS	spec/11-balance.md	accepted
