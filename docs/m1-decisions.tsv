@@ -117,3 +117,13 @@ ts	phase	decision	why	evidence	result
 2026-09-04T00:02:31Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T00:02:31Z	verify	Acceptance filter 5 passed	AddsFiveComplaint; OneShiftLate 4c; TwoShiftsLate 0c; mix sum; letter AddMisdelivery	dotnet test --filter AddsFiveComplaint|OneShiftLate|TwoShiftsLate|EachShiftShares|AddMisdelivery_Letter	VERIFIED
 2026-09-04T00:04:30Z	verify	CI on 55c3eeb all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33820150062	VERIFIED
+2026-09-04T00:15:00Z	frame	Frame U3.5 as death respawn and death bag	Issue 91; inventory drops; 10 s respawn; 30 s Intake return; death never ends the run	https://github.com/gfed-official/performative-mail/issues/91	open
+2026-09-04T00:15:00Z	architect	Chose DeathSession plus Alive/Dead ticks over PlayerBody flags	U3.1-U3.4 stay; pose body stays a mover; bag outlives respawn	src/Sim/Run/DeathSession.cs	accepted
+2026-09-04T00:15:00Z	architect	Skip four-model arena	Issue 91 and chapter 01 2.2 already name the timers and bag; two sketches compared	docs/m1-frame.md	accepted
+2026-09-04T00:15:00Z	subtract	No combat HP regen WorldItem or Intake widen	M0 inventory already moves stacks; tests use mail so Intake stays mail-only	src/Sim/Inventory/Stack.cs	accepted
+2026-09-04T00:16:00Z	verify	dotnet test Release 378 passed	Sim 248 Net 114 Bot 16; eight DeathSession tests	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-04T00:18:00Z	subtract	Dropped unused Origin ctor and vacuous RunState fact	Comment Sicko; death never touches RunState so the fact asserted nothing	tests/Sim.Tests/Run/DeathSessionTests.cs	accepted
+2026-09-04T00:18:00Z	verify	dotnet test Release 377 passed	Sim 247 Net 114 Bot 16; seven DeathSession tests	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-04T00:19:00Z	verify	CI on 0935a08 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33821111774	VERIFIED
+2026-09-04T00:16:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T00:16:00Z	verify	Acceptance filter 4 passed	empty bags; +300 respawn; Intake return; RunState unchanged	dotnet test --filter RespawnTicks_TenSeconds|Die_EmptiesPlayerContainers|AdvanceTo_AtDespawnTick|Die_DoesNotChangeRunState	VERIFIED
