@@ -258,3 +258,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:12:00Z	verify	From() probe printed inspect strings	same boot payloads the Godot dump will grep	/tmp/u93-probe	VERIFIED
 2026-09-04T05:12:00Z	verify	Godot inspect pending CI	No godot binary on the agent host; inspect-overlays.sh greps earned quota cards score seed	tools/godot/inspect-overlays.sh	INCONCLUSIVE
 2026-09-04T05:12:00Z	architect	Rebased onto main after PR 142 merged	User asked to prefer main once U9.2 landed	origin/main 6edb3e3	accepted
+2026-09-04T05:13:20Z	verify	CI on 2caedfa all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33839491027	VERIFIED
+2026-09-04T05:13:20Z	verify	Godot overlays inspect printed live Control text	Earned 640; quota 2214; insured quick_hands union_rep; score 14375; seed PM1-SMALL-7F3A9C21-CM.DR; live-ui-verified	https://github.com/gfed-official/performative-mail/actions/runs/33839491027	VERIFIED
+2026-09-04T05:13:20Z	audit	Kept draft cards as offer ids	Issue 106 says bind phase payload only; DraftOffer ids are the payload names; PerkDef lookup is not the payload	src/Client/UI/DraftFrame.cs	accepted
+2026-09-04T05:13:20Z	audit	Kept play boot unbound	Same as U9.1 and U9.2; inspect owns the bind so Host/Join stay clickable	tests/Net.Tests/UI/MainPlayBootTests.cs	accepted
