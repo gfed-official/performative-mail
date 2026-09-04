@@ -1,6 +1,7 @@
 using System;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Net;
+using PerformativeMail.Sim.Run;
 
 namespace PerformativeMail.Net.Tests;
 
@@ -36,6 +37,38 @@ public sealed class WireCodecTests
         0x21, 0x9C, 0x3A, 0x7F,
         0x0E, 0x68, 0x73, 0x48,
         0x05, 0x70, 0x16, 0x82,
+    };
+
+    private static readonly byte[] RunSettingsArcadeBytes =
+    {
+        0x33,
+        0x21, 0x9C, 0x3A, 0x7F,
+        0x0C,
+        0x73, 0x6D, 0x61, 0x6C, 0x6C, 0x5F, 0x69, 0x73, 0x6C, 0x61, 0x6E, 0x64,
+        0x00,
+        0x08,
+        0x02,
+        0x04,
+        0x6C, 0x61, 0x6E, 0x64,
+        0xFA, 0xC9, 0x12, 0x41,
+        0x00, 0x00, 0x00, 0x00,
+    };
+
+    private static readonly byte[] RunSettingsCustomBytes =
+    {
+        0x33,
+        0xD2, 0xEB, 0x3A, 0x7F,
+        0x0C,
+        0x73, 0x6D, 0x61, 0x6C, 0x6C, 0x5F, 0x69, 0x73, 0x6C, 0x61, 0x6E, 0x64,
+        0x01,
+        0x0C,
+        0x64, 0x6F, 0x75, 0x62, 0x6C, 0x65, 0x5F, 0x72, 0x61, 0x69, 0x64, 0x73,
+        0x04,
+        0x03,
+        0x04,
+        0x6C, 0x61, 0x6E, 0x64,
+        0xFA, 0xC9, 0x12, 0x41,
+        0x00, 0x00, 0x00, 0x00,
     };
 
     private static readonly byte[] InputOneBytes =
@@ -157,6 +190,34 @@ public sealed class WireCodecTests
     }
 
     [Fact]
+    public void RunSettings_Arcade_GoldenRoundTrip()
+    {
+        var settings = RunSettings.Arcade();
+        Assert.Equal(RunSettingsArcadeBytes, WireCodec.Encode(settings));
+        Assert.True(WireCodec.TryDecode(RunSettingsArcadeBytes, out RunSettings decoded));
+        Assert.Equal(settings, decoded);
+        Assert.Equal(0x33, RunSettingsArcadeBytes[0]);
+    }
+
+    [Fact]
+    public void RunSettings_CustomStampsInvite_GoldenRoundTrip()
+    {
+        var settings = new RunSettings(
+            2134567890,
+            "small_island",
+            new[] { "double_raids" },
+            4,
+            LobbyVisibility.Invite,
+            "land",
+            Protocol.SchemaHash,
+            Protocol.ContentHash);
+        Assert.Equal(RunSettingsCustomBytes, WireCodec.Encode(settings));
+        Assert.True(WireCodec.TryDecode(RunSettingsCustomBytes, out RunSettings decoded));
+        Assert.Equal(settings, decoded);
+        Assert.Equal(new[] { "double_raids" }, decoded.Stamps);
+    }
+
+    [Fact]
     public void InputPacket_OneCmd_GoldenRoundTrip()
     {
         var cmd = new InputCmd(7, -127, 127, 32768, InputButtons.Sprint | InputButtons.Interact);
@@ -214,6 +275,8 @@ public sealed class WireCodecTests
         Assert.False(WireCodec.TryDecode(HelloOkBytes.AsSpan(0, HelloOkBytes.Length - 1), out HelloOk _));
         Assert.False(WireCodec.TryDecode(HelloRejectBytes.AsSpan(0, 1), out HelloReject _));
         Assert.False(WireCodec.TryDecode(WorldOfferBytes.AsSpan(0, WorldOfferBytes.Length - 1), out WorldOffer _));
+        Assert.False(WireCodec.TryDecode(RunSettingsArcadeBytes.AsSpan(0, RunSettingsArcadeBytes.Length - 1), out RunSettings _));
+        Assert.False(WireCodec.TryDecode(RunSettingsCustomBytes.AsSpan(0, RunSettingsCustomBytes.Length - 1), out RunSettings _));
         Assert.False(WireCodec.TryDecode(InputOneBytes.AsSpan(0, InputOneBytes.Length - 1), out InputPacket? _));
         Assert.False(WireCodec.TryDecode(SnapshotOneBytes.AsSpan(0, SnapshotOneBytes.Length - 1), out SnapshotPacket? _));
         Assert.False(WireCodec.TryDecode(ReadOnlySpan<byte>.Empty, out Hello _));
@@ -225,6 +288,8 @@ public sealed class WireCodecTests
         Assert.False(WireCodec.TryDecode(AppendByte(HelloBytes), out Hello _));
         Assert.False(WireCodec.TryDecode(AppendByte(InputOneBytes), out InputPacket? _));
         Assert.False(WireCodec.TryDecode(AppendByte(SnapshotOneBytes), out SnapshotPacket? _));
+        Assert.False(WireCodec.TryDecode(AppendByte(RunSettingsArcadeBytes), out RunSettings _));
+        Assert.False(WireCodec.TryDecode(AppendByte(RunSettingsCustomBytes), out RunSettings _));
     }
 
     [Fact]

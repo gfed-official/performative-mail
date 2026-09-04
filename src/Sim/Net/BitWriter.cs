@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 
 namespace PerformativeMail.Sim.Net;
 
@@ -39,6 +40,19 @@ public sealed class BitWriter
     {
         WriteUInt32(unchecked((uint)value));
         WriteUInt32(unchecked((uint)(value >> 32)));
+    }
+
+    public void WriteUtf8(string value)
+    {
+        if (value is null) throw new ArgumentNullException(nameof(value));
+        int byteCount = Encoding.UTF8.GetByteCount(value);
+        if (byteCount > byte.MaxValue)
+            throw new ArgumentOutOfRangeException(nameof(value));
+        Ensure(1 + byteCount);
+        _buffer[_length++] = (byte)byteCount;
+        if (byteCount == 0) return;
+        Encoding.UTF8.GetBytes(value, 0, value.Length, _buffer, _length);
+        _length += byteCount;
     }
 
     public byte[] ToArray()

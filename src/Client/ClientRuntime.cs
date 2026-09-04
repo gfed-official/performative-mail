@@ -4,6 +4,7 @@ using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
+using PerformativeMail.Sim.Run;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Client;
@@ -45,6 +46,8 @@ public sealed class ClientRuntime
     public WorldTables? GeneratedWorld { get; private set; }
 
     public ulong? AcceptedWorldHash { get; private set; }
+
+    public RunSettings? AcceptedSettings { get; private set; }
 
     public InventorySystem? Inventory { get; }
 
@@ -136,6 +139,9 @@ public sealed class ClientRuntime
             case MessageKind.WorldOffer:
                 ApplyWorldOffer(payload);
                 break;
+            case MessageKind.RunSettings:
+                ApplyRunSettings(payload);
+                break;
             case MessageKind.Hello:
             case MessageKind.Input:
             case MessageKind.Ping:
@@ -162,6 +168,14 @@ public sealed class ClientRuntime
             return;
 
         LastReject = reject;
+    }
+
+    private void ApplyRunSettings(byte[] payload)
+    {
+        if (!WireCodec.TryDecode(payload, out RunSettings settings))
+            return;
+
+        AcceptedSettings = settings;
     }
 
     private void ApplyWorldOffer(byte[] payload)

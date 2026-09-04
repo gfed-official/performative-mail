@@ -10,13 +10,13 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues. The current landable unit is U5.3 (issue 96): prerequisites, exclusions, and team vs personal pick rules. Do not start U6+.
+This run cuts those gates into landable child issues. The current landable unit is U6.1 (issue 97): lobby `RunSettings` (seed, archetype, kit) on the Hello/join path. Do not start U6.2+.
 
 ## Scope
 
-Touch chapters 01 §2.5 (shared 3-card draft and pick rules), 01 §4.2 (personal cap, team unique), 08 §2.9 (`prerequisites`, `excludes`, `scope`), and 10 §4 (Arcade twelve). Reuse U5.2 `DraftSession` and U2.3 perk JSON. Keep U4 bike and shop. Do not start M2–M5.
+Touch chapters 08 §3.1 (`RunSettings`) and 06 § lobby join (Hello then settings). Reuse U2.1 archetype id `small_island` and the frozen U4.1 Hello field list. Keep U5 draft and U4 bike. Do not start M2–M5.
 
-U5.3 filters the roll by prerequisites and exclusion ids, records picks, and greys a team perk after one take. Personal perks stack per player up to 5. No apply into `StatSheet`, no reroll, no U6+.
+U6.1 is a typed `RunSettings` record replicated after `HelloOk` on an additive kind. Empty stamps are fine. No lobby UI, no `JoinState`, no disconnect grace.
 
 ## Rigor
 
