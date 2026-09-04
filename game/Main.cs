@@ -56,7 +56,8 @@ public partial class Main : Node3D
             return;
         }
 
-        BindHud(BootPlaceholder());
+        if (HudBoot.ForPlayReady() is { } playHud)
+            BindHud(playHud);
         BindOverlay(OverlayBootReplica.Build());
         GD.Print("performative-mail boot ok");
     }
@@ -245,7 +246,7 @@ public partial class Main : Node3D
     private void InspectHud()
     {
         var dump = new StringBuilder();
-        BindHud(InspectMatch());
+        BindHud(HudBoot.Placeholder());
         dump.AppendLine(_hud.Dump("match"));
         BindHud(InspectMismatch());
         dump.AppendLine(_hud.Dump("mismatch"));
@@ -259,7 +260,7 @@ public partial class Main : Node3D
 
     private void InspectOverlay()
     {
-        BindHud(BootPlaceholder());
+        BindHud(HudBoot.Placeholder());
         BindOverlay(OverlayBootReplica.Build());
         var dump = new StringBuilder();
         _overlay.Open();
@@ -277,12 +278,6 @@ public partial class Main : Node3D
             File.WriteAllText(_overlayDumpPath, text);
         GetTree().Quit();
     }
-
-    private static HudSnapshot BootPlaceholder() =>
-        DeliveryStub(new InteractPrompt.Deliver("13 Larch Lane", "13 Larch Lane"));
-
-    private static HudSnapshot InspectMatch() =>
-        DeliveryStub(new InteractPrompt.Deliver("13 Larch Lane", "13 Larch Lane"));
 
     private static HudSnapshot InspectMismatch() =>
         DeliveryStub(new InteractPrompt.Deliver("13 Larch Lane", "8 Oak Street"));
