@@ -1,6 +1,6 @@
 # Godot CI script
 
-`tools/godot/ci.sh` is the Godot test entrypoint. The GitHub Actions `godot` job runs each command inside `barichello/godot-ci:mono-4.7.2`. Sim and App logic stay in xUnit. There is no GdUnit.
+`tools/godot/ci.sh` is the Godot test entrypoint. The GitHub Actions `godot` job runs each command inside `barichello/godot-ci:mono-4.7.2`.
 
 ## Commands
 
@@ -31,7 +31,7 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 | `overlays` | `inspect-overlays.sh` | `--inspect-overlays` | `--overlays-dump=` |
 | `debug` | `inspect-debug.sh` | `--inspect-debug` | `--debug-dump=` |
 
-`join` and `play` live inline in `ci.sh`. They do not use an inspect script.
+`join` and `play` live inline in `ci.sh`.
 
 ## Environment
 
@@ -51,4 +51,4 @@ The `godot` job in `.github/workflows/ci.yml` runs each command as its own step.
 6. Add a step in `.github/workflows/ci.yml` after `import`.
 7. List the command in this file and in the repo README Test section.
 
-To add a process smoke like `join` or `play`, write a function in `ci.sh` instead of an inspect script. Do not add GdUnit. Do not move `game/` into `PerformativeMail.sln`.
+To add a process smoke like `join` or `play`, write a function in `ci.sh` instead of an inspect script.
