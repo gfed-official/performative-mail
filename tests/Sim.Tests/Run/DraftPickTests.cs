@@ -1,5 +1,6 @@
 using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Sim.Tests.Run;
 
