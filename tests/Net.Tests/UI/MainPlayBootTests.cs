@@ -115,22 +115,25 @@ public sealed class MainPlayBootTests
     }
 
     [Fact]
-    public void Playing_HidesMenuChromeAndUsesFirstPersonCamera()
+    public void Playing_HidesMenuChromeAndUsesPerPawnCameras()
     {
         var render = MethodBody(ReadMain(), "Render");
         Assert.Contains("ShowMenuChrome(false)", render);
-        Assert.Contains("ApplyFirstPersonCamera", render);
+        Assert.Contains("_pawns.Sync(playing.Pawns, _look.PitchRadians)", render);
+        Assert.DoesNotContain("ApplyFirstPersonCamera", ReadMain());
         Assert.Contains("BindHud(playing.Hud)", render);
         Assert.Contains("_world.Sync(playing.World)", render);
         Assert.DoesNotContain("0f, 9f, 8f", ReadMain());
         Assert.DoesNotContain("_leave", ReadMain());
         Assert.Contains("ShowMenuChrome(true)", render);
+        Assert.Contains("UseMenuCamera", render);
     }
 
     [Fact]
-    public void BuildWorld_UsesEyeHeightCamera()
+    public void BuildWorld_UsesMenuCameraFallback()
     {
         var build = MethodBody(ReadMain(), "BuildWorld");
+        Assert.Contains("MenuCamera", build);
         Assert.Contains("FirstPersonLook.EyeHeightMeters", build);
         Assert.DoesNotContain("PlaneMesh", build);
     }

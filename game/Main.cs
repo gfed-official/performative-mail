@@ -16,7 +16,7 @@ public partial class Main : Node3D
     private PlaySessionMachine _session = null!;
     private PawnStage _pawns = null!;
     private WorldStage _world = null!;
-    private Camera3D _camera = null!;
+    private Camera3D _menuCamera = null!;
     private LineEdit _address = null!;
     private Label _status = null!;
     private Button _host = null!;
@@ -138,30 +138,29 @@ public partial class Main : Node3D
                 ShowMenuChrome(true);
                 SetMouseCaptured(false);
                 HidePlayUi();
-                _pawns.DespawnAll();
+                UseMenuCamera();
                 _status.Text = "Host a game, or join a friend by LAN IP.";
                 break;
             case PlaySession.Connecting:
                 ShowMenuChrome(false);
                 SetMouseCaptured(false);
                 HidePlayUi();
-                _pawns.DespawnAll();
+                UseMenuCamera();
                 break;
             case PlaySession.Playing playing:
                 ShowMenuChrome(false);
                 SetMouseCaptured(!_pause.IsOpen);
-                _pawns.Sync(playing.Pawns);
+                _pawns.Sync(playing.Pawns, _look.PitchRadians);
                 _world.Sync(playing.World);
                 BindHud(playing.Hud);
                 if (_overlay.IsOpen && playing.Overlay is OverlayReplica overlay)
                     BindOverlay(overlay);
-                ApplyFirstPersonCamera(playing);
                 break;
             case PlaySession.Failed failed:
                 ShowMenuChrome(true);
                 SetMouseCaptured(false);
                 HidePlayUi();
-                _pawns.DespawnAll();
+                UseMenuCamera();
                 _status.Text = failed.Reason.Message();
                 break;
             default:
@@ -184,12 +183,10 @@ public partial class Main : Node3D
         _overlay.Close();
     }
 
-    private void ApplyFirstPersonCamera(PlaySession.Playing playing)
+    private void UseMenuCamera()
     {
-        if (!_pawns.TryLocalEye(playing.Pawns, out var eye))
-            return;
-        _camera.Position = new Vector3(eye.X, eye.Y, eye.Z);
-        _camera.Rotation = new Vector3(_look.PitchRadians, eye.YawRadians, 0f);
+        _pawns.DespawnAll();
+        _menuCamera.Current = true;
     }
 
     private void SetMouseCaptured(bool captured)
@@ -221,12 +218,14 @@ public partial class Main : Node3D
         };
         AddChild(env);
 
-        _camera = new Camera3D
+        _menuCamera = new Camera3D
         {
-            Position = new Vector3(0f, FirstPersonLook.EyeHeightMeters, 0f),
+            Name = "MenuCamera",
+            Position = new Vector3(0f, FirstPersonLook.EyeHeightMeters, 8f),
             Current = true,
         };
-        AddChild(_camera);
+        AddChild(_menuCamera);
+        _menuCamera.LookAt(new Vector3(0f, FirstPersonLook.EyeHeightMeters, 0f));
 
         _world = new WorldStage();
         AddChild(_world);

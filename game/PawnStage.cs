@@ -18,9 +18,13 @@ public static class PawnTransform
 
 public partial class PawnStage : Node3D
 {
+    public const string CameraName = "Camera";
+    public const string BodyName = "Body";
+    public const string LabelName = "Label";
+
     private readonly Dictionary<uint, Node3D> _nodes = new();
 
-    public void Sync(IReadOnlyList<PawnView> pawns)
+    public void Sync(IReadOnlyList<PawnView> pawns, float localPitchRadians)
     {
         var seen = new HashSet<uint>();
         for (int i = 0; i < pawns.Count; i++)
@@ -36,13 +40,21 @@ public partial class PawnStage : Node3D
 
             var pose = pawn.Pose;
             node.Transform = PawnTransform.Of(in pose);
-            bool showBody = pawn.Role != PawnRole.Local;
-            if (node.GetNodeOrNull<MeshInstance3D>("Body") is MeshInstance3D body)
-                body.Visible = showBody;
-            if (node.GetNodeOrNull<Label3D>("Label") is Label3D label)
+            bool local = pawn.Role == PawnRole.Local;
+            if (node.GetNodeOrNull<MeshInstance3D>(BodyName) is MeshInstance3D body)
+                body.Visible = !local;
+            if (node.GetNodeOrNull<Label3D>(LabelName) is Label3D label)
             {
                 label.Text = pawn.DisplayName;
-                label.Visible = showBody;
+                label.Visible = !local;
+            }
+
+            if (node.GetNodeOrNull<Camera3D>(CameraName) is Camera3D camera)
+            {
+                camera.Current = local;
+                camera.Rotation = local
+                    ? new Vector3(localPitchRadians, 0f, 0f)
+                    : Vector3.Zero;
             }
         }
 
@@ -63,21 +75,6 @@ public partial class PawnStage : Node3D
         }
     }
 
-    public bool TryLocalEye(IReadOnlyList<PawnView> pawns, out ViewPose eye)
-    {
-        for (int i = 0; i < pawns.Count; i++)
-        {
-            if (pawns[i].Role != PawnRole.Local)
-                continue;
-            var pose = pawns[i].Pose;
-            eye = FirstPersonLook.EyePose(ViewFrame.From(in pose));
-            return true;
-        }
-
-        eye = default;
-        return false;
-    }
-
     public void DespawnAll()
     {
         foreach (var node in _nodes.Values)
@@ -90,30 +87,38 @@ public partial class PawnStage : Node3D
         var (r, g, b) = PawnPalette.Rgb(pawn.Palette);
         var color = new Color(r / 255f, g / 255f, b / 255f);
         var root = new Node3D { Name = $"Pawn_{pawn.Id.Value}" };
-        bool showBody = pawn.Role != PawnRole.Local;
+        bool local = pawn.Role == PawnRole.Local;
 
         var mesh = new MeshInstance3D
         {
-            Name = "Body",
+            Name = BodyName,
             Mesh = new CapsuleMesh { Radius = 0.35f, Height = 1.6f },
             MaterialOverride = new StandardMaterial3D { AlbedoColor = color },
             Position = new Vector3(0f, 0.8f, 0f),
-            Visible = showBody,
+            Visible = !local,
         };
         root.AddChild(mesh);
 
         var label = new Label3D
         {
-            Name = "Label",
+            Name = LabelName,
             Text = pawn.DisplayName,
             Position = new Vector3(0f, 2.0f, 0f),
             FontSize = 48,
             OutlineSize = 8,
             Modulate = Colors.White,
             Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-            Visible = showBody,
+            Visible = !local,
         };
         root.AddChild(label);
+
+        var camera = new Camera3D
+        {
+            Name = CameraName,
+            Position = new Vector3(0f, FirstPersonLook.EyeHeightMeters, 0f),
+            Current = local,
+        };
+        root.AddChild(camera);
         return root;
     }
 }
