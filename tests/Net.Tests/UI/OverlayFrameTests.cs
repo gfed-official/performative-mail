@@ -68,6 +68,34 @@ public sealed class OverlayFrameTests
         Assert.Equal("13-2", OverlayCell.MiniAddress(new AddressId(1, 1, 13, 2)));
     }
 
+    [Fact]
+    public void From_LiveShapedReplica_HotbarMailUsesHouseNumberNotBootLarch()
+    {
+        var catalog = new LetterOnlyCatalog();
+        var auth = new InventorySystem(catalog);
+        var player = new EntityId(1);
+        var hotbar = auth.CreateContainer(ContainerSpec.Hotbar, player);
+        var inventory = auth.CreateContainer(ContainerSpec.BaseInventory, player);
+        var mail = MailStack.Single(MailKinds.Letter, new AddressId(1, 1, 1, 0), new MailId(1));
+        Assert.IsType<Accepted>(auth.Apply(Actor.System, new Deposit(hotbar, mail)));
+
+        var replica = new InventorySystem(catalog);
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(hotbar)));
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(inventory)));
+        Assert.True(LiveOverlay.TryFrom(replica, out var live));
+
+        var frame = OverlayFrame.From(in live);
+        OverlayCell cell = frame.Hotbar[1, 0];
+        Assert.Equal("1", cell.CountLabel);
+        Assert.Equal("1", cell.AddressLabel);
+        Assert.Equal("1 1", cell.Text);
+        Assert.False(cell.Pending);
+        Assert.Equal(OverlayCell.ConfirmedOpacity, cell.Opacity);
+        Assert.Null(frame.Backpack);
+        Assert.NotEqual("13", cell.AddressLabel);
+        Assert.NotEqual("1 13", cell.Text);
+    }
+
     private sealed class LetterOnlyCatalog : IStackCatalog
     {
         public Footprint FootprintOf(StackKey key) => new(1, 1);

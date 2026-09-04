@@ -184,6 +184,18 @@ public sealed class MainPlayBootTests
     }
 
     [Fact]
+    public void MaybeFinish_WritesLiveOverlayDumpOnPlayingQuit()
+    {
+        var finish = MethodBody(ReadMain(), "MaybeFinish");
+        Assert.Contains("_overlayDumpPath", finish);
+        Assert.Contains("Dump(\"live\")", finish);
+        Assert.Contains("OVERLAY_DUMP_END", finish);
+        Assert.Contains("PlaySession.Playing", finish);
+        Assert.DoesNotContain("OverlayBootReplica", finish);
+        Assert.DoesNotContain("InspectOverlay", finish);
+    }
+
+    [Fact]
     public void PhysicsProcess_AppliesDebugHelperAfterPump()
     {
         var body = MethodBody(ReadMain(), "_PhysicsProcess");
@@ -197,10 +209,13 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryOpenLiveOverlay", helper);
         Assert.Contains("\"interact\"", helper);
         Assert.Contains("TryStepInteractSmoke", helper);
+        Assert.Contains("\"live-overlay\"", helper);
+        Assert.Contains("TryStepLiveOverlay", helper);
         var main = ReadMain();
         Assert.Contains("TryStockIntake", main);
         Assert.Contains("HasHeldMail", main);
         Assert.Contains("TryStepInteractSmoke", main);
+        Assert.Contains("TryStepLiveOverlay", main);
         Assert.Contains("using PerformativeMail.Sim.Inventory;", main);
     }
 

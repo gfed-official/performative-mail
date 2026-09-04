@@ -678,6 +678,13 @@ public partial class Main : Node3D
             WriteReport(state, _reportPath);
         if (_worldDumpPath is not null && state is PlaySession.Playing)
             File.WriteAllText(_worldDumpPath, _world.Dump());
+        if (_overlayDumpPath is not null && state is PlaySession.Playing)
+        {
+            var dump = new StringBuilder();
+            dump.Append(_overlay.Dump("live"));
+            dump.AppendLine("OVERLAY_DUMP_END");
+            File.WriteAllText(_overlayDumpPath, dump.ToString());
+        }
         GetTree().Quit();
     }
 
@@ -698,6 +705,7 @@ public partial class Main : Node3D
             "give-mail" => _session.TryGiveMail(),
             "overlay" => TryOpenLiveOverlay(playing),
             "interact" => TryStepInteractSmoke(playing),
+            "live-overlay" => TryStepLiveOverlay(playing),
             _ => true,
         };
         if (done)
@@ -717,6 +725,22 @@ public partial class Main : Node3D
             _holdInteract = true;
             _session.TryTeleportToMailbox();
             return false;
+        }
+
+        if (!_session.TryStockIntake())
+            return false;
+
+        _holdInteract = true;
+        _session.TryTeleportToIntake();
+        return false;
+    }
+
+    private bool TryStepLiveOverlay(PlaySession.Playing playing)
+    {
+        if (HasHeldMail(playing))
+        {
+            _holdInteract = false;
+            return TryOpenLiveOverlay(playing);
         }
 
         if (!_session.TryStockIntake())

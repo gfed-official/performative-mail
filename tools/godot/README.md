@@ -22,6 +22,7 @@
 | `debug-helpers` | Solo Host `--debug-world --debug-helper=intake`. Asserts the local pawn report is at Intake tile centre `1100, 500`. |
 | `worldstage` | Solo Host `--debug-world` plus `--world-dump=`. Asserts SmokeReport mailbox count ≥ 2 and live Label3D text for Post Office, Mail, and `1 Debug Lane` / `2 Debug Lane`. |
 | `interact` | Solo Host `--debug-world --debug-helper=interact`. Stocks Intake, teleports, holds Interact through pickup and deliver, and asserts `wallet` is `8`. |
+| `live-overlay` | Solo Host `--debug-world --debug-helper=live-overlay` plus `--overlay-dump=`. Picks up Intake mail, opens the inventory overlay on the Playing replica, and asserts live hotbar cell text (`1 1`), not OverlayBootReplica `1 13`. |
 | `all` | Every command above, in that order. `all` is the default. |
 | `-h`, `--help` | Print the command list. |
 
@@ -35,9 +36,9 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 | `overlays` | `inspect-overlays.sh` | `--inspect-overlays` | `--overlays-dump=` |
 | `debug` | `inspect-debug.sh` | `--inspect-debug` | `--debug-dump=` |
 
-`join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, and `interact` live inline in `ci.sh`.
+`join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, `interact`, and `live-overlay` live inline in `ci.sh`.
 
-`--debug-helper=` runs one host cheat. Values are `intake`, `mailbox`, `give-mail`, `overlay`, and `interact`. `intake`, `mailbox`, `give-mail`, and `overlay` finish on the first Playing frame. `interact` stays set until the wallet credits: it stocks Intake, teleports to Intake, holds Interact to pick up, teleports to the matching mailbox, and holds Interact to deliver. F3 and `` ` `` still toggle DebugMenu for the one-shot cheats.
+`--debug-helper=` runs one host cheat. Values are `intake`, `mailbox`, `give-mail`, `overlay`, `interact`, and `live-overlay`. `intake`, `mailbox`, `give-mail`, and `overlay` finish on the first Playing frame. `interact` stays set until the wallet credits: it stocks Intake, teleports to Intake, holds Interact to pick up, teleports to the matching mailbox, and holds Interact to deliver. `live-overlay` stays set until the hotbar holds mail and the overlay is open: it stocks Intake, teleports, holds Interact to pick up, then binds `InventoryOverlay` from the Playing replica. `--overlay-dump=` on that path writes `OVERLAY_DUMP case=live` at quit. `--inspect-overlay` still dumps the OverlayBootReplica bind. F3 and `` ` `` still toggle DebugMenu for the one-shot cheats.
 
 ## Environment
 
@@ -45,7 +46,7 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 
 ## CI
 
-The `godot` job in `.github/workflows/ci.yml` runs each command as its own step. It does not call `all`. The steps are `verify`, `import`, `boot`, `hud`, `overlay`, `lobby`, `overlays`, `debug`, `join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, and `interact`.
+The `godot` job in `.github/workflows/ci.yml` runs each command as its own step. It does not call `all`. The steps are `verify`, `import`, `boot`, `hud`, `overlay`, `lobby`, `overlays`, `debug`, `join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, `interact`, and `live-overlay`.
 
 ## Add a Control-text smoke
 

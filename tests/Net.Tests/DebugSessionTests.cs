@@ -237,6 +237,14 @@ public sealed class DebugSessionTests
         Assert.True(HasMail(held.Overlay.Value.Hotbar));
         Assert.Equal(new Cents(0), held.Hud.Wallet);
 
+        var frame = OverlayFrame.From(held.Overlay.Value);
+        OverlayCell cell = frame.Hotbar[1, 0];
+        Assert.Equal("1", cell.CountLabel);
+        Assert.Equal("1", cell.AddressLabel);
+        Assert.Equal("1 1", cell.Text);
+        Assert.False(cell.Pending);
+        Assert.NotEqual("13", cell.AddressLabel);
+
         Assert.True(host.TryTeleportToMailbox());
         Pump(
             host,

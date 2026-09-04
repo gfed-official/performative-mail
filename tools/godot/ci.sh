@@ -414,9 +414,71 @@ host_interact_smoke() {
     || fail "host interact report failed pickup-deliver: $(cat "$report")"
 }
 
+host_live_overlay_smoke() {
+  echo "==> headless host live inventory overlay dump"
+  local reports report dump log
+  reports="$(mktemp -d)"
+  report="$reports/report.json"
+  dump="$reports/overlay-dump.txt"
+  log="$(mktemp)"
+  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+    --host --debug-world --debug-helper=live-overlay --quit-after-ms=8000 \
+    --report="$report" --overlay-dump="$dump" \
+    >"$log" 2>&1; then
+    cat "$log"
+    fail "host live-overlay process exited non-zero"
+  fi
+  if [[ ! -f "$report" ]]; then
+    cat "$log"
+    fail "host live-overlay did not write a report"
+  fi
+  if [[ ! -f "$dump" ]]; then
+    cat "$log"
+    fail "host live-overlay did not write an overlay dump"
+  fi
+  cat "$report"
+  echo
+  echo "---- $dump ----"
+  cat "$dump"
+  echo
+  grep -q '"state":"Playing"' "$report" || fail "host live-overlay report is not Playing: $(cat "$report")"
+  grep -q '"worldHash":"0x4CF184F2FA4D4EEE"' "$report" \
+    || fail "host live-overlay report missing debug worldHash: $(cat "$report")"
+  need_jq
+  jq -e '
+    .state == "Playing"
+    and .phase == "Prep"
+    and .shift == 1
+    and .worldHash == "0x4CF184F2FA4D4EEE"
+    and (.pawns | length) >= 1
+    and .worldEntityCounts.postOffices == 1
+    and .worldEntityCounts.intakes == 1
+    and .worldEntityCounts.houses == 2
+    and .worldEntityCounts.mailboxes == 2
+    and .overlayOpen == true
+    and .debugOpen == false
+  ' "$report" >/dev/null \
+    || fail "host live-overlay report failed jq schema: $(cat "$report")"
+  grep -q 'OVERLAY_DUMP case=live' "$dump" || fail "missing live overlay dump: $(cat "$dump")"
+  grep -q 'OVERLAY_DUMP_END' "$dump" || fail "missing OVERLAY_DUMP_END: $(cat "$dump")"
+  grep -Fqx "visible=true" "$dump" || fail "live overlay dump is not open: $(cat "$dump")"
+  grep -Fqx "hotbar cols=8 rows=1" "$dump" || fail "live overlay dump missing hotbar grid: $(cat "$dump")"
+  grep -Fqx "inventory cols=8 rows=2" "$dump" || fail "live overlay dump missing inventory grid: $(cat "$dump")"
+  grep -Fqx "hotbar[1,0] count=1 address=1 pending=0 opacity=1.0" "$dump" \
+    || fail "live overlay dump missing pickup mail cell: $(cat "$dump")"
+  grep -Fqx "hotbar_1_0 text=1 1 opacity=1.0" "$dump" \
+    || fail "live overlay dump missing pickup cell text: $(cat "$dump")"
+  if grep -Fq "address=13" "$dump"; then
+    fail "live overlay dump still has OverlayBootReplica Larch 13: $(cat "$dump")"
+  fi
+  if grep -Fqx "hotbar_1_0 text=1 13 opacity=0.6" "$dump"; then
+    fail "live overlay dump still has placeholder pending cell: $(cat "$dump")"
+  fi
+}
+
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join|play|debug-world|debug-helpers|worldstage|interact]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay]
 
   verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import   godot --import + dotnet build of game/
@@ -432,6 +494,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debu
   debug-helpers solo Host --debug-world --debug-helper=intake; local pawn at Intake (1100, 500)
   worldstage solo Host --debug-world report plus WorldStage Label3D dump (PO, Mail, addresses)
   interact solo Host --debug-world --debug-helper=interact; pickup Intake mail, deliver, wallet 8
+  live-overlay solo Host --debug-world --debug-helper=live-overlay; pickup, open overlay, dump live cell text
   all      all of the above (default)
 EOF
 }
@@ -481,6 +544,9 @@ case "$cmd" in
   interact)
     host_interact_smoke
     ;;
+  live-overlay)
+    host_live_overlay_smoke
+    ;;
   all)
     verify_godot
     verify_dotnet
@@ -497,6 +563,7 @@ case "$cmd" in
     host_debug_helpers_smoke
     host_worldstage_smoke
     host_interact_smoke
+    host_live_overlay_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;
   -h|--help)
