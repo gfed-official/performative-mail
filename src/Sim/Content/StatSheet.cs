@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace PerformativeMail.Sim.Content;
@@ -21,10 +22,17 @@ public sealed class StatSheet
             StatModifier modifier = _modifiers[i];
             if (modifier.Stat != stat)
                 continue;
-            if (modifier.Op == StatOp.Mul)
-                mul *= modifier.Value;
-            else
-                add += modifier.Value;
+            switch (modifier.Op)
+            {
+                case StatOp.Mul:
+                    mul *= modifier.Value;
+                    break;
+                case StatOp.Add:
+                    add += modifier.Value;
+                    break;
+                default:
+                    throw new InvalidOperationException($"unknown stat op '{modifier.Op}'.");
+            }
         }
 
         return basis * mul + add;

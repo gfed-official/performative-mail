@@ -156,3 +156,6 @@ ts	phase	decision	why	evidence	result
 2026-09-04T01:08:46Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T01:08:46Z	verify	Acceptance filter 6 passed	TwoMulsAndOneAdd is 34 not 39; no modifiers; adds; muls; other-stat isolation; unset base	dotnet test --filter TwoMulsAndOneAdd|NoModifiers|AddsOnly|MulsOnly|IgnoresOtherStats|UnsetBase	VERIFIED
 2026-09-04T01:08:46Z	u5.1	Owned StatSheet in-thread	Shape was settled; parent skipped nested code agents on prior units	src/Sim/Content/StatSheet.cs	accepted
+2026-09-04T01:11:53Z	audit	Add-then-mul and interleaved tests pin order-independent resolve	Trail review: muls-then-add also matches sequential apply; add-first sequential is 42; interleaved sequential is 23	tests/Sim.Tests/Content/StatSheetTests.cs	accepted
+2026-09-04T01:11:53Z	audit	Get switches on StatOp and throws on unknown	Trail review: else-as-Add would swallow a future op	src/Sim/Content/StatSheet.cs	accepted
+2026-09-04T01:11:53Z	verify	dotnet test Release 413 passed	Sim 277 Net 120 Bot 16; eight StatSheet tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
