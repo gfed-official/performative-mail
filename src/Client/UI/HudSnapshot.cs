@@ -9,4 +9,7 @@ public readonly record struct HudSnapshot(
     uint Now,
     uint Deadline,
     Cents Wallet,
-    InteractPrompt Interact);
+    InteractPrompt Interact,
+    Cents Earnings,
+    Cents Quota,
+    int Complaint);

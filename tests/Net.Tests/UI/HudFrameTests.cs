@@ -25,6 +25,10 @@ public sealed class HudFrameTests
         Assert.Equal(Held, frame.TargetAddress);
         Assert.Equal(MatchMark.Tick, frame.Match);
         Assert.Equal("tick", frame.MatchLabel);
+        Assert.Equal("Quota 640 / 2214", frame.QuotaLabel);
+        Assert.Equal("", frame.SurplusLabel);
+        Assert.Equal("23", frame.ComplaintLabel);
+        Assert.False(frame.QuotaMet);
     }
 
     [Fact]
@@ -89,10 +93,61 @@ public sealed class HudFrameTests
             0,
             2700,
             new Cents(cents),
-            InteractPrompt.None.Instance);
+            InteractPrompt.None.Instance,
+            new Cents(640),
+            new Cents(2214),
+            23);
         Assert.Equal(expected, HudFrame.From(in snap).WalletLabel);
     }
 
-    private static HudSnapshot Snapshot(InteractPrompt interact, uint now = 0, uint deadline = 2700) =>
-        new(RunPhase.Delivery, 1, now, deadline, new Cents(1820), interact);
+    [Fact]
+    public void From_QuotaMet_ShowsSurplus()
+    {
+        var frame = HudFrame.From(Snapshot(InteractPrompt.None.Instance, earnings: 2214, quota: 2214));
+
+        Assert.Equal("Quota 2214 / 2214", frame.QuotaLabel);
+        Assert.Equal(HudFrame.SurplusText, frame.SurplusLabel);
+        Assert.True(frame.QuotaMet);
+        Assert.Equal(2214, frame.QuotaEarnings);
+        Assert.Equal(2214, frame.QuotaTarget);
+    }
+
+    [Fact]
+    public void From_QuotaOver_ShowsSurplus()
+    {
+        var frame = HudFrame.From(Snapshot(InteractPrompt.None.Instance, earnings: 2215, quota: 2214));
+
+        Assert.Equal("Quota 2215 / 2214", frame.QuotaLabel);
+        Assert.Equal("+surplus", frame.SurplusLabel);
+        Assert.True(frame.QuotaMet);
+        Assert.Equal(2215, frame.QuotaEarnings);
+        Assert.Equal(2214, frame.QuotaTarget);
+    }
+
+    [Theory]
+    [InlineData(0, "0")]
+    [InlineData(100, "100")]
+    public void From_ComplaintPoints(int points, string expected)
+    {
+        var frame = HudFrame.From(Snapshot(InteractPrompt.None.Instance, complaint: points));
+        Assert.Equal(expected, frame.ComplaintLabel);
+    }
+
+    [Fact]
+    public void From_Shift_FormatsNOver5()
+    {
+        var frame = HudFrame.From(Snapshot(InteractPrompt.None.Instance, shift: 3));
+        Assert.Equal("Shift 3 / 5", frame.ShiftLabel);
+    }
+
+    private static HudSnapshot Snapshot(
+        InteractPrompt interact,
+        uint now = 0,
+        uint deadline = 2700,
+        byte shift = 1,
+        int earnings = 640,
+        int quota = 2214,
+        int complaint = 23) =>
+        new(RunPhase.Delivery, shift, now, deadline, new Cents(1820), interact,
+            new Cents(earnings), new Cents(quota), complaint);
 }

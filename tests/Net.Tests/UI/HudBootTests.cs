@@ -15,5 +15,8 @@ public sealed class HudBootTests
         Assert.Equal("13 Larch Lane", frame.TargetAddress);
         Assert.Equal("tick", frame.MatchLabel);
         Assert.Equal("$18.20", frame.WalletLabel);
+        Assert.Equal("Quota 640 / 2214", frame.QuotaLabel);
+        Assert.Equal("", frame.SurplusLabel);
+        Assert.Equal("23", frame.ComplaintLabel);
     }
 }
