@@ -280,3 +280,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:38:00Z	verify	BalanceSim prints five paydays and duration 1450s	U10.1 lines unchanged; exit 0; hashes proven in Net.Tests	dotnet run --project tools/BalanceSim -- content	VERIFIED
 2026-09-04T05:38:00Z	verify	Acceptance filter 12 passed	FiveShiftRun 1450s; 4p shift 1 MET; shift 2 MET; hashes 0; U10.1 holds	dotnet test --filter FiveShiftRun|FourPlayer|SoloHand	VERIFIED
 2026-09-04T05:38:00Z	verify	No-regress filter 26 passed	play boot unbound; HUD Ignore; overlay Ignore	dotnet test --filter MainPlayBoot|HudBoot|HudScene|PaydayFrame|DraftFrame|ResultsFrame|PhaseOverlay	VERIFIED
+2026-09-04T05:41:32Z	verify	CI on 33beb6f all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions	VERIFIED
