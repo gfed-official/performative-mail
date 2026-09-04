@@ -10,13 +10,13 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues. The current landable unit is U6.3 (issue 99): disconnect grace. Do not start U7+.
+This run cuts those gates into landable child issues. The current landable unit is U7.1 (issue 100): Results payload and Postal Rank XP. Do not start U7.2+.
 
 ## Scope
 
-Touch chapters 06 §6 (disconnect hold and resume) and 01 §7 (all-disconnect). Reuse U6.2 `JoinState` and U3.5 death-bag drop. Keep U6.1 Hello goldens and U6.2 Prep join. Do not start M2–M5.
+Touch chapters 01 §5.1 (Postal Rank XP), 01 §5.3 (seed string), 01 §6 (score × stamp product), and 08 §3.2 (`payload.results`). Reuse U3.1 `RunState` and U6.1 `RunSettings`. Keep U6.1 Hello goldens and U6.3 disconnect grace. Do not start M2–M5.
 
-U6.3 holds a disconnected seat for 120 s. Inventory stays on the body. The same account resumes the same entity. After 120 s the body drops a U3.5 bag and despawns. When no seat is connected the run ends after 60 s without Results. No lobby UI, no host-lost screen, no Results payload, no 64 KB chunking.
+U7.1 is a typed `ResultsPayload` plus `PostalRankXp.Award`. XP is `100 × shifts + 50 × victory + 5 × deliveries`. Score is `totalEarned × product(stampMultipliers)`. Seed string matches `PM1-SMALL-7F3A9C21-CM.DR`. No `profile.json`, no unlock write, no results overlay, no new `MessageKind`.
 
 ## Rigor
 

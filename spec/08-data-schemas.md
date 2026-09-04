@@ -335,7 +335,7 @@ Flat key/value file for every tunable not owned by another def: baseQuota, playe
   "payload?": {                    // per phase
     "shopOffer": ["bandage", "oil_can", "bp_motorboat"],
     "draftCards": ["express_lane", "big_pockets", "presort"],
-    "results": { "score": 12345, "xpPerPlayer": {}, "stats": {} }
+    "results": { "score": 12345, "postalRankXp": 650, "shiftsCompleted": 5, "victory": true, "deliveries": 20, "seedString": "PM1-SMALL-7F3A9C21-CM.DR", "stamps": [{ "id": "cursed_mail", "scoreMult": 1.15 }] }
   }
 }
 ```
