@@ -276,3 +276,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:36:40Z	architect	Skip four-model arena	Shape is composition of ShiftClock QuotaBudget and HashTrace; two sketches compared in-thread	docs/m1-frame.md	accepted
 2026-09-04T05:36:40Z	subtract	No Delivery to Payday table change and no BotBrain bike	Raid already overlaps Delivery; bike 200 is the chapter 11 rate	src/Sim/Run/RunTransitions.cs	accepted
 2026-09-04T05:36:40Z	subtract	Did not invent a truck-level 4p shift 5 rate	Chapter 11 bike 200 cannot meet 9840; later paydays record MISS	spec/11-balance.md	accepted
+2026-09-04T05:38:00Z	verify	dotnet test Release 575 passed	Sim 378 Net 181 Bot 16; baseline U10.1 was 567; eight new tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T05:38:00Z	verify	BalanceSim prints five paydays and duration 1450s	U10.1 lines unchanged; exit 0; hashes proven in Net.Tests	dotnet run --project tools/BalanceSim -- content	VERIFIED
+2026-09-04T05:38:00Z	verify	Acceptance filter 12 passed	FiveShiftRun 1450s; 4p shift 1 MET; shift 2 MET; hashes 0; U10.1 holds	dotnet test --filter FiveShiftRun|FourPlayer|SoloHand	VERIFIED
+2026-09-04T05:38:00Z	verify	No-regress filter 26 passed	play boot unbound; HUD Ignore; overlay Ignore	dotnet test --filter MainPlayBoot|HudBoot|HudScene|PaydayFrame|DraftFrame|ResultsFrame|PhaseOverlay	VERIFIED
