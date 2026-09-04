@@ -49,6 +49,14 @@ public sealed class PlayerBody
 
     public PlayerPose Pose => new(Xcm, Ycm, Zcm, Yaw);
 
+    public void SetPose(in PlayerPose pose)
+    {
+        Xcm = pose.Xcm;
+        Ycm = pose.Ycm;
+        Zcm = pose.Zcm;
+        Yaw = pose.Yaw;
+    }
+
     public void Apply(in InputCmd cmd)
     {
         if (HasAppliedInput && cmd.Tick <= LastProcessedInputTick)

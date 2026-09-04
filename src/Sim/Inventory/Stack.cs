@@ -173,6 +173,8 @@ public sealed record ContainerSpec(ContainerShape Shape, IReadOnlyCollection<Sta
 
     public static ContainerSpec Chest => new(ContainerShape.Grid(8, 4), null);
 
+    public static ContainerSpec DeathBag => new(ContainerShape.Grid(8, 4), null);
+
     public static ContainerSpec BaseInventory => new(ContainerShape.Grid(8, 2), null);
 
     public static ContainerSpec Backpack => new(ContainerShape.Grid(8, 2), null);
