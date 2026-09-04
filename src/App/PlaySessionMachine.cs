@@ -45,12 +45,15 @@ public sealed class PlaySessionMachine : IDisposable
         return true;
     }
 
-    public void Host()
+    public void Host() => StartHost(ArcadeSession.Create());
+
+    public void HostDebug() => StartHost(ArcadeSession.CreateDebug());
+
+    private void StartHost(ArcadeBoot boot)
     {
         Leave();
         try
         {
-            var boot = ArcadeSession.Create();
             var listen = _stack.Listen(_options.ListenPort, _options.MaxPlayers);
             var server = new ServerRuntime(listen.Link, boot);
             server.Start();

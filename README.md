@@ -44,6 +44,7 @@ Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4
 - `debug` opens DebugMenu and reads inspect and cheat labels.
 - `join` runs a two-process LAN host and join on `127.0.0.1:7777`.
 - `play` runs a solo Host play report with the golden worldHash, HUD, and world entity counts listed in [`tools/godot/report.md`](tools/godot/report.md).
+- `debug-world` runs a solo Host play report with `--debug-world`. It asserts Playing, PREP, two houses, and debug worldHash `0x4CF184F2FA4D4EEE`.
 
 `all` runs every command above. `all` is the default when you omit the argument. The command list and the steps to add a Control-text smoke are in [`tools/godot/README.md`](tools/godot/README.md).
 

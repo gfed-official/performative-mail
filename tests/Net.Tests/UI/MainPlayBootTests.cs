@@ -163,6 +163,15 @@ public sealed class MainPlayBootTests
         Assert.DoesNotContain("json.Append", write);
     }
 
+    [Fact]
+    public void ApplyArgs_WiresDebugWorldToHostDebug()
+    {
+        var apply = MethodBody(ReadMain(), "ApplyArgs");
+        Assert.Contains("\"--debug-world\"", apply);
+        Assert.Contains("HostDebug()", apply);
+        Assert.Contains("_session.Host()", apply);
+    }
+
     private static string ReadMain()
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })

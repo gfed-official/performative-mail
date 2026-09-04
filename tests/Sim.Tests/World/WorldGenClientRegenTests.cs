@@ -32,6 +32,17 @@ public sealed class WorldGenClientRegenTests
     }
 
     [Fact]
+    public void Accept_DebugWorldHash_ReturnsDebugTables()
+    {
+        var verdict = WorldHashCheck.Accept(FixedSeed, DebugWorld.Hash, out var tables, out ulong local);
+        Assert.Equal(WorldHashVerdict.Match, verdict);
+        Assert.Equal(DebugWorld.Hash, local);
+        Assert.Equal(2, tables.Houses.Length);
+        Assert.Equal(DebugWorld.StreetName, tables.Streets[0].Name);
+        Assert.Equal(DebugWorld.Hash, WorldHash.Compute(tables));
+    }
+
+    [Fact]
     public void Accept_MismatchedHash_IsVersionMismatch()
     {
         var server = WorldGen.GenerateSmallIsland(FixedSeed);
