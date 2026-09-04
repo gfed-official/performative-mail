@@ -199,3 +199,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T02:55:00Z	verify	dotnet test Release 463 passed	Sim 310 Net 137 Bot 16; baseline U6.2 was 448	dotnet test PerformativeMail.sln -c Release	VERIFIED
 2026-09-04T02:55:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T02:55:00Z	verify	Acceptance filter passed	HoldTicks 3600; drop bag; resume same entity; empty end 1800; Hello golden	dotnet test --filter HoldTicks_OneHundredTwenty|AfterGrace_DropsInventory|ReconnectWithinGrace|AllDisconnect_EndsWithoutResults|Hello_GoldenRoundTrip	VERIFIED
+2026-09-04T02:36:00Z	verify	CI on 6443e12 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33830031394	VERIFIED
