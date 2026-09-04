@@ -53,6 +53,30 @@ public sealed class ContentFilesTests
     }
 
     [Fact]
+    public void ContentFiles_PlantedUnknownStat_FailsValidate()
+    {
+        string root = PlantContentTree();
+        string path = Path.Combine(root, "perks", "long_legs.json");
+        var node = JsonNode.Parse(File.ReadAllText(path))!;
+        node["modifiers"]![0]!["stat"] = "NotAStat";
+        File.WriteAllText(path, node.ToJsonString());
+        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Validate(root));
+        Assert.Contains("NotAStat", ex.Message);
+    }
+
+    [Fact]
+    public void ContentFiles_PlantedUnknownRuleFlag_FailsValidate()
+    {
+        string root = PlantContentTree();
+        string path = Path.Combine(root, "stamps", "double_raids.json");
+        var node = JsonNode.Parse(File.ReadAllText(path))!;
+        node["rules"] = new JsonArray("not_a_flag");
+        File.WriteAllText(path, node.ToJsonString());
+        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Validate(root));
+        Assert.Contains("not_a_flag", ex.Message);
+    }
+
+    [Fact]
     public void ArchetypeCatalog_UnknownTownSize_Throws()
     {
         string json = MutateRepoArchetypes(def =>

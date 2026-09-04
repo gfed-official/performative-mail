@@ -1,0 +1,13 @@
+{
+  "id": "union_rep",
+  "name": "Union Rep",
+  "description": "Quota −10%.",
+  "category": "postal",
+  "scope": "team",
+  "rarity": "uncommon",
+  "modifiers": [
+    { "stat": "QuotaMult", "op": "mul", "value": 0.9 }
+  ],
+  "maxStacks": 1,
+  "tags": ["quota"]
+}

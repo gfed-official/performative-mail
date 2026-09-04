@@ -1,0 +1,13 @@
+{
+  "id": "quick_hands",
+  "name": "Quick Hands",
+  "description": "Mailbox insert hold −50%.",
+  "category": "carrier",
+  "scope": "personal",
+  "rarity": "common",
+  "modifiers": [
+    { "stat": "MailboxInsertTime", "op": "mul", "value": 0.5 }
+  ],
+  "maxStacks": 1,
+  "tags": ["delivery"]
+}

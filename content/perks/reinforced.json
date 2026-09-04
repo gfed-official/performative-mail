@@ -1,0 +1,13 @@
+{
+  "id": "reinforced",
+  "name": "Reinforced",
+  "description": "All construct HP +40%.",
+  "category": "defense",
+  "scope": "team",
+  "rarity": "common",
+  "modifiers": [
+    { "stat": "ConstructHp", "op": "mul", "value": 1.4 }
+  ],
+  "maxStacks": 1,
+  "tags": ["construct"]
+}

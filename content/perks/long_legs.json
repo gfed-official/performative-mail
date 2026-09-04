@@ -1,0 +1,13 @@
+{
+  "id": "long_legs",
+  "name": "Long Legs",
+  "description": "+12% move speed.",
+  "category": "carrier",
+  "scope": "personal",
+  "rarity": "common",
+  "modifiers": [
+    { "stat": "PlayerSpeed", "op": "mul", "value": 1.12 }
+  ],
+  "maxStacks": 3,
+  "tags": ["mobility"]
+}

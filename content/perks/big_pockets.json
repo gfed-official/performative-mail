@@ -1,0 +1,13 @@
+{
+  "id": "big_pockets",
+  "name": "Big Pockets",
+  "description": "+1 inventory row.",
+  "category": "carrier",
+  "scope": "personal",
+  "rarity": "common",
+  "modifiers": [
+    { "stat": "InventoryRows", "op": "add", "value": 1 }
+  ],
+  "maxStacks": 2,
+  "tags": ["inventory"]
+}

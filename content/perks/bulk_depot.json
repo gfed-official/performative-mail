@@ -1,0 +1,13 @@
+{
+  "id": "bulk_depot",
+  "name": "Bulk Depot",
+  "description": "Depot and chest grids +50%.",
+  "category": "facility",
+  "scope": "team",
+  "rarity": "common",
+  "modifiers": [
+    { "stat": "ContainerGrid", "op": "mul", "value": 1.5 }
+  ],
+  "maxStacks": 1,
+  "tags": ["storage"]
+}

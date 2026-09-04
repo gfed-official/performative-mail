@@ -293,6 +293,13 @@ internal static class ContentIds
         return value;
     }
 
+    public static double RequireFinite(double value, string source, string id, string field)
+    {
+        if (double.IsNaN(value) || double.IsInfinity(value))
+            throw new InvalidOperationException($"{source}: '{id}' {field} must be a finite number.");
+        return value;
+    }
+
     public static string? OptionalContentId(string? raw, string source)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;

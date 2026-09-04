@@ -1,0 +1,10 @@
+{
+  "id": "postal_audit",
+  "name": "Postal Audit",
+  "tier": 3,
+  "scoreMult": 1.20,
+  "modifiers": [
+    { "stat": "ComplaintDecay", "op": "mul", "value": 0.5 },
+    { "stat": "InspectorThreshold", "op": "add", "value": -25 }
+  ]
+}

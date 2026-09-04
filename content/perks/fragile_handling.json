@@ -1,0 +1,14 @@
+{
+  "id": "fragile_handling",
+  "name": "Fragile Handling",
+  "description": "Misdelivery penalty −50% and complaint −50%.",
+  "category": "postal",
+  "scope": "team",
+  "rarity": "common",
+  "modifiers": [
+    { "stat": "MisdeliveryPenalty", "op": "mul", "value": 0.5 },
+    { "stat": "ComplaintGain", "op": "mul", "value": 0.5 }
+  ],
+  "maxStacks": 1,
+  "tags": ["complaint"]
+}

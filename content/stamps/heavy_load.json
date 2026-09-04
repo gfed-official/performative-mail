@@ -1,0 +1,9 @@
+{
+  "id": "heavy_load",
+  "name": "Heavy Load",
+  "tier": 1,
+  "scoreMult": 1.10,
+  "modifiers": [
+    { "stat": "MailSizeBias", "op": "add", "value": 1 }
+  ]
+}

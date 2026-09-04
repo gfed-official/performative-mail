@@ -1,0 +1,12 @@
+{
+  "ranks": [
+    { "rank": 2, "unlocks": [ { "kit": "sea" } ] },
+    { "rank": 3, "unlocks": [ { "archetype": "large_island" } ] },
+    { "rank": 4, "unlocks": [ { "reroll": 1 } ] },
+    { "rank": 5, "unlocks": [ { "perk_pool": "facility" } ] },
+    { "rank": 6, "unlocks": [ { "stamp_tier": 2 } ] },
+    { "rank": 8, "unlocks": [ { "perk_pool": "defense" } ] },
+    { "rank": 10, "unlocks": [ { "kit": "pipes" } ] },
+    { "rank": 12, "unlocks": [ { "stamp_tier": 3 } ] }
+  ]
+}

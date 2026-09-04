@@ -1,0 +1,10 @@
+{
+  "id": "cursed_mail",
+  "name": "Cursed Mail",
+  "tier": 1,
+  "scoreMult": 1.15,
+  "modifiers": [
+    { "stat": "CursedMailChance", "op": "add", "value": 0.10 }
+  ],
+  "rules": ["cursed_mail_miniraid"]
+}

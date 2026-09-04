@@ -1,0 +1,9 @@
+{
+  "id": "skeleton_crew",
+  "name": "Skeleton Crew",
+  "tier": 3,
+  "scoreMult": 1.30,
+  "modifiers": [
+    { "stat": "QuotaPlayerOffset", "op": "add", "value": 2 }
+  ]
+}
