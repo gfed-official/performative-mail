@@ -1,6 +1,7 @@
 using PerformativeMail.App;
 using PerformativeMail.Client;
 using PerformativeMail.Client.UI;
+using PerformativeMail.Server;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
@@ -29,6 +30,7 @@ public sealed class DebugSessionTests
         Assert.False(machine.TryTeleportToIntake());
         Assert.False(machine.TryTeleportToMailbox());
         Assert.False(machine.TryGiveMail());
+        Assert.False(machine.TryStockIntake());
     }
 
     [Fact]
@@ -128,6 +130,7 @@ public sealed class DebugSessionTests
         Assert.False(guest.TryTeleportToIntake());
         Assert.False(guest.TryTeleportToMailbox());
         Assert.False(guest.TryGiveMail());
+        Assert.False(guest.TryStockIntake());
         Assert.Equal(new Cents(0), host.Inspect().Wallet);
         Assert.Equal(RunPhase.Prep, host.Inspect().Phase);
     }
@@ -188,6 +191,63 @@ public sealed class DebugSessionTests
         Assert.NotNull(after.Overlay);
         Assert.True(HasMail(after.Overlay.Value.Hotbar));
         Assert.True(host.TryGiveMail());
+    }
+
+    [Fact]
+    public void HostStockIntake_DepositsLetterAtIntake()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.HostDebug();
+        Pump(host, ref now, MoveIntent.Idle, 8);
+
+        var before = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.NotNull(before.Overlay);
+        Assert.False(HasMail(before.Overlay.Value.Hotbar));
+
+        Assert.True(host.TryStockIntake());
+        Pump(host, ref now, MoveIntent.Idle, 4);
+        var after = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.NotNull(after.Overlay);
+        Assert.False(HasMail(after.Overlay.Value.Hotbar));
+        Assert.Equal(new Cents(0), after.Hud.Wallet);
+        Assert.True(host.TryGiveMail());
+        Pump(host, ref now, MoveIntent.Idle, 4);
+        after = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.True(HasMail(after.Overlay!.Value.Hotbar));
+        Assert.True(host.TryStockIntake());
+    }
+
+    [Fact]
+    public void HostDebug_StockIntakeTeleportInteract_CreditsWallet()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.HostDebug();
+        Pump(host, ref now, MoveIntent.Idle, 8);
+
+        Assert.True(host.TryStockIntake());
+        Assert.True(host.TryTeleportToIntake());
+        Pump(host, ref now, new MoveIntent(0, 0, 0, InputButtons.Interact), 4);
+
+        var held = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.NotNull(held.Overlay);
+        Assert.True(HasMail(held.Overlay.Value.Hotbar));
+        Assert.Equal(new Cents(0), held.Hud.Wallet);
+
+        Assert.True(host.TryTeleportToMailbox());
+        Pump(
+            host,
+            ref now,
+            new MoveIntent(0, 0, 0, InputButtons.Interact),
+            ServerRuntime.InteractHoldTicks + 4);
+
+        var delivered = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.NotNull(delivered.Overlay);
+        Assert.False(HasMail(delivered.Overlay.Value.Hotbar));
+        Assert.Equal(new Cents(MailKinds.LetterBaseValue), delivered.Hud.Wallet);
     }
 
     private static PlayerPose LocalPose(PlaySessionMachine machine)

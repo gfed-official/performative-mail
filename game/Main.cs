@@ -5,6 +5,7 @@ using PerformativeMail.Client;
 using PerformativeMail.Client.UI;
 using PerformativeMail.Game.Net;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Run;
 
@@ -52,6 +53,7 @@ public partial class Main : Node3D
     private string? _debugDumpPath;
     private string? _worldDumpPath;
     private string? _debugHelper;
+    private bool _holdInteract;
 
     public override void _Ready()
     {
@@ -120,6 +122,8 @@ public partial class Main : Node3D
             : _walk
                 ? new MoveIntent(0, sbyte.MaxValue, _look.Yaw, InputButtons.None)
                 : InputSampler.Sample(in _look);
+        if (_holdInteract && !_pause.IsOpen)
+            intent = new MoveIntent(intent.AxisX, intent.AxisY, intent.Yaw, intent.Buttons | InputButtons.Interact);
         var state = _session.Pump(WallNow(), in intent);
         Render(state);
         if (!_pause.IsOpen)
@@ -693,10 +697,48 @@ public partial class Main : Node3D
             "mailbox" => _session.TryTeleportToMailbox(),
             "give-mail" => _session.TryGiveMail(),
             "overlay" => TryOpenLiveOverlay(playing),
+            "interact" => TryStepInteractSmoke(playing),
             _ => true,
         };
         if (done)
             _debugHelper = null;
+    }
+
+    private bool TryStepInteractSmoke(PlaySession.Playing playing)
+    {
+        if (playing.Hud.Wallet.Value > 0)
+        {
+            _holdInteract = false;
+            return true;
+        }
+
+        if (HasHeldMail(playing))
+        {
+            _holdInteract = true;
+            _session.TryTeleportToMailbox();
+            return false;
+        }
+
+        if (!_session.TryStockIntake())
+            return false;
+
+        _holdInteract = true;
+        _session.TryTeleportToIntake();
+        return false;
+    }
+
+    private static bool HasHeldMail(PlaySession.Playing playing)
+    {
+        if (playing.Overlay is not OverlayReplica overlay)
+            return false;
+
+        foreach (var entry in overlay.Hotbar.Entries)
+        {
+            if (entry.Stack is MailStack)
+                return true;
+        }
+
+        return false;
     }
 
     private bool TryOpenLiveOverlay(PlaySession.Playing playing)

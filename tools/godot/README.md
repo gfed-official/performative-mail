@@ -21,6 +21,7 @@
 | `debug-world` | Solo Host play report with `--debug-world`. Asserts Playing, PREP, 2 houses / 2 mailboxes, and debug `worldHash` `0x4CF184F2FA4D4EEE`. |
 | `debug-helpers` | Solo Host `--debug-world --debug-helper=intake`. Asserts the local pawn report is at Intake tile centre `1100, 500`. |
 | `worldstage` | Solo Host `--debug-world` plus `--world-dump=`. Asserts SmokeReport mailbox count ≥ 2 and live Label3D text for Post Office, Mail, and `1 Debug Lane` / `2 Debug Lane`. |
+| `interact` | Solo Host `--debug-world --debug-helper=interact`. Stocks Intake, teleports, holds Interact through pickup and deliver, and asserts `wallet` is `8`. |
 | `all` | Every command above, in that order. `all` is the default. |
 | `-h`, `--help` | Print the command list. |
 
@@ -34,9 +35,9 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 | `overlays` | `inspect-overlays.sh` | `--inspect-overlays` | `--overlays-dump=` |
 | `debug` | `inspect-debug.sh` | `--inspect-debug` | `--debug-dump=` |
 
-`join`, `play`, `debug-world`, `debug-helpers`, and `worldstage` live inline in `ci.sh`.
+`join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, and `interact` live inline in `ci.sh`.
 
-`--debug-helper=` runs one host cheat on the first Playing frame. Values are `intake`, `mailbox`, `give-mail`, and `overlay`. F3 and `` ` `` still toggle DebugMenu for the same cheats.
+`--debug-helper=` runs one host cheat. Values are `intake`, `mailbox`, `give-mail`, `overlay`, and `interact`. `intake`, `mailbox`, `give-mail`, and `overlay` finish on the first Playing frame. `interact` stays set until the wallet credits: it stocks Intake, teleports to Intake, holds Interact to pick up, teleports to the matching mailbox, and holds Interact to deliver. F3 and `` ` `` still toggle DebugMenu for the one-shot cheats.
 
 ## Environment
 
@@ -44,7 +45,7 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 
 ## CI
 
-The `godot` job in `.github/workflows/ci.yml` runs each command as its own step. It does not call `all`. The steps are `verify`, `import`, `boot`, `hud`, `overlay`, `lobby`, `overlays`, `debug`, `join`, `play`, `debug-world`, `debug-helpers`, and `worldstage`.
+The `godot` job in `.github/workflows/ci.yml` runs each command as its own step. It does not call `all`. The steps are `verify`, `import`, `boot`, `hud`, `overlay`, `lobby`, `overlays`, `debug`, `join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, and `interact`.
 
 ## Add a Control-text smoke
 

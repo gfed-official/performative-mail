@@ -188,11 +188,20 @@ public sealed class MainPlayBootTests
     {
         var body = MethodBody(ReadMain(), "_PhysicsProcess");
         Assert.Contains("MaybeApplyDebugHelper", body);
+        Assert.Contains("_holdInteract", body);
+        Assert.Contains("InputButtons.Interact", body);
         var helper = MethodBody(ReadMain(), "MaybeApplyDebugHelper");
         Assert.Contains("TryTeleportToIntake", helper);
         Assert.Contains("TryTeleportToMailbox", helper);
         Assert.Contains("TryGiveMail", helper);
         Assert.Contains("TryOpenLiveOverlay", helper);
+        Assert.Contains("\"interact\"", helper);
+        Assert.Contains("TryStepInteractSmoke", helper);
+        var main = ReadMain();
+        Assert.Contains("TryStockIntake", main);
+        Assert.Contains("HasHeldMail", main);
+        Assert.Contains("TryStepInteractSmoke", main);
+        Assert.Contains("using PerformativeMail.Sim.Inventory;", main);
     }
 
     private static string ReadMain()
