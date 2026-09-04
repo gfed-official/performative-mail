@@ -7,3 +7,5 @@ ts	phase	decision	why	evidence	result
 2026-09-04T08:08:51Z	unit3	Eye-height camera + mouse yaw via FirstPersonLook; hide local body	redesign-from-first-principles; PauseBoot already promised mouse look	src/App/FirstPersonLook.cs; PawnStage Body visible	FirstPersonLookTests pass
 2026-09-04T08:08:51Z	unit4	WorldStage labels PO, Mail, houses, mailboxes from m0 atlas	experience-first readable markers; U11.5 still owns generated WorldTables	game/WorldStage.cs; issue 164	WorldStageBootTests pass
 2026-09-04T08:08:51Z	verify	dotnet test PerformativeMail.sln all green 637	prove-it-works on harness; Godot binary absent so live FP not on this VM	dotnet test exit 0	VERIFIED harness; Godot live INCONCLUSIVE here
+2026-09-04T08:10:03Z	unit2	Put LAN join address on Esc pause status for host	chrome is gone; friends still need the IP without overlapping HUD	game/Main.cs OpenPause Listening	kept
+2026-09-04T08:10:03Z	handback	Branch pushed; PR create returned 403 Resource not accessible by integration	token can push but not open PRs or comment; ManagePullRequest tool absent	gh pr create / api 403	open: compare URL for human

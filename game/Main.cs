@@ -379,7 +379,7 @@ public partial class Main : Node3D
 
         if (!_pause.IsOpen)
         {
-            OpenPause();
+            OpenPause(state);
             return;
         }
 
@@ -389,11 +389,22 @@ public partial class Main : Node3D
             _pauseMenu.Bind(_pause.Frame, true);
     }
 
-    private void OpenPause()
+    private void OpenPause(PlaySession state)
     {
         _overlay.Close();
         _pause.Open(_session.TrySetClockPaused(true));
-        _pauseMenu.Bind(_pause.Frame, true);
+        var frame = _pause.Frame;
+        if (state is PlaySession.Playing { Role: SessionRole.Listening listening })
+        {
+            string baseStatus = frame.StatusLabel;
+            string join = "Join " + listening.Advertisement;
+            frame = frame with
+            {
+                StatusLabel = baseStatus.Length == 0 ? join : baseStatus + " · " + join,
+            };
+        }
+
+        _pauseMenu.Bind(frame, true);
     }
 
     private void ClosePause()
