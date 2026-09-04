@@ -11,7 +11,7 @@
     "beltLength": 0.5,
     "deadlineOffsetShifts": 0,
     "acceptedBy": ["house", "apartment", "pobox"],
-    "complaintOnMisdelivery": 5,
+    "complaintOnMisdelivery": 3,
     "unlockShift": 2
   },
   {
@@ -41,7 +41,7 @@
     "beltLength": 0.5,
     "deadlineOffsetShifts": 0,
     "acceptedBy": ["house", "apartment"],
-    "complaintOnMisdelivery": 5,
+    "complaintOnMisdelivery": 8,
     "unlockShift": 1
   },
   {
@@ -56,7 +56,7 @@
     "beltLength": 0.5,
     "deadlineOffsetShifts": 0,
     "acceptedBy": ["house", "apartment"],
-    "complaintOnMisdelivery": 5,
+    "complaintOnMisdelivery": 12,
     "unlockShift": 1
   },
   {
@@ -71,7 +71,7 @@
     "beltLength": 0.5,
     "deadlineOffsetShifts": 0,
     "acceptedBy": ["house", "apartment"],
-    "complaintOnMisdelivery": 5,
+    "complaintOnMisdelivery": 16,
     "unlockShift": 2
   },
   {
@@ -86,7 +86,7 @@
     "beltLength": 0.5,
     "deadlineOffsetShifts": 1,
     "acceptedBy": ["business_dock"],
-    "complaintOnMisdelivery": 5,
+    "complaintOnMisdelivery": 20,
     "unlockShift": 3
   }
 ]

@@ -26,6 +26,10 @@ public static class MailSpawnConstants
 
     public const byte Shift1 = 1;
 
+    public const double LateValueRatio = 0.5;
+
+    public const int DeadLetterShifts = 2;
+
     public const int BatchIntervalTicks = BatchIntervalSeconds * TickClock.TickHz;
 
     public const int Shift1DeliveryTicks = Shift1DeliverySeconds * TickClock.TickHz;

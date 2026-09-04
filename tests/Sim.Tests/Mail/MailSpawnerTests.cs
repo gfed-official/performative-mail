@@ -2,6 +2,7 @@ using PerformativeMail.Sim;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.Run;
 using PerformativeMail.Sim.Tests.Inventory;
 using PerformativeMail.Sim.World;
 using InventoryRejected = PerformativeMail.Sim.Inventory.Rejected;
@@ -37,6 +38,36 @@ public sealed class MailSpawnerTests
         }
 
         Assert.NotEmpty(seen);
+    }
+
+    [Fact]
+    public void Step_SpawnedLetter_DeadlineEqualsSpawnShift()
+    {
+        var world = CreateWorld(SeedA);
+        TickThrough(world, FirstBatchTick);
+
+        Assert.Equal(MailSpawnConstants.LateValueRatio, world.MailSpawner!.LateValueRatio);
+        Assert.Equal(0, MailKinds.DeadlineOffsetShifts(MailKinds.Letter));
+        Assert.Equal(1, MailKinds.DeadlineOffsetShifts(MailKinds.Cargo));
+        foreach (var item in world.Mail!.Items)
+        {
+            Assert.Equal(
+                (byte)(item.SpawnShift + MailKinds.DeadlineOffsetShifts(item.Kind)),
+                item.DeadlineShift);
+        }
+    }
+
+    [Fact]
+    public void Step_FullIntake_BacklogTickAddsOneComplaint()
+    {
+        var world = CreateWorld(SeedA);
+        FillIntake(world);
+        Assert.Equal(0, world.Complaint.Points);
+
+        TickThrough(world, FirstBatchTick);
+
+        Assert.NotEmpty(world.MailSpawner!.Backlog);
+        Assert.Equal(ComplaintMeter.BacklogTick, world.Complaint.Points);
     }
 
     [Fact]

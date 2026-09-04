@@ -29,6 +29,13 @@ public static class MailKinds
     public const ushort LargePackageBaseValue = 160;
     public const ushort CargoBaseValue = 600;
 
+    public const int PostcardComplaint = 3;
+    public const int LetterComplaint = 5;
+    public const int SmallPackageComplaint = 8;
+    public const int MediumPackageComplaint = 12;
+    public const int LargePackageComplaint = 16;
+    public const int CargoComplaint = 20;
+
     // chapter 03 §1.1
     public static ushort BaseValue(MailKindId kind)
     {
@@ -38,6 +45,24 @@ public static class MailKinds
         if (kind.Equals(MediumPackage)) return MediumPackageBaseValue;
         if (kind.Equals(LargePackage)) return LargePackageBaseValue;
         if (kind.Equals(Cargo)) return CargoBaseValue;
+        throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+    }
+
+    public static int ComplaintOnMisdelivery(MailKindId kind)
+    {
+        if (kind.Equals(Postcard)) return PostcardComplaint;
+        if (kind.Equals(Letter)) return LetterComplaint;
+        if (kind.Equals(SmallPackage)) return SmallPackageComplaint;
+        if (kind.Equals(MediumPackage)) return MediumPackageComplaint;
+        if (kind.Equals(LargePackage)) return LargePackageComplaint;
+        if (kind.Equals(Cargo)) return CargoComplaint;
+        throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+    }
+
+    public static byte DeadlineOffsetShifts(MailKindId kind)
+    {
+        if (kind.Equals(Cargo)) return 1;
+        if (IsKnownKind(kind)) return 0;
         throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
     }
 

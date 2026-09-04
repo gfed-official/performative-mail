@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Run;
 
 namespace PerformativeMail.Sim.Mail;
 
@@ -54,7 +55,12 @@ public sealed class Destinations
     public bool TryGet(DestinationId id, out Destination destination)
         => _destinations.TryGetValue(id, out destination);
 
-    public DeliverResult TryDeliver(MailId mailId, DestinationId destinationId, byte currentShift, Wallet wallet)
+    public DeliverResult TryDeliver(
+        MailId mailId,
+        DestinationId destinationId,
+        byte currentShift,
+        Wallet wallet,
+        ComplaintMeter? complaint = null)
     {
         if (wallet is null)
             throw new ArgumentNullException(nameof(wallet));
@@ -69,33 +75,42 @@ public sealed class Destinations
             return new Rejected(RejectReason.KindNotAccepted);
 
         if (!item.Address.Equals(destination.Address))
-            return TryMisdeliver(mailId, item, wallet);
+            return TryMisdeliver(mailId, item, wallet, complaint);
 
         _mail.Remove(mailId);
         var paid = PayForTimeliness(item.Value, currentShift, item.DeadlineShift);
         wallet.Credit(paid);
+        if (currentShift > item.DeadlineShift)
+            complaint?.AddLateDelivery();
         return new Delivered(paid);
     }
 
     // §2.2 rule 5: consume and debit misdeliveryPenaltyRatio × value (0.5) when
     // TryDebit succeeds. Reject WalletFloor and do not consume when the debit
     // would land below -500. Lateness does not change the penalty.
-    private DeliverResult TryMisdeliver(MailId mailId, MailItem item, Wallet wallet)
+    private DeliverResult TryMisdeliver(MailId mailId, MailItem item, Wallet wallet, ComplaintMeter? complaint)
     {
         var penalty = PenaltyForMisdelivery(item.Value);
         if (!wallet.TryDebit(penalty))
             return new Rejected(RejectReason.WalletFloor);
         _mail.Remove(mailId);
+        complaint?.AddMisdelivery(item.Kind);
         return new Misdelivered(penalty);
     }
 
-    // §2.2 rule 3: 1.0 on time, lateValueRatio 0.5 one shift late, 0 later.
     private static Cents PayForTimeliness(ushort value, byte currentShift, byte deadlineShift)
     {
-        if (currentShift <= deadlineShift)
+        int lateBy = currentShift - deadlineShift;
+        if (lateBy <= 0)
             return new Cents(value);
-        if (currentShift == deadlineShift + 1)
-            return new Cents(value / 2);
+        if (lateBy < MailSpawnConstants.DeadLetterShifts)
+        {
+            int paid = checked((int)Math.Round(
+                value * MailSpawnConstants.LateValueRatio,
+                MidpointRounding.AwayFromZero));
+            return new Cents(paid);
+        }
+
         return new Cents(0);
     }
 

@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using PerformativeMail.Sim.Content;
+using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Sim.Tests.Content;
@@ -48,6 +49,32 @@ public sealed class ContentStarterTests
         var mix = MailMixCatalog.LoadFile(Path.Combine(FindContentRoot(), MailMixCatalog.RelativePath));
         var shift1 = Assert.Single(mix.Shifts, s => s.Shift == 1);
         Assert.Equal(0.60, shift1.Shares["letter"]);
+    }
+
+    [Fact]
+    public void MailMix_RepoFile_EachShiftSharesSumToOne()
+    {
+        var mix = MailMixCatalog.LoadFile(Path.Combine(FindContentRoot(), MailMixCatalog.RelativePath));
+        Assert.Equal(MailSpawnConstants.LateValueRatio, mix.LateValueRatio);
+        foreach (var shift in mix.Shifts)
+        {
+            double sum = 0;
+            foreach (var share in shift.Shares.Values)
+                sum += share;
+            Assert.InRange(sum, 1.0 - MailMixCatalog.ShareSumTolerance, 1.0 + MailMixCatalog.ShareSumTolerance);
+        }
+    }
+
+    [Fact]
+    public void MailKindCatalog_LetterComplaintIs5_CargoIs20()
+    {
+        var kinds = MailKindCatalog.LoadFile(Path.Combine(FindContentRoot(), MailKindCatalog.RelativePath));
+        var letter = Assert.Single(kinds, k => k.Id == "letter");
+        var cargo = Assert.Single(kinds, k => k.Id == "cargo");
+        Assert.Equal(MailKinds.LetterComplaint, letter.ComplaintOnMisdelivery);
+        Assert.Equal(MailKinds.CargoComplaint, cargo.ComplaintOnMisdelivery);
+        Assert.Equal(0, letter.DeadlineOffsetShifts);
+        Assert.Equal(1, cargo.DeadlineOffsetShifts);
     }
 
     [Fact]
