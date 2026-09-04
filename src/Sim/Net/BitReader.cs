@@ -58,7 +58,7 @@ public sealed class BitReader
         return true;
     }
 
-    public bool TryReadUInt32(out uint value)
+    public bool TryPeekUInt32(out uint value)
     {
         if (_offset + 4 > _data.Length)
         {
@@ -70,6 +70,14 @@ public sealed class BitReader
             | (_data[_offset + 1] << 8)
             | (_data[_offset + 2] << 16)
             | (_data[_offset + 3] << 24));
+        return true;
+    }
+
+    public bool TryReadUInt32(out uint value)
+    {
+        if (!TryPeekUInt32(out value))
+            return false;
+
         _offset += 4;
         return true;
     }

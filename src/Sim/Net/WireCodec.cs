@@ -219,6 +219,8 @@ public static class WireCodec
         writer.WriteByte(player.Anim);
         writer.WriteByte(player.HpPct);
         writer.WriteUInt32(player.LastProcessedInputTick);
+        if (player.VehicleId.Value != 0)
+            writer.WriteUInt32(player.VehicleId.Value);
     }
 
     private static bool TryReadKind(BitReader reader, MessageKind expected)
@@ -250,7 +252,20 @@ public static class WireCodec
         if (!reader.TryReadByte(out var anim)) return false;
         if (!reader.TryReadByte(out var hpPct)) return false;
         if (!reader.TryReadUInt32(out var lastProcessed)) return false;
-        player = new PlayerSnapshot(new EntityId(id), xcm, ycm, zcm, yaw, anim, hpPct, lastProcessed);
+        var vehicleId = default(EntityId);
+        if (!reader.AtEnd)
+        {
+            if (!reader.TryPeekUInt32(out var raw))
+                return false;
+            if (EntityId.ClassOf(raw) == EntityClass.Vehicle)
+            {
+                if (!reader.TryReadUInt32(out raw))
+                    return false;
+                vehicleId = new EntityId(raw);
+            }
+        }
+
+        player = new PlayerSnapshot(new EntityId(id), xcm, ycm, zcm, yaw, anim, hpPct, lastProcessed, vehicleId);
         return true;
     }
 }

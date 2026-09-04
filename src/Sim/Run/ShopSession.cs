@@ -127,8 +127,9 @@ public sealed class ShopSession
 
         string? grantItem = def.GrantItem;
         string? grantBlueprint = def.GrantBlueprint;
+        string? grantVehicle = def.GrantVehicle;
         int count = def.GrantCount ?? (grantItem is null ? 0 : 1);
-        if (grantItem is null && grantBlueprint is null)
+        if (grantItem is null && grantBlueprint is null && grantVehicle is null)
             return new ShopRejected(ShopReject.UnknownGrant);
 
         if (grantItem is not null)
@@ -153,7 +154,7 @@ public sealed class ShopSession
         if (offer.Remaining is int left)
             _offers[index] = offer with { Remaining = left - 1 };
 
-        return new ShopBought(offer.Id, paid, grantItem, count, grantBlueprint);
+        return new ShopBought(offer.Id, paid, grantItem, count, grantBlueprint, grantVehicle);
     }
 
     private bool CanAfford(int price) => _wallet.Balance.Value >= price;

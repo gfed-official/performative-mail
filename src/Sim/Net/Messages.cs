@@ -48,12 +48,14 @@ public readonly record struct PlayerSnapshot(
     ushort Yaw,
     byte Anim,
     byte HpPct,
-    uint LastProcessedInputTick);
+    uint LastProcessedInputTick,
+    EntityId VehicleId = default);
 
 public readonly record struct OwnerSnapshot(
     uint ServerTick,
     PlayerPose Pose,
-    uint LastProcessedInputTick)
+    uint LastProcessedInputTick,
+    EntityId VehicleId = default)
 {
     public static bool TryFrom(SnapshotPacket packet, EntityId owner, out OwnerSnapshot snapshot)
     {
@@ -70,7 +72,8 @@ public readonly record struct OwnerSnapshot(
             snapshot = new OwnerSnapshot(
                 packet.ServerTick,
                 new PlayerPose(player.Xcm, player.Ycm, player.Zcm, player.Yaw),
-                player.LastProcessedInputTick);
+                player.LastProcessedInputTick,
+                player.VehicleId);
             return true;
         }
 

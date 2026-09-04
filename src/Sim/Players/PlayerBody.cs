@@ -49,6 +49,8 @@ public sealed class PlayerBody
 
     public PlayerPose Pose => new(Xcm, Ycm, Zcm, Yaw);
 
+    public EntityId VehicleId { get; private set; }
+
     public void SetPose(in PlayerPose pose)
     {
         Xcm = pose.Xcm;
@@ -57,18 +59,36 @@ public sealed class PlayerBody
         Yaw = pose.Yaw;
     }
 
+    public void Mount(EntityId vehicle) => VehicleId = vehicle;
+
+    public void Dismount() => VehicleId = default;
+
+    public void RecordInput(in InputCmd cmd)
+    {
+        if (HasAppliedInput && cmd.Tick <= LastProcessedInputTick)
+            return;
+
+        LastCmd = cmd;
+        _lastProcessed = cmd.Tick;
+        AppliedCount++;
+    }
+
     public void Apply(in InputCmd cmd)
     {
         if (HasAppliedInput && cmd.Tick <= LastProcessedInputTick)
             return;
+
+        if (VehicleId.Value != 0)
+        {
+            RecordInput(in cmd);
+            return;
+        }
 
         var pose = MovementStep.ApplyTick(Pose, in cmd, MovementContext.Unburdened);
         Xcm = pose.Xcm;
         Ycm = pose.Ycm;
         Zcm = pose.Zcm;
         Yaw = pose.Yaw;
-        LastCmd = cmd;
-        _lastProcessed = cmd.Tick;
-        AppliedCount++;
+        RecordInput(in cmd);
     }
 }

@@ -18,6 +18,6 @@ public enum ShopReject : byte
 
 public abstract record ShopBuyResult;
 
-public sealed record ShopBought(string Id, Cents Paid, string? Item, int Count, string? Blueprint) : ShopBuyResult;
+public sealed record ShopBought(string Id, Cents Paid, string? Item, int Count, string? Blueprint, string? Vehicle = null) : ShopBuyResult;
 
 public sealed record ShopRejected(ShopReject Reason) : ShopBuyResult;
