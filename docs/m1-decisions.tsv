@@ -252,3 +252,9 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:08:04Z	architect	Chose PaydaySnapshot plus DraftFrame.From(DraftOffer) plus ResultsFrame.From(ResultsPayload)	HUD bind path; inspect dumps Control text; play boot stays unbound	src/Client/UI/PhaseOverlayBoot.cs	accepted
 2026-09-04T05:08:04Z	architect	Skip four-model arena	Chapter 09 2.9-2.11 and the HUD bind path already name the shape	docs/m1-frame.md	accepted
 2026-09-04T05:08:04Z	subtract	No shop MVP forecast play-again PerkDef lookup or play-boot BindHud	Verify is earned/quota card ids score and seed; issue 137 forbids Placeholder on play	spec/09-ui-ux.md	accepted
+2026-09-04T05:12:00Z	verify	dotnet test Release 561 passed	Sim 366 Net 179 Bot 16; baseline U9.2 was 541; 20 new overlay tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T05:12:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T05:12:00Z	verify	Acceptance filter 49 passed	Earned 640; quota 2214; cards insured quick_hands union_rep; score 14375; seed PM1-SMALL-7F3A9C21-CM.DR; scene Ignore; play boot unbound	dotnet test --filter PaydayFrame|DraftFrame|ResultsFrame|PhaseOverlay|MainPlayBoot|HudBoot|HudScene|HudFrame	VERIFIED
+2026-09-04T05:12:00Z	verify	From() probe printed inspect strings	same boot payloads the Godot dump will grep	/tmp/u93-probe	VERIFIED
+2026-09-04T05:12:00Z	verify	Godot inspect pending CI	No godot binary on the agent host; inspect-overlays.sh greps earned quota cards score seed	tools/godot/inspect-overlays.sh	INCONCLUSIVE
+2026-09-04T05:12:00Z	architect	Rebased onto main after PR 142 merged	User asked to prefer main once U9.2 landed	origin/main 6edb3e3	accepted
