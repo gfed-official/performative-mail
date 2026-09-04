@@ -24,6 +24,7 @@
 | `interact` | Solo Host `--debug-world --debug-helper=interact`. Stocks Intake, teleports, holds Interact through pickup and deliver, and asserts `wallet` is `8`. |
 | `live-overlay` | Solo Host `--debug-world --debug-helper=live-overlay` plus `--overlay-dump=`. Picks up Intake mail, opens the inventory overlay on the Playing replica, and asserts live hotbar cell text (`1 1`), not OverlayBootReplica `1 13`. |
 | `live-hud` | Solo Host `--debug-world` plus `--hud-dump=`. Asserts Control text from Playing / `HudSnapshot` (`PREP`, shift, timer matching the report replica), not `HudBoot.Placeholder` (`DELIVERY`, `13 Larch Lane`). |
+| `leave` | Solo Host `--debug-world --debug-helper=leave`. Opens pause (`OpenPause`, same path as Esc), activates Leave then confirm, and asserts SmokeReport `state` is `Menu`. |
 | `all` | Every command above, in that order. `all` is the default. |
 | `-h`, `--help` | Print the command list. |
 
@@ -37,9 +38,9 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 | `overlays` | `inspect-overlays.sh` | `--inspect-overlays` | `--overlays-dump=` |
 | `debug` | `inspect-debug.sh` | `--inspect-debug` | `--debug-dump=` |
 
-`join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, `interact`, `live-overlay`, and `live-hud` live inline in `ci.sh`.
+`join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, `interact`, `live-overlay`, `live-hud`, and `leave` live inline in `ci.sh`.
 
-`--debug-helper=` runs one host cheat. Values are `intake`, `mailbox`, `give-mail`, `overlay`, `interact`, and `live-overlay`. `intake`, `mailbox`, `give-mail`, and `overlay` finish on the first Playing frame. `interact` stays set until the wallet credits: it stocks Intake, teleports to Intake, holds Interact to pick up, teleports to the matching mailbox, and holds Interact to deliver. `live-overlay` stays set until the hotbar holds mail and the overlay is open: it stocks Intake, teleports, holds Interact to pick up, then binds `InventoryOverlay` from the Playing replica. `--overlay-dump=` on that path writes `OVERLAY_DUMP case=live` at quit. `--inspect-overlay` still dumps the OverlayBootReplica bind. A Playing quit with `--hud-dump=` writes `HUD_DUMP case=live` from the bound Playing snapshot. `--inspect-hud` still dumps `HudBoot.Placeholder`. F3 and `` ` `` still toggle DebugMenu for the one-shot cheats.
+`--debug-helper=` runs one host cheat. Values are `intake`, `mailbox`, `give-mail`, `overlay`, `interact`, `live-overlay`, and `leave`. `intake`, `mailbox`, `give-mail`, `overlay`, and `leave` finish on the first Playing frame. `interact` stays set until the wallet credits: it stocks Intake, teleports to Intake, holds Interact to pick up, teleports to the matching mailbox, and holds Interact to deliver. `live-overlay` stays set until the hotbar holds mail and the overlay is open: it stocks Intake, teleports, holds Interact to pick up, then binds `InventoryOverlay` from the Playing replica. `leave` calls `OpenPause` (the Esc edge in `PollPause`), then `OnPauseChoice` for `PauseFrame.LeaveId` and `ConfirmLeaveId`, which runs `_session.Leave()` when `WantsLeave` is set. `--overlay-dump=` on the live-overlay path writes `OVERLAY_DUMP case=live` at quit. `--inspect-overlay` still dumps the OverlayBootReplica bind. A Playing quit with `--hud-dump=` writes `HUD_DUMP case=live` from the bound Playing snapshot. `--inspect-hud` still dumps `HudBoot.Placeholder`. F3 and `` ` `` still toggle DebugMenu for the one-shot cheats.
 
 ## Environment
 
@@ -47,7 +48,7 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 
 ## CI
 
-The `godot` job in `.github/workflows/ci.yml` runs each command as its own step. It does not call `all`. The steps are `verify`, `import`, `boot`, `hud`, `overlay`, `lobby`, `overlays`, `debug`, `join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, `interact`, `live-overlay`, and `live-hud`.
+The `godot` job in `.github/workflows/ci.yml` runs each command as its own step. It does not call `all`. The steps are `verify`, `import`, `boot`, `hud`, `overlay`, `lobby`, `overlays`, `debug`, `join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, `interact`, `live-overlay`, `live-hud`, and `leave`.
 
 ## Add a Control-text smoke
 

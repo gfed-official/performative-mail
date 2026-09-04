@@ -547,9 +547,38 @@ host_live_hud_smoke() {
   fi
 }
 
+host_leave_smoke() {
+  echo "==> headless host pause Leave returns to Menu"
+  local report log
+  report="$(mktemp)"
+  log="$(mktemp)"
+  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+    --host --debug-world --debug-helper=leave --quit-after-ms=8000 --report="$report" \
+    >"$log" 2>&1; then
+    cat "$log"
+    fail "host leave process exited non-zero"
+  fi
+  if [[ ! -f "$report" ]]; then
+    cat "$log"
+    fail "host leave did not write a report"
+  fi
+  cat "$report"
+  echo
+  grep -q '"state":"Menu"' "$report" || fail "host leave report is not Menu: $(cat "$report")"
+  if grep -q '"state":"Playing"' "$report"; then
+    fail "host leave report still Playing: $(cat "$report")"
+  fi
+  if grep -q '"state":"Failed"' "$report"; then
+    fail "host leave report is Failed: $(cat "$report")"
+  fi
+  need_jq
+  jq -e '.state == "Menu" and (length == 1)' "$report" >/dev/null \
+    || fail "host leave report failed Menu schema: $(cat "$report")"
+}
+
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay|live-hud]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay|live-hud|leave]
 
   verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import   godot --import + dotnet build of game/
@@ -567,6 +596,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debu
   interact solo Host --debug-world --debug-helper=interact; pickup Intake mail, deliver, wallet 8
   live-overlay solo Host --debug-world --debug-helper=live-overlay; pickup, open overlay, dump live cell text
   live-hud solo Host --debug-world report plus live HUD dump (Playing / HudSnapshot, not Placeholder)
+  leave    solo Host --debug-world --debug-helper=leave; Esc pause Leave confirm; SmokeReport state Menu
   all      all of the above (default)
 EOF
 }
@@ -622,6 +652,9 @@ case "$cmd" in
   live-hud)
     host_live_hud_smoke
     ;;
+  leave)
+    host_leave_smoke
+    ;;
   all)
     verify_godot
     verify_dotnet
@@ -640,6 +673,7 @@ case "$cmd" in
     host_interact_smoke
     host_live_overlay_smoke
     host_live_hud_smoke
+    host_leave_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;
   -h|--help)

@@ -224,12 +224,26 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryStepInteractSmoke", helper);
         Assert.Contains("\"live-overlay\"", helper);
         Assert.Contains("TryStepLiveOverlay", helper);
+        Assert.Contains("\"leave\"", helper);
+        Assert.Contains("TryStepLeaveSmoke", helper);
         var main = ReadMain();
         Assert.Contains("TryStockIntake", main);
         Assert.Contains("HasHeldMail", main);
         Assert.Contains("TryStepInteractSmoke", main);
         Assert.Contains("TryStepLiveOverlay", main);
+        Assert.Contains("TryStepLeaveSmoke", main);
         Assert.Contains("using PerformativeMail.Sim.Inventory;", main);
+    }
+
+    [Fact]
+    public void DebugHelperLeave_OpensPauseThenConfirmsLeave()
+    {
+        var leave = MethodBody(ReadMain(), "TryStepLeaveSmoke");
+        Assert.Contains("OpenPause(playing)", leave);
+        Assert.Contains("PauseFrame.LeaveId", leave);
+        Assert.Contains("PauseFrame.ConfirmLeaveId", leave);
+        Assert.Contains("OnPauseChoice", leave);
+        Assert.DoesNotContain("_session.Leave()", leave);
     }
 
     private static string ReadMain()
@@ -249,10 +263,21 @@ public sealed class MainPlayBootTests
         throw new FileNotFoundException("game/Main.cs");
     }
 
+    private static int IndexOfMethod(string source, string name)
+    {
+        foreach (var prefix in new[] { "void ", "bool " })
+        {
+            int start = source.IndexOf(prefix + name + "(", StringComparison.Ordinal);
+            if (start >= 0)
+                return start;
+        }
+
+        return -1;
+    }
+
     private static string MethodBody(string source, string name)
     {
-        var needle = "void " + name + "(";
-        int start = source.IndexOf(needle, StringComparison.Ordinal);
+        int start = IndexOfMethod(source, name);
         Assert.True(start >= 0, "missing method " + name);
         int brace = source.IndexOf('{', start);
         Assert.True(brace >= 0, "missing body for " + name);
@@ -274,8 +299,7 @@ public sealed class MainPlayBootTests
 
     private static string SliceMethod(string source, string name)
     {
-        var needle = "void " + name + "(";
-        int start = source.IndexOf(needle, StringComparison.Ordinal);
+        int start = IndexOfMethod(source, name);
         Assert.True(start >= 0, "missing method " + name);
         int arrow = source.IndexOf("=>", start);
         int brace = source.IndexOf('{', start);
