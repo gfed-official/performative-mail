@@ -187,7 +187,8 @@ public sealed class ServerRuntime
                     body.Yaw,
                     body.Anim,
                     body.HpPct,
-                    lastProcessed);
+                    lastProcessed,
+                    body.VehicleId);
             }
 
             _link.Send(

@@ -108,7 +108,7 @@ public static class ShopCatalog
         string id = ContentIds.RequireId(doc.Id, source, index);
         ContentIds.AddUnique(seen, id, source);
         ShopKind kind = ParseKind(doc.Kind, source, id);
-        if (kind is ShopKind.Vehicle or ShopKind.Hire or ShopKind.Service)
+        if (kind is ShopKind.Hire or ShopKind.Service)
         {
             throw new InvalidOperationException(
                 $"{source}: '{id}' kind '{doc.Kind}' has no target def in this unit.");
@@ -135,6 +135,16 @@ public static class ShopCatalog
         else if (kind == ShopKind.Blueprint && grantBlueprint is null)
         {
             throw new InvalidOperationException($"{source}: '{id}' kind blueprint requires grants.blueprint.");
+        }
+        else if (kind == ShopKind.Vehicle)
+        {
+            if (grantVehicle is null)
+                throw new InvalidOperationException($"{source}: '{id}' kind vehicle requires grants.vehicle.");
+            if (!string.Equals(grantVehicle, "bike", StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    $"{source}: '{id}' grants.vehicle '{grantVehicle}' is not bike.");
+            }
         }
         else if (doc.Grants?.Count is int listed)
         {

@@ -4,6 +4,7 @@ using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Players;
 using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.Vehicles;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Sim;
@@ -13,6 +14,8 @@ public sealed class SimWorld
     public uint CurrentTick { get; private set; }
 
     public PlayerTable Players { get; } = new PlayerTable();
+
+    public VehicleTable Vehicles { get; } = new VehicleTable();
 
     public WorldAtlas? Atlas { get; }
 
@@ -53,10 +56,33 @@ public sealed class SimWorld
         MailSpawner?.Step(tick);
     }
 
+    public bool TryMount(EntityId player, EntityId vehicle)
+    {
+        if (!Players.TryGet(player, out var body))
+            return false;
+        if (!Vehicles.TryGet(vehicle, out var bike))
+            return false;
+        if (bike.Driver.Value != 0 && bike.Driver != player)
+            return false;
+
+        body.Mount(vehicle);
+        bike.SetDriver(player);
+        bike.SetPose(body.Pose);
+        return true;
+    }
+
     public void ApplyInput(EntityId sender, in InputCmd cmd)
     {
         if (!Players.TryGet(sender, out var body))
             return;
+
+        if (body.VehicleId.Value != 0 && Vehicles.TryGet(body.VehicleId, out var bike))
+        {
+            bike.Apply(in cmd, VehicleContext.BikeOnRoad);
+            body.SetPose(bike.Pose);
+            body.RecordInput(in cmd);
+            return;
+        }
 
         body.Apply(in cmd);
     }

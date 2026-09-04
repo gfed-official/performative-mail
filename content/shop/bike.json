@@ -1,0 +1,12 @@
+[
+  {
+    "id": "bike",
+    "name": "Bike",
+    "kind": "vehicle",
+    "price": 120,
+    "grants": { "vehicle": "bike" },
+    "availability": { "fromShift": 1, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["transport"]
+  }
+]

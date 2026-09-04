@@ -106,7 +106,9 @@ public sealed class WireCodecTests
     public void EntityClass_Player_IsOne_AndFirstIdMatchesSpec()
     {
         Assert.Equal(1, EntityClass.Player);
+        Assert.Equal(2, EntityClass.Vehicle);
         Assert.Equal(16777217u, FirstPlayer.Value);
+        Assert.Equal(33554433u, EntityId.FromClassAndCounter(EntityClass.Vehicle, 1).Value);
     }
 
     [Fact]
