@@ -1,4 +1,5 @@
 using System;
+using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
 
 namespace PerformativeMail.Sim.Run;
