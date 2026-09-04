@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using PerformativeMail.Sim;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
+using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
+using PerformativeMail.Sim.Players;
 using PerformativeMail.Sim.Run;
 using PerformativeMail.Sim.World;
 
@@ -25,6 +27,12 @@ public sealed class ServerRuntime
     public RunState Session { get; }
 
     public IReadOnlyList<ContainerDelta> LastFlushedDeltas { get; private set; } = Array.Empty<ContainerDelta>();
+
+    public DisconnectGrace Grace { get; } = new();
+
+    public DeathSession? Deaths { get; private set; }
+
+    public bool EndedWithoutResults => Grace.EndedWithoutResults;
 
     public int JoinedCount
     {
@@ -86,11 +94,28 @@ public sealed class ServerRuntime
     public void TickOnce()
     {
         Drain();
+        DropExpired();
+        Deaths?.AdvanceTo(_tick);
         World.Tick(_tick++);
         FlushInventoryEvents();
 
         if (SnapshotCadence.ShouldSend(World.CurrentTick))
             Broadcast();
+    }
+
+    public void BindPlayerBags(
+        PlayerBody body,
+        ContainerId hotbar,
+        ContainerId inventory,
+        ContainerId? backpack = null,
+        ContainerId? cursor = null)
+    {
+        if (body is null) throw new ArgumentNullException(nameof(body));
+        if (World.Inventory is not InventorySystem inv)
+            throw new InvalidOperationException("World has no inventory.");
+
+        Deaths ??= new DeathSession(inv, inv.CreateContainer(ContainerSpec.Intake), PlayerPose.Origin);
+        Deaths.Bind(body, hotbar, inventory, backpack, cursor);
     }
 
     private void Drain()
@@ -101,7 +126,7 @@ public sealed class ServerRuntime
             {
                 case LinkEventKind.Opened:
                     if (!_seats.ContainsKey(ev.Connection))
-                        _seats[ev.Connection] = new Seat(ev.Connection, null);
+                        _seats[ev.Connection] = new Seat(ev.Connection, null, 0);
                     break;
                 case LinkEventKind.Data:
                     OnData(ev.Connection, ev.Payload);
@@ -120,6 +145,12 @@ public sealed class ServerRuntime
         if (!_seats.ContainsKey(from))
             return;
 
+        if (WireCodec.TryDecode(payload, out AccountHello account))
+        {
+            OnAccountHello(from, in account);
+            return;
+        }
+
         if (WireCodec.TryDecode(payload, out Hello hello))
         {
             HandleHello(from, in hello);
@@ -136,6 +167,14 @@ public sealed class ServerRuntime
             ApplyInputPacket(from, packet);
     }
 
+    private void OnAccountHello(ConnectionId from, in AccountHello hello)
+    {
+        if (!_seats.TryGetValue(from, out var seat))
+            return;
+
+        _seats[from] = new Seat(seat.Id, seat.Player, hello.AccountId);
+    }
+
     private void HandleHello(ConnectionId from, in Hello hello)
     {
         var seat = _seats[from];
@@ -149,6 +188,12 @@ public sealed class ServerRuntime
             return;
         }
 
+        if (seat.Account != 0 && Grace.TryResume(seat.Account, out var resumed))
+        {
+            Welcome(from, resumed, seat.Account);
+            return;
+        }
+
         if (!JoinGate.Allows(Session.Phase))
         {
             _link.Send(from, NetChannels.Handshake, WireCodec.Encode(new HelloReject(HelloRejectReason.WrongPhase)));
@@ -157,8 +202,13 @@ public sealed class ServerRuntime
         }
 
         var body = World.SpawnPlayer();
-        _seats[from] = new Seat(from, body.Id);
-        _link.Send(from, NetChannels.Handshake, WireCodec.Encode(new HelloOk(body.Id, _tick)));
+        Welcome(from, body.Id, seat.Account);
+    }
+
+    private void Welcome(ConnectionId from, EntityId player, uint account)
+    {
+        _seats[from] = new Seat(from, player, account);
+        _link.Send(from, NetChannels.Handshake, WireCodec.Encode(new HelloOk(player, _tick)));
         _link.Send(from, NetChannels.Handshake, WireCodec.Encode(OfferedSettings));
         if (Session.Phase == RunPhase.Prep)
         {
@@ -224,8 +274,28 @@ public sealed class ServerRuntime
             return;
 
         _seats.Remove(from);
-        if (seat.Player is EntityId player)
-            World.Players.Remove(player);
+        if (seat.Player is not EntityId player)
+            return;
+
+        Grace.Hold(seat.Account, player, _tick, JoinedCount);
+    }
+
+    private void DropExpired()
+    {
+        Grace.AdvanceTo(_tick);
+        var expired = Grace.TakeExpired();
+        for (int i = 0; i < expired.Count; i++)
+            DropHeld(expired[i]);
+    }
+
+    private void DropHeld(EntityId player)
+    {
+        if (!World.Players.TryGet(player, out var body))
+            return;
+
+        var tile = new TileCoord(body.Xcm / 100, body.Ycm / 100);
+        Deaths?.Drop(player, tile, _tick);
+        World.Players.Remove(player);
     }
 
     private void Broadcast()
@@ -297,15 +367,18 @@ public sealed class ServerRuntime
 
     private readonly struct Seat
     {
-        public Seat(ConnectionId id, EntityId? player)
+        public Seat(ConnectionId id, EntityId? player, uint account)
         {
             Id = id;
             Player = player;
+            Account = account;
         }
 
         public ConnectionId Id { get; }
 
         public EntityId? Player { get; }
+
+        public uint Account { get; }
 
         public bool Joined => Player.HasValue;
     }

@@ -51,37 +51,10 @@ public sealed class DeathSession
     }
 
     public bool Die(EntityId player, TileCoord tile, uint now)
-    {
-        if (!_bound.TryGetValue(player.Value, out var bound))
-            return false;
-        if (_respawnAt.ContainsKey(player.Value))
-            return false;
+        => TryDrop(player, tile, now, respawn: true);
 
-        var stacks = new List<Stack>();
-        Drain(bound.Hotbar, stacks);
-        Drain(bound.Inventory, stacks);
-        if (bound.Backpack is { } pack)
-            Drain(pack, stacks);
-        if (bound.Cursor is { } cursor)
-            Drain(cursor, stacks);
-
-        var bagId = _inventory.CreateContainer(ContainerSpec.DeathBag);
-        ContainerId? overflow = null;
-        foreach (var stack in stacks)
-        {
-            if (TryDeposit(bagId, stack))
-                continue;
-            overflow ??= _inventory.CreateContainer(OverflowSpec);
-            if (!TryDeposit(overflow.Value, stack))
-                throw new InvalidOperationException("Death bag overflow rejected a stack.");
-        }
-
-        if (now > Now)
-            Now = now;
-        _respawnAt[player.Value] = now + (uint)RespawnTicks;
-        _bags.Add(new DeathBag(player, bagId, overflow, tile, now + (uint)DespawnTicks));
-        return true;
-    }
+    public bool Drop(EntityId player, TileCoord tile, uint now)
+        => TryDrop(player, tile, now, respawn: false);
 
     public void AdvanceTo(uint tick)
     {
@@ -118,6 +91,40 @@ public sealed class DeathSession
         if (bag.Overflow is { } overflow)
             CopyStacks(overflow, stacks);
         return stacks;
+    }
+
+    private bool TryDrop(EntityId player, TileCoord tile, uint now, bool respawn)
+    {
+        if (!_bound.TryGetValue(player.Value, out var bound))
+            return false;
+        if (_respawnAt.ContainsKey(player.Value))
+            return false;
+
+        var stacks = new List<Stack>();
+        Drain(bound.Hotbar, stacks);
+        Drain(bound.Inventory, stacks);
+        if (bound.Backpack is { } pack)
+            Drain(pack, stacks);
+        if (bound.Cursor is { } cursor)
+            Drain(cursor, stacks);
+
+        var bagId = _inventory.CreateContainer(ContainerSpec.DeathBag);
+        ContainerId? overflow = null;
+        foreach (var stack in stacks)
+        {
+            if (TryDeposit(bagId, stack))
+                continue;
+            overflow ??= _inventory.CreateContainer(OverflowSpec);
+            if (!TryDeposit(overflow.Value, stack))
+                throw new InvalidOperationException("Death bag overflow rejected a stack.");
+        }
+
+        if (now > Now)
+            Now = now;
+        if (respawn)
+            _respawnAt[player.Value] = now + (uint)RespawnTicks;
+        _bags.Add(new DeathBag(player, bagId, overflow, tile, now + (uint)DespawnTicks));
+        return true;
     }
 
     private void RespawnReady()

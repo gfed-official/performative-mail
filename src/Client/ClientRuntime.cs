@@ -65,9 +65,13 @@ public sealed class ClientRuntime
         Inventory = new InventorySystem(catalog);
     }
 
-    public void Connect(ITransport transport)
+    public void Connect(ITransport transport) => Connect(transport, accountId: 0);
+
+    public void Connect(ITransport transport, uint accountId)
     {
         Connection = transport;
+        if (accountId != 0)
+            transport.Send(HelloChannel, WireCodec.Encode(new AccountHello(accountId)));
         transport.Send(HelloChannel, WireCodec.Encode(new Hello(Protocol.Hash)));
     }
 
@@ -148,6 +152,7 @@ public sealed class ClientRuntime
                 ApplyJoinState(payload);
                 break;
             case MessageKind.Hello:
+            case MessageKind.AccountHello:
             case MessageKind.Input:
             case MessageKind.Ping:
                 break;

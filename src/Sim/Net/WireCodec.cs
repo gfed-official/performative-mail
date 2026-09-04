@@ -26,6 +26,14 @@ public static class WireCodec
         return writer.ToArray();
     }
 
+    public static byte[] Encode(in AccountHello message)
+    {
+        var writer = new BitWriter();
+        writer.WriteByte((byte)MessageKind.AccountHello);
+        writer.WriteUInt32(message.AccountId);
+        return writer.ToArray();
+    }
+
     public static byte[] Encode(in HelloOk message)
     {
         var writer = new BitWriter();
@@ -76,6 +84,17 @@ public static class WireCodec
         if (!reader.TryReadUInt32(out var protocolHash)) return false;
         if (!reader.AtEnd) return false;
         message = new Hello(protocolHash);
+        return true;
+    }
+
+    public static bool TryDecode(ReadOnlySpan<byte> payload, out AccountHello message)
+    {
+        message = default;
+        var reader = new BitReader(payload);
+        if (!TryReadKind(reader, MessageKind.AccountHello)) return false;
+        if (!reader.TryReadUInt32(out var accountId)) return false;
+        if (!reader.AtEnd) return false;
+        message = new AccountHello(accountId);
         return true;
     }
 

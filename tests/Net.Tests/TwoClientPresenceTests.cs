@@ -106,7 +106,7 @@ public sealed class TwoClientPresenceTests
         server.TickOnce();
         host.Receive();
 
-        Assert.Equal(1, server.World.Players.Count);
-        Assert.Equal(0, host.RemoteCount);
+        Assert.Equal(2, server.World.Players.Count);
+        Assert.Equal(1, host.RemoteCount);
     }
 }
