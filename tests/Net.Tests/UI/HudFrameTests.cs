@@ -1,6 +1,7 @@
 using PerformativeMail.Client.UI;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.Run;
 
 namespace PerformativeMail.Net.Tests.UI;
 

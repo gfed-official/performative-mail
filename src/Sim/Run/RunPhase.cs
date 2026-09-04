@@ -1,4 +1,4 @@
-namespace PerformativeMail.Client.UI;
+namespace PerformativeMail.Sim.Run;
 
 public enum RunPhase : byte
 {

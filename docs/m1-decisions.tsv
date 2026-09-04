@@ -84,3 +84,12 @@ ts	phase	decision	why	evidence	result
 2026-09-03T23:01:00Z	verify	CI on c59d6c8 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33815603136	VERIFIED
 2026-09-03T23:03:00Z	subtract	Deleted ContentFiles.Validate	Comment Sicko: void shim allocated a bundle and discarded it; callers use Load	src/Sim/World/ContentFiles.cs	accepted
 2026-09-03T23:06:00Z	verify	CI on 8f0b1ef all 4 checks green	test and Godot 4.7.2 .NET after Validate fold	https://github.com/gfed-official/performative-mail/actions	VERIFIED
+2026-09-03T23:10:00Z	frame	Frame U3.1 as RunState phases and legal edges	Issue 87; chapter 01 §1; M0 tick already exists; no clock quota complaint death	https://github.com/gfed-official/performative-mail/issues/87	open
+2026-09-03T23:10:00Z	architect	Chose edge table plus TryTransition over event reducer	Acceptance is illegal edges rejected; Delivery to Draft is an edge test; events belong to U3.2 and U3.3	src/Sim/Run/RunTransitions.cs	accepted
+2026-09-03T23:10:00Z	architect	Skip four-model arena	Parent forbids nested subagents; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-03T23:10:00Z	subtract	Moved Client.UI.RunPhase into Sim.Run	One enum; chapter 07 puts the machine in Sim/Run; HUD keeps the same values	src/Sim/Run/RunPhase.cs	accepted
+2026-09-03T23:10:00Z	subtract	No SimWorld.Tick hook, no PhaseChanged wire, no payload	Clock is U3.2; join and HUD live bind are U6/U9; shop draft results wait	src/Sim/SimWorld.cs	accepted
+2026-09-03T23:12:00Z	u3.1	Explicit RunState constructor instead of primary-constructor init	netstandard2.1 Sim project rejected the init block	src/Sim/Run/RunState.cs	accepted
+2026-09-03T23:14:00Z	verify	dotnet test Release 309 passed	Sim 179 Net 114 Bot 16; 35 RunState tests	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-03T23:14:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-03T23:16:00Z	verify	CI on db224fd all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33816352869	VERIFIED
