@@ -68,6 +68,61 @@ public sealed class DebugWorldSessionTests
         Assert.False(root.TryGetProperty("pawnCount", out _));
     }
 
+    [Fact]
+    public void Host_BuildsWorldAfterLeaveInsideTry()
+    {
+        string source = ReadPlaySessionMachine();
+        Assert.Contains("StartHost(ArcadeSession.Create)", source);
+        Assert.DoesNotContain("StartHost(ArcadeSession.Create())", source);
+        Assert.Contains("StartHost(ArcadeSession.CreateDebug)", source);
+        string start = SliceMethod(source, "StartHost");
+        int leave = start.IndexOf("Leave();", StringComparison.Ordinal);
+        int tryAt = start.IndexOf("try", StringComparison.Ordinal);
+        int create = start.IndexOf("create();", StringComparison.Ordinal);
+        Assert.True(leave >= 0 && tryAt > leave && create > tryAt);
+        Assert.Contains("BootFailed", start);
+    }
+
+    private static string ReadPlaySessionMachine()
+    {
+        foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
+        {
+            var dir = new DirectoryInfo(Path.GetFullPath(start));
+            while (dir != null)
+            {
+                var candidate = Path.Combine(dir.FullName, "src", "App", "PlaySessionMachine.cs");
+                if (File.Exists(candidate))
+                    return File.ReadAllText(candidate);
+                dir = dir.Parent;
+            }
+        }
+
+        throw new FileNotFoundException("src/App/PlaySessionMachine.cs");
+    }
+
+    private static string SliceMethod(string source, string name)
+    {
+        var needle = "void " + name + "(";
+        int start = source.IndexOf(needle, StringComparison.Ordinal);
+        Assert.True(start >= 0, "missing method " + name);
+        int brace = source.IndexOf('{', start);
+        Assert.True(brace >= 0, "missing body for " + name);
+        int depth = 0;
+        for (int i = brace; i < source.Length; i++)
+        {
+            if (source[i] == '{')
+                depth++;
+            else if (source[i] == '}')
+            {
+                depth--;
+                if (depth == 0)
+                    return source.Substring(start, i - start + 1);
+            }
+        }
+
+        throw new InvalidOperationException("unbalanced body for " + name);
+    }
+
     private static PlaySession.Playing GoldenPlaying(WorldTables world)
     {
         var id = new EntityId(1);

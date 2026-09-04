@@ -31,6 +31,7 @@ public sealed class DebugWorldTests
         Assert.Equal("1 Debug Lane", AddressText.Format(tables.Houses[0].Address, tables.Streets));
         Assert.Equal("2 Debug Lane", AddressText.Format(tables.Houses[1].Address, tables.Streets));
         Assert.Equal(DebugWorld.StreetName, tables.Streets[0].Name);
+        Assert.False(tables.Valid);
     }
 
     [Fact]

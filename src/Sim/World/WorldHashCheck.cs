@@ -18,8 +18,8 @@ public static class WorldHashCheck
         if (expected == DebugWorld.Hash)
         {
             tables = DebugWorld.Tables();
-            local = DebugWorld.Hash;
-            return WorldHashVerdict.Match;
+            local = WorldHash.Compute(tables);
+            return Compare(local, expected);
         }
 
         tables = Regenerate(seed);
