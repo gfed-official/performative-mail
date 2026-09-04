@@ -271,3 +271,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:21:00Z	verify	BalanceSim prints 880/600 MET and 810/1100 MISS	exit 0; live QuotaBudget 600 and 1100	dotnet run --project tools/BalanceSim -- content	VERIFIED
 2026-09-04T05:21:00Z	verify	Acceptance filter 3 passed	shift 1 >= quota; shift 2 < quota; SoloHandShift1WinShift2Fail	dotnet test --filter RunHand_Shift1|RunHand_Shift2|SoloHandShift1WinShift2Fail	VERIFIED
 2026-09-04T05:21:00Z	verify	No-regress filter 26 passed	play boot unbound; HUD Ignore; overlay Ignore	dotnet test --filter MainPlayBoot|HudBoot|HudScene|PaydayFrame|DraftFrame|ResultsFrame|PhaseOverlay	VERIFIED
+2026-09-04T05:24:00Z	verify	CI on 9bda267 all 4 checks green	test and Godot 4.7.2 .NET; BalanceSim printed 880/600 MET and 810/1100 MISS	https://github.com/gfed-official/performative-mail/actions/runs/33840174240	VERIFIED
