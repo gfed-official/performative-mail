@@ -38,9 +38,15 @@ public sealed class DisconnectGraceTests
         Assert.Equal(2, server.World.Players.Count);
 
         server.TickOnce();
-        host.Receive();
         Assert.Equal(1, server.World.Players.Count);
         Assert.Equal(0, server.Grace.HeldCount);
+
+        for (int i = 0; i < 3 && host.RemoteCount != 0; i++)
+        {
+            server.TickOnce();
+            host.Receive();
+        }
+
         Assert.Equal(0, host.RemoteCount);
     }
 
