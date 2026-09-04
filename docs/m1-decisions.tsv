@@ -127,3 +127,6 @@ ts	phase	decision	why	evidence	result
 2026-09-04T00:23:00Z	architect	Chose ShopSession over pure ShopBuy.Apply	Buy must debit stock once-per-run and grant in one call; RunState stays U3.1	/tmp/u41-architect/synthesis.md	accepted
 2026-09-04T00:23:00Z	architect	Two sketches: session vs stock ledger	Grafted ShopOffer remaining and ShopBought/ShopRejected; callers do not thread wallet	/tmp/u41-architect/synthesis.md	accepted
 2026-09-04T00:23:00Z	subtract	No bike vehicle hire service wire or RunState fields	ShopCatalog already rejects vehicle; TryDebit floor stays misdelivery-only	src/Sim/Content/ShopCatalog.cs	accepted
+2026-09-04T00:27:00Z	verify	dotnet test Release 385 passed	Sim 255 Net 114 Bot 16; eight ShopSession tests	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-04T00:27:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T00:27:00Z	verify	Acceptance filter 3 passed	DebitsWalletAndGrantsItem; OncePerRun second reject; LastCard one grant	dotnet test --filter TryBuy_OfferedItem|TryBuy_OncePerRun|TryBuy_LastCard	VERIFIED

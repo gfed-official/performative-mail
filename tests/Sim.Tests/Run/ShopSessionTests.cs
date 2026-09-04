@@ -203,8 +203,6 @@ public sealed class ShopSessionTests
 
         public static Fixture With(ShopItemDef def, Wallet Wallet) => new(new[] { def }, Wallet);
 
-        public static Fixture With(ShopItemDef[] defs, Wallet Wallet) => new(defs, Wallet);
-
         public Wallet Wallet { get; }
 
         public ShopItems Catalog { get; }
