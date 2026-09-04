@@ -200,3 +200,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T02:55:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T02:55:00Z	verify	Acceptance filter passed	HoldTicks 3600; drop bag; resume same entity; empty end 1800; Hello golden	dotnet test --filter HoldTicks_OneHundredTwenty|AfterGrace_DropsInventory|ReconnectWithinGrace|AllDisconnect_EndsWithoutResults|Hello_GoldenRoundTrip	VERIFIED
 2026-09-04T02:36:00Z	verify	CI on 6443e12 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33830031394	VERIFIED
+2026-09-04T02:42:00Z	frame	Frame U7.1 as Results payload and Postal Rank XP	Issue 100; chapter 01 5.1 names the award; unit table omits stampBonus	https://github.com/gfed-official/performative-mail/issues/100	open
+2026-09-04T02:42:00Z	architect	Chose ResultsPayload plus PostalRankXp.Award	XP score and seed string derive from one From call; no second score path	src/Sim/Run/ResultsPayload.cs	accepted
+2026-09-04T02:42:00Z	architect	Skip four-model arena	Chapter 01 5.1 and 08 3.2 name the fields; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T02:42:00Z	subtract	No stampBonus profile.json MessageKind or results overlay	No bonus table exists; U7.2 owns persist; U9.3 owns overlay	spec/01-run-structure.md	accepted

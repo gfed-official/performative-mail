@@ -132,7 +132,7 @@ Perks are run-scoped modifiers applied to data-driven stat blocks. They never re
 
 ### 5.1 Postal Rank
 
-- Players earn Postal Rank XP at Results: 100 × shiftsCompleted + 50 × victory + 5 × deliveries + stampBonus. XP is per player; the team shares the deliveries count.
+- Players earn Postal Rank XP at Results: 100 × shiftsCompleted + 50 × victory + 5 × deliveries + stampBonus. XP is per player; the team shares the deliveries count. M1 U7.1 awards the three-term sum (stampBonus stays 0 until a bonus table exists).
 - Rank thresholds grow linearly (500 XP per rank, tunable). Ranks unlock content, never stats.
 
 ### 5.2 Unlock tracks
