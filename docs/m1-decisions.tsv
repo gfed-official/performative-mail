@@ -227,3 +227,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T03:20:00Z	architect	Chose ConstructRegistry.TryPlace	Place is one-shot; a session wrapper would pass through to the registry	/tmp/u82-architect/synthesis.md	accepted
 2026-09-04T03:20:00Z	architect	Skip four-model arena	Chapter 04 1.2 and chapter 07 name Construct and TryPlace; two sketches compared in-thread	docs/m1-frame.md	accepted
 2026-09-04T03:20:00Z	subtract	No drag line flatten chest GridContainer MessageKind PO Depot SimWorld hook	Issue verify is recipe consume plus registry plus street and slope reject	spec/04-automation.md	accepted
+2026-09-04T03:25:00Z	verify	dotnet test Release 519 passed	Sim 366 Net 137 Bot 16; baseline U8.1 was 509; 10 new construct tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T03:25:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T03:25:00Z	verify	Acceptance filter 6 passed	Wall 3 Log; Chest 4 Log; street reject; slope reject; harvest then place	dotnet test --filter Wall_ThreeLog|Chest_FourLog|Street_Rejected|Slope_AtOrAbove|HarvestThenPlace|RepoDefs_WallAndChest	VERIFIED
+2026-09-04T03:25:00Z	verify	ConstructRegistry 10 passed	entity id 50331649; generated street reject; under-15 place	dotnet test --filter ConstructRegistry	VERIFIED
