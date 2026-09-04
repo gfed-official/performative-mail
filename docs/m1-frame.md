@@ -14,9 +14,9 @@ This run cuts those gates into landable child issues. The current landable unit 
 
 ## Scope
 
-Touch `JoinState`, `ContainerStamp`, and the Prep shift-3 loopback join. Reuse `WorldOffer`, `WorldHashCheck`, `BotWorld` intake, and U6.2 `JoinStatePrepTests`. Keep U10.1 solo hand cells, U10.2 `FiveShiftRun`, `HudBoot.Placeholder` inspect-only, HUD `mouse_filter` Ignore, and Host/Join clickable. Do not start M2–M5.
+Touch `JoinState`, `ContainerStamp`, and the Prep shift-3 loopback join. Reuse `WorldOffer`, `WorldHashCheck`, `ShiftClock`, and U6.2 `JoinStatePrepTests`. Keep U10.1 solo hand cells, U10.2 `FiveShiftRun`, `HudBoot.Placeholder` inspect-only, HUD `mouse_filter` Ignore, and Host/Join clickable. Do not start M2–M5.
 
-U10.3 encodes `JoinState` after a Small Island seed sits in Prep of shift 3 with typical containers (intake plus a chest). The test asserts `Length <= 200_000` and that the joiner `worldHash` and container hashes match the host. No full `ContainerState` payload, Windows hash, mailbox-walk rewrite, or raid combat.
+U10.3 encodes `JoinState` after `ShiftClock` lands in Prep of shift 3. Typical containers are an intake and a chest on a catalog `SimWorld`. The host world for hash is the Small Island `WorldOffer`, not the M0 atlas. The test asserts `Length <= 200_000` and that the joiner `worldHash` and container hashes match the host. No full `ContainerState` payload, Windows hash, mailbox-walk rewrite, or raid combat.
 
 ## Rigor
 
