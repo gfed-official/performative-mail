@@ -170,6 +170,19 @@ public sealed class MainPlayBootTests
         Assert.Contains("\"--debug-world\"", apply);
         Assert.Contains("HostDebug()", apply);
         Assert.Contains("_session.Host()", apply);
+        Assert.Contains("\"--debug-helper=\"", apply);
+    }
+
+    [Fact]
+    public void PhysicsProcess_AppliesDebugHelperAfterPump()
+    {
+        var body = MethodBody(ReadMain(), "_PhysicsProcess");
+        Assert.Contains("MaybeApplyDebugHelper", body);
+        var helper = MethodBody(ReadMain(), "MaybeApplyDebugHelper");
+        Assert.Contains("TryTeleportToIntake", helper);
+        Assert.Contains("TryTeleportToMailbox", helper);
+        Assert.Contains("TryGiveMail", helper);
+        Assert.Contains("TryOpenLiveOverlay", helper);
     }
 
     private static string ReadMain()

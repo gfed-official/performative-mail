@@ -4,6 +4,7 @@ using PerformativeMail.Server;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.Run;
 using PerformativeMail.Sim.World;
@@ -155,20 +156,143 @@ public sealed class PlaySessionMachine : IDisposable
 
     public bool TryResetLocalPawn()
     {
-        if (_state is not PlaySession.Playing)
-            return false;
-        if (_live.Server is not ServerRuntime server)
-            return false;
-        if (_live.Client.LocalPlayer is not EntityId local)
+        if (!TryHostPlaying(out var server, out var local))
             return false;
         if (!server.World.Players.TryGet(local, out var body))
             return false;
 
         var spawn = SpawnRing.Pose(SpawnRing.CentreOf(server.World.Atlas), body.SpawnSlot);
-        body.SetPose(spawn);
-        _live.Client.Prediction.Reconcile(in spawn, uint.MaxValue);
+        return TrySetLocalPose(in spawn);
+    }
+
+    public bool TryTeleportToIntake()
+    {
+        if (!TryHostPlaying(out var server, out _))
+            return false;
+        if (server.World.Atlas is not WorldAtlas atlas)
+            return false;
+
+        return TrySetLocalPose(TileCentre(atlas.PostOffice.IntakeTile, atlas.TileCm));
+    }
+
+    public bool TryTeleportToMailbox()
+    {
+        if (!TryHostPlaying(out var server, out _))
+            return false;
+        if (server.Tables is not { Houses.Length: > 0 } tables)
+            return false;
+
+        var box = tables.Houses[0].Mailbox;
+        return TrySetLocalPose(new PlayerPose(box.XCm, box.YCm, box.ZCm, 0));
+    }
+
+    public bool TryGiveMail()
+    {
+        if (!TryHostPlaying(out var server, out var local))
+            return false;
+        if (server.World.Inventory is not InventorySystem inventory)
+            return false;
+        if (!TryHotbar(inventory, out var hotbar))
+            return false;
+        if (TryFirstMail(inventory, hotbar, out _, out _))
+            return true;
+        if (server.World.Intake.Value != 0 &&
+            TryFirstMail(inventory, server.World.Intake, out var intakeEntry, out _) &&
+            inventory.Apply(
+                Actor.Player(local),
+                new QuickMove(server.World.Intake, intakeEntry, hotbar, Amount.Of(1))) is Accepted)
+            return true;
+
+        return TrySpawnLetter(server, inventory, hotbar);
+    }
+
+    private bool TryHostPlaying(out ServerRuntime server, out EntityId local)
+    {
+        server = null!;
+        local = default;
+        if (_state is not PlaySession.Playing)
+            return false;
+        if (_live.Server is not ServerRuntime runtime)
+            return false;
+        if (_live.Client.LocalPlayer is not EntityId id)
+            return false;
+
+        server = runtime;
+        local = id;
         return true;
     }
+
+    private bool TrySetLocalPose(in PlayerPose pose)
+    {
+        if (!TryHostPlaying(out var server, out var local))
+            return false;
+        if (!server.World.Players.TryGet(local, out var body))
+            return false;
+
+        body.SetPose(pose);
+        _live.Client.Prediction.Reconcile(in pose, uint.MaxValue);
+        return true;
+    }
+
+    private static bool TrySpawnLetter(ServerRuntime server, InventorySystem inventory, ContainerId hotbar)
+    {
+        if (server.World.Mail is not MailRegistry mail)
+            return false;
+        if (server.World.Atlas is not WorldAtlas atlas)
+            return false;
+        if (atlas.DeliverableAddresses.Count == 0)
+            return false;
+
+        var address = atlas.DeliverableAddresses[0];
+        var id = mail.Allocate();
+        var item = new MailItem(
+            id,
+            MailKinds.Letter,
+            address,
+            MailKinds.ValueAtSpawn(MailKinds.Letter, atlas.DistrictId, MailSpawnConstants.Shift1),
+            MailSpawnConstants.Shift1,
+            MailSpawnConstants.Shift1);
+        if (!mail.Register(item))
+            return false;
+        return inventory.Apply(Actor.System, new Deposit(hotbar, MailStack.Single(MailKinds.Letter, address, id)))
+            is Accepted;
+    }
+
+    private static bool TryHotbar(InventorySystem inventory, out ContainerId hotbar)
+    {
+        foreach (var container in inventory.Containers)
+        {
+            var shape = container.Spec.Shape;
+            if (shape.Cols != 8 || shape.Rows != 1)
+                continue;
+            hotbar = container.Id;
+            return true;
+        }
+
+        hotbar = default;
+        return false;
+    }
+
+    private static bool TryFirstMail(InventorySystem inventory, ContainerId container, out EntryId entry, out MailStack stack)
+    {
+        entry = default;
+        stack = null!;
+        if (!inventory.TryGetContainer(container, out var grid))
+            return false;
+        foreach (var item in grid.Entries)
+        {
+            if (item.Stack is not MailStack mail)
+                continue;
+            entry = item.Id;
+            stack = mail;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static PlayerPose TileCentre(TileCoord tile, int tileCm) =>
+        new(tile.X * tileCm + tileCm / 2, tile.Y * tileCm + tileCm / 2, 0, 0);
 
     private DebugSnapshot InspectLive(DebugConnection connection, SessionRole role, bool canCheat)
     {

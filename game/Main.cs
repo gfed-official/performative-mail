@@ -50,6 +50,7 @@ public partial class Main : Node3D
     private bool _debugHeld;
     private bool _inspectDebug;
     private string? _debugDumpPath;
+    private string? _debugHelper;
 
     public override void _Ready()
     {
@@ -126,6 +127,7 @@ public partial class Main : Node3D
         PollDebugToggle();
         if (_debug is { IsOpen: true })
             BindDebug(_session.Inspect());
+        MaybeApplyDebugHelper(state);
         MaybeFinish(state);
     }
 
@@ -458,6 +460,14 @@ public partial class Main : Node3D
         _debug.GiveWalletPressed += () => _session.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents));
         _debug.AdvancePhasePressed += () => _session.TryAdvancePhase();
         _debug.ResetPawnPressed += () => _session.TryResetLocalPawn();
+        _debug.TeleportIntakePressed += () => _session.TryTeleportToIntake();
+        _debug.TeleportMailboxPressed += () => _session.TryTeleportToMailbox();
+        _debug.GiveMailPressed += () => _session.TryGiveMail();
+        _debug.OpenInventoryPressed += () =>
+        {
+            if (_session.State is PlaySession.Playing playing)
+                TryOpenLiveOverlay(playing);
+        };
     }
 
     private void BindDebug(in DebugSnapshot snapshot)
@@ -626,6 +636,8 @@ public partial class Main : Node3D
                 _overlaysDumpPath = arg.Substring("--overlays-dump=".Length);
             else if (arg.StartsWith("--debug-dump=", StringComparison.Ordinal))
                 _debugDumpPath = arg.Substring("--debug-dump=".Length);
+            else if (arg.StartsWith("--debug-helper=", StringComparison.Ordinal))
+                _debugHelper = arg.Substring("--debug-helper=".Length);
             else if (arg.StartsWith("--quit-after-ms=", StringComparison.Ordinal) &&
                      int.TryParse(arg.AsSpan("--quit-after-ms=".Length), out var ms))
                 _quitAfterMs = ms;
@@ -662,6 +674,34 @@ public partial class Main : Node3D
 
     private void WriteReport(PlaySession state, string path) =>
         SmokeReport.Write(path, state, new SmokeReportUi(_overlay.IsOpen, _debug is { IsOpen: true }));
+
+    private void MaybeApplyDebugHelper(PlaySession state)
+    {
+        if (_debugHelper is null)
+            return;
+        if (state is not PlaySession.Playing playing)
+            return;
+
+        bool done = _debugHelper switch
+        {
+            "intake" => _session.TryTeleportToIntake(),
+            "mailbox" => _session.TryTeleportToMailbox(),
+            "give-mail" => _session.TryGiveMail(),
+            "overlay" => TryOpenLiveOverlay(playing),
+            _ => true,
+        };
+        if (done)
+            _debugHelper = null;
+    }
+
+    private bool TryOpenLiveOverlay(PlaySession.Playing playing)
+    {
+        if (playing.Overlay is not OverlayReplica live)
+            return false;
+        BindOverlay(live);
+        _overlay.Open();
+        return true;
+    }
 
     private static TimeSpan WallNow() =>
         TimeSpan.FromTicks((long)Time.GetTicksUsec() * 10);

@@ -19,10 +19,18 @@ public partial class DebugMenu : Control
     public const string GiveWalletPath = "GiveWalletButton";
     public const string AdvancePhasePath = "AdvancePhaseButton";
     public const string ResetPawnPath = "ResetPawnButton";
+    public const string TeleportIntakePath = "TeleportIntakeButton";
+    public const string TeleportMailboxPath = "TeleportMailboxButton";
+    public const string GiveMailPath = "GiveMailButton";
+    public const string OpenInventoryPath = "OpenInventoryButton";
 
     public event Action? GiveWalletPressed;
     public event Action? AdvancePhasePressed;
     public event Action? ResetPawnPressed;
+    public event Action? TeleportIntakePressed;
+    public event Action? TeleportMailboxPressed;
+    public event Action? GiveMailPressed;
+    public event Action? OpenInventoryPressed;
 
     private Label _connection = null!;
     private Label _role = null!;
@@ -37,6 +45,10 @@ public partial class DebugMenu : Control
     private Button _giveWallet = null!;
     private Button _advancePhase = null!;
     private Button _resetPawn = null!;
+    private Button _teleportIntake = null!;
+    private Button _teleportMailbox = null!;
+    private Button _giveMail = null!;
+    private Button _openInventory = null!;
     private bool _open;
 
     public bool IsOpen => _open && Visible;
@@ -86,6 +98,10 @@ public partial class DebugMenu : Control
         _giveWallet.Disabled = !frame.CanCheat;
         _advancePhase.Disabled = !frame.CanCheat;
         _resetPawn.Disabled = !frame.CanCheat;
+        _teleportIntake.Disabled = !frame.CanCheat;
+        _teleportMailbox.Disabled = !frame.CanCheat;
+        _giveMail.Disabled = !frame.CanCheat;
+        _openInventory.Disabled = !frame.CanCheat;
         Visible = _open;
     }
 
@@ -108,6 +124,10 @@ public partial class DebugMenu : Control
             $"GiveWallet={Enabled(_giveWallet)}\n" +
             $"AdvancePhase={Enabled(_advancePhase)}\n" +
             $"ResetPawn={Enabled(_resetPawn)}\n" +
+            $"TeleportIntake={Enabled(_teleportIntake)}\n" +
+            $"TeleportMailbox={Enabled(_teleportMailbox)}\n" +
+            $"GiveMail={Enabled(_giveMail)}\n" +
+            $"OpenInventory={Enabled(_openInventory)}\n" +
             $"ToggleKey={DebugFrame.ToggleKey}";
     }
 
@@ -164,6 +184,10 @@ public partial class DebugMenu : Control
         _giveWallet = AddCheat(column, GiveWalletPath, "Give $10.00", () => GiveWalletPressed?.Invoke());
         _advancePhase = AddCheat(column, AdvancePhasePath, "Advance phase", () => AdvancePhasePressed?.Invoke());
         _resetPawn = AddCheat(column, ResetPawnPath, "Reset pawn", () => ResetPawnPressed?.Invoke());
+        _teleportIntake = AddCheat(column, TeleportIntakePath, "Teleport to Intake", () => TeleportIntakePressed?.Invoke());
+        _teleportMailbox = AddCheat(column, TeleportMailboxPath, "Teleport to mailbox", () => TeleportMailboxPressed?.Invoke());
+        _giveMail = AddCheat(column, GiveMailPath, "Give mail", () => GiveMailPressed?.Invoke());
+        _openInventory = AddCheat(column, OpenInventoryPath, "Open inventory", () => OpenInventoryPressed?.Invoke());
     }
 
     private static Label AddRow(VBoxContainer column, string prefix, string name)

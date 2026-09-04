@@ -2,6 +2,7 @@ using PerformativeMail.App;
 using PerformativeMail.Client;
 using PerformativeMail.Client.UI;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Run;
@@ -25,6 +26,9 @@ public sealed class DebugSessionTests
         Assert.False(machine.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents)));
         Assert.False(machine.TryAdvancePhase());
         Assert.False(machine.TryResetLocalPawn());
+        Assert.False(machine.TryTeleportToIntake());
+        Assert.False(machine.TryTeleportToMailbox());
+        Assert.False(machine.TryGiveMail());
     }
 
     [Fact]
@@ -121,14 +125,99 @@ public sealed class DebugSessionTests
         Assert.False(guest.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents)));
         Assert.False(guest.TryAdvancePhase());
         Assert.False(guest.TryResetLocalPawn());
+        Assert.False(guest.TryTeleportToIntake());
+        Assert.False(guest.TryTeleportToMailbox());
+        Assert.False(guest.TryGiveMail());
         Assert.Equal(new Cents(0), host.Inspect().Wallet);
         Assert.Equal(RunPhase.Prep, host.Inspect().Phase);
+    }
+
+    [Fact]
+    public void HostTeleportToIntake_MovesLocalPawnToIntakeTile()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        Pump(host, ref now, MoveIntent.Idle, 8);
+
+        var play = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.NotNull(play.World);
+        Assert.NotEqual(IntakePose(play.World), LocalPose(host));
+
+        Assert.True(host.TryTeleportToIntake());
+        Pump(host, ref now, MoveIntent.Idle, 4);
+        Assert.Equal(IntakePose(play.World), LocalPose(host));
+    }
+
+    [Fact]
+    public void HostTeleportToMailbox_MovesLocalPawnToFirstMailbox()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        Pump(host, ref now, MoveIntent.Idle, 8);
+
+        var play = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.NotNull(play.World);
+        var mailbox = MailboxPose(play.World);
+        Assert.NotEqual(mailbox, LocalPose(host));
+
+        Assert.True(host.TryTeleportToMailbox());
+        Pump(host, ref now, MoveIntent.Idle, 4);
+        Assert.Equal(mailbox, LocalPose(host));
+    }
+
+    [Fact]
+    public void HostGiveMail_DepositsStackWhenHotbarEmpty()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        Pump(host, ref now, MoveIntent.Idle, 8);
+
+        var before = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.NotNull(before.Overlay);
+        Assert.False(HasMail(before.Overlay.Value.Hotbar));
+
+        Assert.True(host.TryGiveMail());
+        Pump(host, ref now, MoveIntent.Idle, 4);
+        var after = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.NotNull(after.Overlay);
+        Assert.True(HasMail(after.Overlay.Value.Hotbar));
+        Assert.True(host.TryGiveMail());
     }
 
     private static PlayerPose LocalPose(PlaySessionMachine machine)
     {
         var play = Assert.IsType<PlaySession.Playing>(machine.State);
         return Assert.Single(play.Pawns, p => p.Role == PawnRole.Local).Pose;
+    }
+
+    private static PlayerPose IntakePose(WorldTables tables)
+    {
+        var tile = tables.PostOffice.IntakeTile;
+        int half = tables.TileCm / 2;
+        return new PlayerPose(tile.X * tables.TileCm + half, tile.Y * tables.TileCm + half, 0, 0);
+    }
+
+    private static PlayerPose MailboxPose(WorldTables tables)
+    {
+        var box = tables.Houses[0].Mailbox;
+        return new PlayerPose(box.XCm, box.YCm, box.ZCm, 0);
+    }
+
+    private static bool HasMail(GridContainer container)
+    {
+        foreach (var entry in container.Entries)
+        {
+            if (entry.Stack is MailStack)
+                return true;
+        }
+
+        return false;
     }
 
     private static void Pump(PlaySessionMachine machine, ref TimeSpan now, in MoveIntent intent, int steps)
