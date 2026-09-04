@@ -1,5 +1,6 @@
 using System;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Run;
 
 namespace PerformativeMail.Sim.Net;
 
@@ -198,6 +199,64 @@ public static class WireCodec
         if (!reader.AtEnd) return false;
         message = new WorldOffer(seed, worldHash);
         return true;
+    }
+
+    public static byte[] Encode(in RunSettings settings)
+    {
+        var writer = new BitWriter();
+        writer.WriteByte((byte)MessageKind.RunSettings);
+        writer.WriteUInt32(settings.Seed);
+        writer.WriteUtf8(settings.Archetype);
+        writer.WriteByte((byte)settings.Stamps.Count);
+        for (int i = 0; i < settings.Stamps.Count; i++)
+            writer.WriteUtf8(settings.Stamps[i]);
+        writer.WriteByte(settings.MaxPlayers);
+        writer.WriteByte((byte)settings.Visibility);
+        writer.WriteUtf8(settings.HostKit);
+        writer.WriteUInt32(settings.ProtocolHash);
+        writer.WriteUInt32(settings.ContentHash);
+        return writer.ToArray();
+    }
+
+    public static bool TryDecode(ReadOnlySpan<byte> payload, out RunSettings settings)
+    {
+        settings = default;
+        var reader = new BitReader(payload);
+        if (!TryReadKind(reader, MessageKind.RunSettings)) return false;
+        if (!reader.TryReadUInt32(out var seed)) return false;
+        if (!reader.TryReadUtf8(out var archetype) || archetype.Length == 0) return false;
+        if (!reader.TryReadByte(out var stampCount)) return false;
+        var stamps = stampCount == 0 ? Array.Empty<string>() : new string[stampCount];
+        for (int i = 0; i < stampCount; i++)
+        {
+            if (!reader.TryReadUtf8(out stamps[i])) return false;
+        }
+
+        if (!reader.TryReadByte(out var maxPlayers)) return false;
+        if (!reader.TryReadByte(out var visibility)) return false;
+        if (!reader.TryReadUtf8(out var hostKit) || hostKit.Length == 0) return false;
+        if (!reader.TryReadUInt32(out var protocolHash)) return false;
+        if (!reader.TryReadUInt32(out var contentHash)) return false;
+        if (!reader.AtEnd) return false;
+
+        try
+        {
+            settings = new RunSettings(
+                seed,
+                archetype,
+                stamps,
+                maxPlayers,
+                (LobbyVisibility)visibility,
+                hostKit,
+                protocolHash,
+                contentHash);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            settings = default;
+            return false;
+        }
     }
 
     private static void WriteCommand(BitWriter writer, in InputCmd command)

@@ -4,6 +4,7 @@ using PerformativeMail.Sim;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Net;
+using PerformativeMail.Sim.Run;
 
 namespace PerformativeMail.Server;
 
@@ -17,6 +18,8 @@ public sealed class ServerRuntime
     public SimWorld World { get; }
 
     public WorldOffer? OfferedWorld { get; }
+
+    public RunSettings OfferedSettings { get; }
 
     public IReadOnlyList<ContainerDelta> LastFlushedDeltas { get; private set; } = Array.Empty<ContainerDelta>();
 
@@ -46,10 +49,16 @@ public sealed class ServerRuntime
     }
 
     public ServerRuntime(IServerLink link, SimWorld world, WorldOffer? offeredWorld)
+        : this(link, world, offeredWorld, offeredSettings: null)
+    {
+    }
+
+    public ServerRuntime(IServerLink link, SimWorld world, WorldOffer? offeredWorld, RunSettings? offeredSettings)
     {
         _link = link ?? throw new ArgumentNullException(nameof(link));
         World = world ?? throw new ArgumentNullException(nameof(world));
         OfferedWorld = offeredWorld;
+        OfferedSettings = offeredSettings ?? RunSettings.Arcade();
     }
 
     public void Start()
@@ -129,6 +138,7 @@ public sealed class ServerRuntime
         var body = World.SpawnPlayer();
         _seats[from] = new Seat(from, body.Id);
         _link.Send(from, NetChannels.Handshake, WireCodec.Encode(new HelloOk(body.Id, _tick)));
+        _link.Send(from, NetChannels.Handshake, WireCodec.Encode(OfferedSettings));
         if (OfferedWorld is WorldOffer offer)
             _link.Send(from, NetChannels.Handshake, WireCodec.Encode(offer));
     }

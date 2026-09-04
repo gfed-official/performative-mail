@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 
 namespace PerformativeMail.Sim.Net;
 
@@ -103,6 +104,25 @@ public sealed class BitReader
         }
 
         value = lo | ((ulong)hi << 32);
+        return true;
+    }
+
+    public bool TryReadUtf8(out string value)
+    {
+        if (!TryReadByte(out var length))
+        {
+            value = "";
+            return false;
+        }
+
+        if (_offset + length > _data.Length)
+        {
+            value = "";
+            return false;
+        }
+
+        value = Encoding.UTF8.GetString(_data, _offset, length);
+        _offset += length;
         return true;
     }
 }

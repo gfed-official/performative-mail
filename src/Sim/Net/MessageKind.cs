@@ -12,4 +12,6 @@ public enum MessageKind : byte
     // Channel 1. Next free after Hello/Input/Snapshot/Ping. Do not renumber the above.
     InventoryEvent = 40,
     WorldOffer = 50,
+    // Additive. Do not renumber Hello/Input/Snapshot/Ping/InventoryEvent/WorldOffer.
+    RunSettings = 51,
 }

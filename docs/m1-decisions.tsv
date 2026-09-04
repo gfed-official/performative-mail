@@ -179,3 +179,7 @@ ts	phase	decision	why	evidence	result
 2026-09-04T01:42:00Z	verify	dotnet test Release 429 passed	Sim 293 Net 120 Bot 16; seven DraftPick tests; baseline U5.2 was 422	dotnet test PerformativeMail.sln -c Release	VERIFIED
 2026-09-04T01:42:00Z	verify	ContentValidator exits 0 on repo content	express_lane builtAny does not break the CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T01:42:00Z	verify	Acceptance filter 16 passed	Team grey after one pick; belt absent until built; excludes never co-occur	dotnet test --filter DraftPick|DraftSession	VERIFIED
+2026-09-04T01:50:00Z	u6.1	Named RunSettings plus LobbyVisibility in Sim.Run	One typed lobby model; Hello fields stay frozen	src/Sim/Run/RunSettings.cs	open
+2026-09-04T01:50:00Z	architect	Chose additive RunSettings=51 after HelloOk	Hello goldens and SchemaHash 0x4112C9FA stay; WorldOffer stays regen-only	/tmp/u61-architect/synthesis.md	accepted
+2026-09-04T01:50:00Z	architect	Skip four-model arena	Chapter 08 §3.1 names the fields; U1.5 already chose additive kinds	docs/m1-frame.md	accepted
+2026-09-04T01:50:00Z	subtract	No JoinState lobby UI disconnect grace PlaySessionMachine	U6.2+; default Host gets Arcade via ServerRuntime	src/App/PlaySessionMachine.cs	accepted
