@@ -121,5 +121,6 @@ ts	phase	decision	why	evidence	result
 2026-09-04T00:16:00Z	verify	dotnet test Release 378 passed	Sim 248 Net 114 Bot 16; eight DeathSession tests	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-04T00:18:00Z	subtract	Dropped unused Origin ctor and vacuous RunState fact	Comment Sicko; death never touches RunState so the fact asserted nothing	tests/Sim.Tests/Run/DeathSessionTests.cs	accepted
 2026-09-04T00:18:00Z	verify	dotnet test Release 377 passed	Sim 247 Net 114 Bot 16; seven DeathSession tests	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-04T00:19:00Z	verify	CI on 0935a08 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33821111774	VERIFIED
 2026-09-04T00:16:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T00:16:00Z	verify	Acceptance filter 4 passed	empty bags; +300 respawn; Intake return; RunState unchanged	dotnet test --filter RespawnTicks_TenSeconds|Die_EmptiesPlayerContainers|AdvanceTo_AtDespawnTick|Die_DoesNotChangeRunState	VERIFIED
