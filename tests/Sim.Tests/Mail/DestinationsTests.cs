@@ -1,5 +1,6 @@
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.Run;
 
 namespace PerformativeMail.Sim.Tests.Mail;
 
@@ -25,11 +26,15 @@ public sealed class DestinationsTests
         var fx = new DeliveryFixture();
         var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
 
-        var result = fx.Destinations.TryDeliver(mailId, fx.HouseOak, currentShift: 2, fx.Wallet);
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseOak, currentShift: 2, fx.Wallet, fx.Complaint);
 
         var delivered = Assert.IsType<Delivered>(result);
         Assert.Equal(new Cents(4), delivered.Paid);
         Assert.Equal(new Cents(4), fx.Wallet.Balance);
+        Assert.Equal(
+            (int)Math.Round(MailKinds.LetterBaseValue * MailSpawnConstants.LateValueRatio, MidpointRounding.AwayFromZero),
+            delivered.Paid.Value);
+        Assert.Equal(ComplaintMeter.LateDelivery, fx.Complaint.Points);
         Assert.False(fx.Mail.Contains(mailId));
     }
 
@@ -39,11 +44,12 @@ public sealed class DestinationsTests
         var fx = new DeliveryFixture();
         var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
 
-        var result = fx.Destinations.TryDeliver(mailId, fx.HouseOak, currentShift: 3, fx.Wallet);
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseOak, currentShift: 3, fx.Wallet, fx.Complaint);
 
         var delivered = Assert.IsType<Delivered>(result);
         Assert.Equal(new Cents(0), delivered.Paid);
         Assert.Equal(new Cents(0), fx.Wallet.Balance);
+        Assert.Equal(ComplaintMeter.LateDelivery, fx.Complaint.Points);
         Assert.False(fx.Mail.Contains(mailId));
     }
 
@@ -79,12 +85,25 @@ public sealed class DestinationsTests
         var fx = new DeliveryFixture();
         var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
 
-        var result = fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet);
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet, fx.Complaint);
 
         var misdelivered = Assert.IsType<Misdelivered>(result);
         Assert.Equal(new Cents(4), misdelivered.Penalty);
         Assert.Equal(new Cents(-4), fx.Wallet.Balance);
+        Assert.Equal(5, fx.Complaint.Points);
         Assert.False(fx.Mail.Contains(mailId));
+    }
+
+    [Fact]
+    public void TryDeliver_LetterAddressMismatch_AddsFiveComplaint()
+    {
+        var fx = new DeliveryFixture();
+        var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
+
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet, fx.Complaint);
+
+        Assert.IsType<Misdelivered>(result);
+        Assert.Equal(MailKinds.LetterComplaint, fx.Complaint.Points);
     }
 
     [Fact]
@@ -107,10 +126,11 @@ public sealed class DestinationsTests
         var fx = new DeliveryFixture(new Cents(-500));
         var mailId = fx.RegisterLetter(fx.Oak, value: MailKinds.LetterBaseValue, deadlineShift: 1);
 
-        var result = fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet);
+        var result = fx.Destinations.TryDeliver(mailId, fx.HouseElm, currentShift: 1, fx.Wallet, fx.Complaint);
 
         Assert.Equal(RejectReason.WalletFloor, Assert.IsType<Rejected>(result).Reason);
         Assert.Equal(new Cents(-500), fx.Wallet.Balance);
+        Assert.Equal(0, fx.Complaint.Points);
         Assert.True(fx.Mail.Contains(mailId));
     }
 
@@ -202,6 +222,7 @@ internal sealed class DeliveryFixture
         Mail = new MailRegistry();
         Destinations = new Destinations(Mail);
         Wallet = new Wallet(wallet);
+        Complaint = new ComplaintMeter();
         Oak = new AddressId(1, 4, 13, 0);
         Elm = new AddressId(1, 5, 2, 0);
         HouseOak = new DestinationId(1);
@@ -215,6 +236,8 @@ internal sealed class DeliveryFixture
     public Destinations Destinations { get; }
 
     public Wallet Wallet { get; }
+
+    public ComplaintMeter Complaint { get; }
 
     public AddressId Oak { get; }
 

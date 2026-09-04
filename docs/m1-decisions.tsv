@@ -109,3 +109,11 @@ ts	phase	decision	why	evidence	result
 2026-09-03T23:54:32Z	architect	Hundredths-then-cents is pinned in QuotaBudgetTests	Raw Pow misses chapter 11 1476/2316; tests are the evidence, not the tmp sketch	tests/Sim.Tests/Run/QuotaBudgetTests.cs	accepted
 2026-09-03T23:54:32Z	verify	CI on 9a139e8 all 4 checks green	docs trail commit after 03c0e6f	https://github.com/gfed-official/performative-mail/actions/runs/33819363368	VERIFIED
 2026-09-03T23:54:51Z	architect	Kept QuotaBudget.For after judge picked ShiftBudget	All four scored 2/2 on the rubric; Fixed2 and default-struct guards were for types we did not add; tests already pin all ten chapter 11 cells	src/Sim/Run/QuotaBudget.cs	accepted
+2026-09-04T00:00:00Z	frame	Frame U3.4 as complaint meter deadlines and mail mix	Issue 90; late pay and mix shares already exist; ComplaintMeter is the missing runtime	https://github.com/gfed-official/performative-mail/issues/90	open
+2026-09-04T00:00:00Z	architect	Chose ComplaintMeter plus MailKinds tables over DeliverySession or RunState field	Destinations already pays late; RunState and ShiftClock stay U3.1/U3.2; optional meter keeps bot callers	src/Sim/Run/ComplaintMeter.cs	accepted
+2026-09-04T00:00:00Z	architect	Skip four-model arena	Parent forbids nested subagents; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T00:00:00Z	subtract	Did not rewrite QuotaBudget or the MailSpawner batch picker	U3.3 formulas stay; shift-1 spawn still uses the 960 stub	src/Sim/Run/QuotaBudget.cs	accepted
+2026-09-04T00:02:31Z	verify	dotnet test Release 370 passed	Sim 240 Net 114 Bot 16; letter +5; late 4 then 0; mix shares sum 1	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-04T00:02:31Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T00:02:31Z	verify	Acceptance filter 5 passed	AddsFiveComplaint; OneShiftLate 4c; TwoShiftsLate 0c; mix sum; letter AddMisdelivery	dotnet test --filter AddsFiveComplaint|OneShiftLate|TwoShiftsLate|EachShiftShares|AddMisdelivery_Letter	VERIFIED
+2026-09-04T00:04:30Z	verify	CI on 55c3eeb all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33820150062	VERIFIED

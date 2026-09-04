@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
+using PerformativeMail.Sim.Run;
 using PerformativeMail.Sim.World;
 using InventoryRejected = PerformativeMail.Sim.Inventory.Rejected;
 
@@ -20,8 +21,10 @@ public sealed class MailSpawner
     private readonly Random _spawnRng;
     private readonly Random _addressRng;
     private readonly int _jitterSeconds;
+    private readonly ComplaintMeter? _complaint;
     private readonly Queue<MailItem> _backlog = new();
     private uint _nextBatchTick;
+    private uint _nextBacklogComplaintTick;
     private int _spawnedValue;
     private int _batchesEmitted;
 
@@ -31,7 +34,8 @@ public sealed class MailSpawner
         InventorySystem inventory,
         ContainerId intake,
         int seed,
-        int jitterSeconds = MailSpawnConstants.BatchJitterSeconds)
+        int jitterSeconds = MailSpawnConstants.BatchJitterSeconds,
+        ComplaintMeter? complaint = null)
     {
         _atlas = atlas ?? throw new ArgumentNullException(nameof(atlas));
         _registry = registry ?? throw new ArgumentNullException(nameof(registry));
@@ -42,12 +46,16 @@ public sealed class MailSpawner
 
         _intake = intake;
         _jitterSeconds = jitterSeconds;
+        _complaint = complaint;
         _spawnRng = new Random(seed);
         _addressRng = new Random(seed);
         _nextBatchTick = NextTickAfter(0);
+        _nextBacklogComplaintTick = MailSpawnConstants.BatchIntervalTicks;
     }
 
     public int SpawnedValue => _spawnedValue;
+
+    public double LateValueRatio => MailSpawnConstants.LateValueRatio;
 
     public IReadOnlyList<MailItem> Backlog
     {
@@ -73,6 +81,8 @@ public sealed class MailSpawner
         {
             EmitBatch();
         }
+
+        ChargeBacklog(tick);
     }
 
     private void EmitBatch()
@@ -122,7 +132,7 @@ public sealed class MailSpawner
                     addresses[i],
                     MailKinds.ValueAtSpawn(kind, _atlas.DistrictId, MailSpawnConstants.Shift1),
                     MailSpawnConstants.Shift1,
-                    MailSpawnConstants.Shift1);
+                    DeadlineShift(kind, MailSpawnConstants.Shift1));
                 if (!_registry.Register(item))
                     throw new InvalidOperationException("Allocated mail id was already registered.");
                 TryDepositOrBacklog(item);
@@ -196,6 +206,19 @@ public sealed class MailSpawner
         if (_inventory.Apply(Actor.System, new Deposit(_intake, stack)) is InventoryRejected)
             _backlog.Enqueue(item);
     }
+
+    private void ChargeBacklog(uint tick)
+    {
+        if (tick < _nextBacklogComplaintTick)
+            return;
+        if (_backlog.Count > 0)
+            _complaint?.AddBacklogTick();
+        while (_nextBacklogComplaintTick <= tick)
+            _nextBacklogComplaintTick += (uint)MailSpawnConstants.BatchIntervalTicks;
+    }
+
+    private static byte DeadlineShift(MailKindId kind, byte spawnShift)
+        => checked((byte)(spawnShift + MailKinds.DeadlineOffsetShifts(kind)));
 
     private void FlushBacklog()
     {

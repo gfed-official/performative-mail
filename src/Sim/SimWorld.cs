@@ -3,6 +3,7 @@ using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Players;
+using PerformativeMail.Sim.Run;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Sim;
@@ -20,6 +21,8 @@ public sealed class SimWorld
     public MailRegistry? Mail { get; }
 
     public MailSpawner? MailSpawner { get; }
+
+    public ComplaintMeter Complaint { get; } = new();
 
     public ContainerId Intake { get; }
 
@@ -39,7 +42,7 @@ public sealed class SimWorld
         Inventory = new InventorySystem(catalog);
         Mail = new MailRegistry();
         Intake = Inventory.CreateContainer(ContainerSpec.Intake);
-        MailSpawner = new MailSpawner(atlas, Mail, Inventory, Intake, seed, jitterSeconds);
+        MailSpawner = new MailSpawner(atlas, Mail, Inventory, Intake, seed, jitterSeconds, Complaint);
     }
 
     public PlayerBody SpawnPlayer() => Players.SpawnOnRing(SpawnRing.CentreOf(Atlas));
