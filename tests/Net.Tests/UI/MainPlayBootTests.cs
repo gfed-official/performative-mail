@@ -263,10 +263,21 @@ public sealed class MainPlayBootTests
         throw new FileNotFoundException("game/Main.cs");
     }
 
+    private static int IndexOfMethod(string source, string name)
+    {
+        foreach (var prefix in new[] { "void ", "bool " })
+        {
+            int start = source.IndexOf(prefix + name + "(", StringComparison.Ordinal);
+            if (start >= 0)
+                return start;
+        }
+
+        return -1;
+    }
+
     private static string MethodBody(string source, string name)
     {
-        var needle = "void " + name + "(";
-        int start = source.IndexOf(needle, StringComparison.Ordinal);
+        int start = IndexOfMethod(source, name);
         Assert.True(start >= 0, "missing method " + name);
         int brace = source.IndexOf('{', start);
         Assert.True(brace >= 0, "missing body for " + name);
@@ -288,8 +299,7 @@ public sealed class MainPlayBootTests
 
     private static string SliceMethod(string source, string name)
     {
-        var needle = "void " + name + "(";
-        int start = source.IndexOf(needle, StringComparison.Ordinal);
+        int start = IndexOfMethod(source, name);
         Assert.True(start >= 0, "missing method " + name);
         int arrow = source.IndexOf("=>", start);
         int brace = source.IndexOf('{', start);
