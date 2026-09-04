@@ -299,3 +299,16 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:56:00Z	audit	Kept stamp hashes not full ContainerState	Issue 109 measures encoded JoinState; chapter 08 3.9 waits	src/Sim/Net/JoinState.cs	accepted
 2026-09-04T05:56:00Z	audit	Kept SchemaHash 0x4112C9FA	JoinState itself landed without a bump; empty golden stays	src/Sim/Net/Protocol.cs	accepted
 2026-09-04T05:56:00Z	audit	Left U10.2 GateHolds quota miss on later shifts	Not this unit; chapter 11 bike 200 cannot meet 4p shifts 3-5	docs/m1-decisions.tsv	open
+2026-09-04T06:00:00Z	verify	CI on 4868ce0 all 4 checks green	test and Godot 4.7.2 .NET after clock-walk tighten	https://github.com/gfed-official/performative-mail/actions	VERIFIED
+2026-09-04T06:03:16Z	frame	Frame U10.4 as Windows and Linux worldHash CI	Issue 110; same golden hash on both runners; U10.3 stays	https://github.com/gfed-official/performative-mail/issues/110	open
+2026-09-04T06:03:16Z	architect	Chose SeedViewer matrix over full test job matrix	Issue names the golden hash print; Godot and play-boot stay Ubuntu	.github/workflows/ci.yml	accepted
+2026-09-04T06:03:16Z	architect	Skip four-model arena	Issue names windows-latest ubuntu-latest and the U1.5 golden; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T06:03:16Z	subtract	No generation rewrite SchemaHash bump or Godot on Windows	Hash encoding and SeedViewer already exist; this unit only attaches the OS runners	tools/SeedViewer/Program.cs	accepted
+2026-09-04T06:06:43Z	verify	SeedViewer printed worldHash 0x821670054873680E	Local Linux pin matches U1.5 golden	tools/SeedViewer 0x7F3A9C21	VERIFIED
+2026-09-04T06:06:43Z	verify	dotnet test Release 577 passed	Sim 378 Net 183 Bot 16; same count as U10.3	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T06:06:43Z	verify	U10 and no-regress filter 46 passed	JoinState FiveShiftRun SoloHand play boot HUD Ignore plus golden hash	dotnet test --filter JoinState|MainPlayBoot|HudBoot|HudScene|FiveShiftRun|SoloHand|GoldenWorldHash	VERIFIED
+2026-09-04T06:06:43Z	verify	BalanceSim and ContentValidator exit 0	U10.1 880/600 MET 810/1100 MISS; U10.2 five paydays duration 1450s	dotnet run --project tools/BalanceSim -- content	VERIFIED
+2026-09-04T06:06:43Z	verify	CI worldHash match on Windows and Linux	Both runners printed worldHash 0x821670054873680E; run 33842844049 all checks green	https://github.com/gfed-official/performative-mail/actions/runs/33842844049	VERIFIED
+2026-09-04T06:11:09Z	audit	Trail review flagged CI copies the golden hex	Frame said SeedViewer reuses GoldenWorldHash but YAML held a second pin	docs/m1-decisions.tsv	open
+2026-09-04T06:11:09Z	architect	Pin via WorldGenHashTests on both OS	SeedViewer prints; the test constant is the one golden	.github/workflows/ci.yml	accepted
+2026-09-04T06:11:17Z	audit	Dropped YAML GOLDEN_WORLD_HASH copy	WorldGenHashTests.GoldenWorldHash is the pin on both runners	.github/workflows/ci.yml	accepted

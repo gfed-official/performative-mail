@@ -10,23 +10,23 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues. The current landable unit is U10.3 (issue 109): join state size after 3 shifts. Do not start U10.4+.
+This run cuts those gates into landable child issues. The current landable unit is U10.4 (issue 110): Windows and Linux `worldHash` CI. Do not start M2.
 
 ## Scope
 
-Touch `JoinState`, `ContainerStamp`, and the Prep shift-3 loopback join. Reuse `WorldOffer`, `WorldHashCheck`, `ShiftClock`, and U6.2 `JoinStatePrepTests`. Keep U10.1 solo hand cells, U10.2 `FiveShiftRun`, `HudBoot.Placeholder` inspect-only, HUD `mouse_filter` Ignore, and Host/Join clickable. Do not start M2–M5.
+Touch `.github/workflows/ci.yml`. Reuse `SeedViewer`, `WorldGen.GenerateSmallIsland`, `WorldHash.Compute`, and `WorldGenHashTests.GoldenWorldHash`. Keep U10.1 solo hand cells, U10.2 `FiveShiftRun`, U10.3 `JoinState` size, `HudBoot.Placeholder` inspect-only, HUD `mouse_filter` Ignore, and Host/Join clickable. Do not start M2–M5.
 
-U10.3 encodes `JoinState` after `ShiftClock` lands in Prep of shift 3. Typical containers are an intake and a chest on a catalog `SimWorld`. The host world for hash is the Small Island `WorldOffer`, not the M0 atlas. The test asserts `Length <= 200_000` and that the joiner `worldHash` and container hashes match the host. No full `ContainerState` payload, Windows hash, mailbox-walk rewrite, or raid combat.
+U10.4 runs `SeedViewer` for seed `0x7F3A9C21` on `windows-latest` and `ubuntu-latest`. Both runners must print a `worldHash 0x…` line. `WorldGenHashTests.GenerateSmallIsland_FixedSeed_GoldenWorldHash` is the pin (`GoldenWorldHash`). The job fails if either runner's generate step drifts. The existing Ubuntu `test` job still runs the full suite. No generation rewrite, no Godot on Windows, no `SchemaHash` bump.
 
 ## Rigor
 
-High for the acceptance predicate. The test must write the encoded `JoinState` bytes and compare joiner hashes to the host grids. U10.1 and U10.2 stay. Spec chapter 08 §3.9 names full container contents on join. This unit does not add them. The size gate is the stamp payload that `WireCodec` already writes.
+High for the acceptance predicate. Both OS runners must print the same hex. `SeedViewer` prints. `WorldGenHashTests.GoldenWorldHash` pins. U10.1 through U10.3 stay.
 
 ## Blockers found while grounding
 
 | Blocker | Impact | Mitigation |
 | --- | --- | --- |
-| CI runs Ubuntu only | Windows vs Linux `worldHash` is an M1 gate | U1.1 pins a golden hash from integer math on Linux. U10.4 adds a Windows runner |
+| CI `test` job is Ubuntu only | Windows vs Linux `worldHash` is an M1 gate | U1.1 pins the golden hash from integer math. U10.4 adds a `worldHash` matrix on `ubuntu-latest` and `windows-latest` |
 | No Godot binary on the agent host | SeedViewer and lobby screens cannot be live-checked here | Keep U1.1 in Sim + xUnit. Godot tools wait for U1.5 / U9 |
 | Authored M0 map is the live atlas | Generation must not replace `WorldAtlasLoader` in this unit | New `WorldTables` + `WorldHash` sit beside the authored atlas |
 
@@ -130,7 +130,7 @@ Riskiest unknown first: cross-platform generation determinism. Smallest landable
 | U10.3 | Join state size after 3 shifts | ≤ 200 KB; world and containers match | U6.2, U1.5 |
 | U10.4 | Windows and Linux `worldHash` CI | Same golden hash on both runners | U1.1 (full after U1.5) |
 
-Architect arena runs before U1.2 (OpenSimplex2 and coastline are a one-way door) and before U3.1 (run phases). U1.1 shape is already concrete in chapter 02 §2 (PCG32, int16 cm, 0.5 m lattice, 64-bit FNV), so arena is skipped for the skeleton. U7.2 shape is already concrete in chapter 08 §3.8, so arena is skipped for persist. U8.1 shape is already concrete in chapter 02 §3.9, so arena is skipped for harvest. U8.2 shape is already concrete in chapter 04 §1.2 and chapter 07 `Constructs.TryPlace`, so arena is skipped for placement. U9.1 shape is already concrete in chapter 09 §2.2 and the HUD bind path, so arena is skipped for the lobby screen. U9.2 shape is already concrete in chapter 09 §2.4 and the same bind path, so arena is skipped for HUD quota and complaint. U9.3 shape is already concrete in chapter 09 §2.9–2.11 and the same bind path, so arena is skipped for the overlays. U10.1 shape is already concrete in chapter 11 §4 (hand agent rates and the two viability cells), so arena is skipped for BalanceSim. U10.2 composes `FiveShiftRun`, live 4-player `QuotaBudget`, and a 4-seat hash pulse. Arena is skipped; two sketches compared in-thread. The mailbox walk lost (second throughput model). Invented shift-5 rates lost (not in chapter 11). U10.3 issue 109 names `Length <= 200_000` on encoded `JoinState`. Arena is skipped; two sketches compared in-thread. Stamp-plus-hash won. Snapshot-on-join lost (new sync path, size gate still measures `JoinState`). Full `ContainerState` lost (chapter 08 §3.9, not this unit).
+Architect arena runs before U1.2 (OpenSimplex2 and coastline are a one-way door) and before U3.1 (run phases). U1.1 shape is already concrete in chapter 02 §2 (PCG32, int16 cm, 0.5 m lattice, 64-bit FNV), so arena is skipped for the skeleton. U7.2 shape is already concrete in chapter 08 §3.8, so arena is skipped for persist. U8.1 shape is already concrete in chapter 02 §3.9, so arena is skipped for harvest. U8.2 shape is already concrete in chapter 04 §1.2 and chapter 07 `Constructs.TryPlace`, so arena is skipped for placement. U9.1 shape is already concrete in chapter 09 §2.2 and the HUD bind path, so arena is skipped for the lobby screen. U9.2 shape is already concrete in chapter 09 §2.4 and the same bind path, so arena is skipped for HUD quota and complaint. U9.3 shape is already concrete in chapter 09 §2.9–2.11 and the same bind path, so arena is skipped for the overlays. U10.1 shape is already concrete in chapter 11 §4 (hand agent rates and the two viability cells), so arena is skipped for BalanceSim. U10.2 composes `FiveShiftRun`, live 4-player `QuotaBudget`, and a 4-seat hash pulse. Arena is skipped; two sketches compared in-thread. The mailbox walk lost (second throughput model). Invented shift-5 rates lost (not in chapter 11). U10.3 issue 109 names `Length <= 200_000` on encoded `JoinState`. Arena is skipped; two sketches compared in-thread. Stamp-plus-hash won. Snapshot-on-join lost (new sync path, size gate still measures `JoinState`). Full `ContainerState` lost (chapter 08 §3.9, not this unit). U10.4 issue 110 names `windows-latest`, `ubuntu-latest`, and the U1.1 then U1.5 golden hash. Arena is skipped; two sketches compared in-thread. Dedicated `SeedViewer` matrix won. Full `test` job matrix lost (doubles CI; Godot and play-boot stay Ubuntu). Artifact-compare job lost (both matching golden already proves they match each other).
 
 ## GitHub issues
 
