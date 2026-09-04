@@ -10,13 +10,13 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues. The current landable unit is U7.2 (issue 101): MetaProfile persist (XP only). Do not start U8+.
+This run cuts those gates into landable child issues. The current landable unit is U8.1 (issue 102): Harvestable resource nodes. Do not start U8.2+.
 
 ## Scope
 
-Touch chapters 07 §7.1 (MetaProfile), 08 §3.8 (`profile.json`), and 01 §5.1 (write the U7.1 award). Reuse `ResultsPayload.PostalRankXp`. Keep the U7.1 formula. Do not start M2–M5.
+Touch chapter 02 §3.9 (yield and HP table). Reuse U1.4 `ResourceNodeRecord` placement and U2.2 item and tool defs. Keep `WorldHash` and `ResourceNodeRecord`. Do not start M2–M5.
 
-U7.2 is a typed `MetaProfile` plus `MetaProfileStore` Load/Save. Write at Results adds `PostalRankXp` to `rankXp`. File is valid JSON. No Steam Cloud, no unlock enforcement, no cosmetics/stats/recentRuns/settings, no results overlay, no new `MessageKind`.
+U8.1 is a typed `HarvestTable` plus `HarvestSession.Hit`. Axe on wood yields 2 Log for 5 hits and leaves a stump. Hand on fiber yields 3 Fiber for 3 hits and sets regrow for the next shift. No wall or chest placement, no Oil pump, no `MessageKind`, no interact prompt.
 
 ## Rigor
 
@@ -130,7 +130,7 @@ Riskiest unknown first: cross-platform generation determinism. Smallest landable
 | U10.3 | Join state size after 3 shifts | ≤ 200 KB; world and containers match | U6.2, U1.5 |
 | U10.4 | Windows and Linux `worldHash` CI | Same golden hash on both runners | U1.1 (full after U1.5) |
 
-Architect arena runs before U1.2 (OpenSimplex2 and coastline are a one-way door) and before U3.1 (run phases). U1.1 shape is already concrete in chapter 02 §2 (PCG32, int16 cm, 0.5 m lattice, 64-bit FNV), so arena is skipped for the skeleton. U7.2 shape is already concrete in chapter 08 §3.8, so arena is skipped for persist.
+Architect arena runs before U1.2 (OpenSimplex2 and coastline are a one-way door) and before U3.1 (run phases). U1.1 shape is already concrete in chapter 02 §2 (PCG32, int16 cm, 0.5 m lattice, 64-bit FNV), so arena is skipped for the skeleton. U7.2 shape is already concrete in chapter 08 §3.8, so arena is skipped for persist. U8.1 shape is already concrete in chapter 02 §3.9, so arena is skipped for harvest.
 
 ## GitHub issues
 
