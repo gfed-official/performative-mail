@@ -243,3 +243,8 @@ ts	phase	decision	why	evidence	result
 2026-09-04T04:53:59Z	architect	Flatten earnings quota complaint onto HudSnapshot and HudFrame	One From call; inspect dump is flat key=value; nested bar types have no second caller	src/Client/UI/HudSnapshot.cs	accepted
 2026-09-04T04:53:59Z	architect	Skip four-model arena	Chapter 09 2.4 and the M0 HUD bind path already name the shape	docs/m1-frame.md	accepted
 2026-09-04T04:53:59Z	subtract	No shake tooltip envelope art payday draft results or play-boot BindHud	Verify is printed texts from a stub snapshot; U9.3 owns overlays; issue 137 forbids Placeholder on play	spec/09-ui-ux.md	accepted
+2026-09-04T05:02:28Z	u9.2	Flattened earnings quota complaint onto HudSnapshot	One From call formats Quota E / Q, +surplus, and points	src/Client/UI/HudFrame.cs	accepted
+2026-09-04T05:02:28Z	verify	dotnet test Release 541 passed	Sim 366 Net 159 Bot 16; baseline U9.1 was 536; 29 HUD filter tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T05:02:28Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T05:02:28Z	verify	Acceptance filter 29 passed	Quota 640 / 2214; +surplus when met; complaint 0 and 100; Shift 3 / 5; scene Ignore; play boot unbound	dotnet test --filter HudFrame|HudBoot|HudScene|MainPlayBoot	VERIFIED
+2026-09-04T05:02:29Z	verify	Godot inspect pending CI	No godot binary on the agent host; inspect-hud.sh now greps quota and complaint	tools/godot/inspect-hud.sh	INCONCLUSIVE
