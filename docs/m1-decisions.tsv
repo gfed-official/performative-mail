@@ -71,3 +71,16 @@ ts	phase	decision	why	evidence	result
 2026-09-03T22:47:00Z	verify	Planted not_a_flag stamp exits 1	same CLI on a temp copy of double_raids.json	tools/ContentValidator	VERIFIED
 2026-09-03T22:47:00Z	verify	dotnet test Release 270 passed	Sim 140 Net 114 Bot 16; eight new perk and stamp tests	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-03T22:48:00Z	verify	CI on ebeab74 success	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33814472724	VERIFIED
+2026-09-03T22:55:00Z	frame	Frame U2.4 as disk reload through ContentFiles.Load	Issue 86 names F6; this unit forbids F6 and has no Godot display	https://github.com/gfed-official/performative-mail/issues/86	open
+2026-09-03T22:55:00Z	architect	ContentBundle plus ContentSession.Reload	Catalogs stay load-only; Validate already ran the same tree; a per-file cache would rewrite U2.1-U2.3	src/Sim/World/ContentSession.cs	accepted
+2026-09-03T22:55:00Z	architect	Skip four-model arena	User constraints settle the shape; F6 and perk re-apply are out	docs/m1-frame.md	accepted
+2026-09-03T22:55:00Z	subtract	No F6, no StatSheet re-apply, no catalog rewrite	Perk apply is U5; Godot F6 waits for a later debug boot	src/Sim/World/ContentFiles.cs	accepted
+2026-09-03T22:59:00Z	verify	Reload after walkSpeed 5.0 to 9.5 on a temp copy	ContentReloadTests.Reload_AfterBalanceEdit_PicksUpNewWalkSpeed	tests/Sim.Tests/Content/ContentReloadTests.cs	VERIFIED
+2026-09-03T22:59:00Z	verify	Watcher fired on the same disk edit	ContentReloadTests.Watch_BalanceEditOnDisk_ReloadsWithoutRestart 9 ms	tests/Sim.Tests/Content/ContentReloadTests.cs	VERIFIED
+2026-09-03T22:59:00Z	verify	Planted NotAStat keeps the previous bundle	Reload failed; WalkSpeed stayed 5.0	tests/Sim.Tests/Content/ContentReloadTests.cs	VERIFIED
+2026-09-03T22:59:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-03T22:59:00Z	verify	Planted NotAStat perk exits 1	same CLI on a temp copy of long_legs.json	tools/ContentValidator	VERIFIED
+2026-09-03T22:59:00Z	verify	dotnet test Release 274 passed	Sim 144 Net 114 Bot 16; four new reload tests	dotnet test PerformativeMail.sln	VERIFIED
+2026-09-03T23:01:00Z	verify	CI on c59d6c8 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33815603136	VERIFIED
+2026-09-03T23:03:00Z	subtract	Deleted ContentFiles.Validate	Comment Sicko: void shim allocated a bundle and discarded it; callers use Load	src/Sim/World/ContentFiles.cs	accepted
+2026-09-03T23:06:00Z	verify	CI on 8f0b1ef all 4 checks green	test and Godot 4.7.2 .NET after Validate fold	https://github.com/gfed-official/performative-mail/actions	VERIFIED

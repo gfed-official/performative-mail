@@ -8,7 +8,7 @@ public sealed class ContentFilesTests
     [Fact]
     public void Validate_RepoContent_Succeeds()
     {
-        ContentFiles.Validate(FindContentRoot());
+        ContentFiles.Load(FindContentRoot());
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public sealed class ContentFilesTests
     public void ContentFiles_PlantedBadDistrictSum_FailsValidate()
     {
         string root = PlantMutatedArchetypes(def => def["districtHouseCounts"] = new JsonArray(1, 1, 1));
-        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Validate(root));
+        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Load(root));
         Assert.Contains("districtHouseCounts sum 3", ex.Message);
     }
 
@@ -48,7 +48,7 @@ public sealed class ContentFilesTests
         var node = JsonNode.Parse(File.ReadAllText(path))!;
         node["produces"]!["building"] = "no_such_building";
         File.WriteAllText(path, node.ToJsonString());
-        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Validate(root));
+        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Load(root));
         Assert.Contains("no_such_building", ex.Message);
     }
 
@@ -60,7 +60,7 @@ public sealed class ContentFilesTests
         var node = JsonNode.Parse(File.ReadAllText(path))!;
         node["modifiers"]![0]!["stat"] = "NotAStat";
         File.WriteAllText(path, node.ToJsonString());
-        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Validate(root));
+        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Load(root));
         Assert.Contains("NotAStat", ex.Message);
     }
 
@@ -72,7 +72,7 @@ public sealed class ContentFilesTests
         var node = JsonNode.Parse(File.ReadAllText(path))!;
         node["rules"] = new JsonArray("not_a_flag");
         File.WriteAllText(path, node.ToJsonString());
-        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Validate(root));
+        var ex = Assert.Throws<InvalidOperationException>(() => ContentFiles.Load(root));
         Assert.Contains("not_a_flag", ex.Message);
     }
 

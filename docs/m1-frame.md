@@ -64,7 +64,7 @@ Riskiest unknown first: cross-platform generation determinism. Smallest landable
 | U2.1 | Archetype, streets, balance JSON + validator rules | Bad archetype fails CI | U1.1 types only |
 | U2.2 | Item, mail, building, recipe, shop defs | All refs resolve | U2.1 |
 | U2.3 | Perk, stamp, unlock defs and closed Stat / RuleFlag enums | Unknown stat fails validator | U2.1 |
-| U2.4 | Editor hot reload | F6 reloads defs in a debug boot | U2.2, U2.3 |
+| U2.4 | Editor hot reload | Disk edit reloads Defs through `ContentFiles.Load` | U2.2, U2.3 |
 
 ### U3 children (run)
 
