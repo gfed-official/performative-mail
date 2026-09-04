@@ -8,6 +8,7 @@
   "modifiers": [
     { "stat": "BeltSpeed", "op": "mul", "value": 1.5 }
   ],
+  "prerequisites": { "builtAny": ["belt_mk1", "belt_mk2"] },
   "maxStacks": 1,
   "tags": ["belt"]
 }
