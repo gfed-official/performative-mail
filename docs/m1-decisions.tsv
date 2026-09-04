@@ -113,3 +113,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T00:02:31Z	verify	dotnet test Release 370 passed	Sim 240 Net 114 Bot 16; letter +5; late 4 then 0; mix shares sum 1	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-04T00:02:31Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T00:02:31Z	verify	Acceptance filter 5 passed	AddsFiveComplaint; OneShiftLate 4c; TwoShiftsLate 0c; mix sum; letter AddMisdelivery	dotnet test --filter AddsFiveComplaint|OneShiftLate|TwoShiftsLate|EachShiftShares|AddMisdelivery_Letter	VERIFIED
+2026-09-04T00:04:30Z	verify	CI on 55c3eeb all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33820150062	VERIFIED
