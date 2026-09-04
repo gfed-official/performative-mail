@@ -147,3 +147,8 @@ ts	phase	decision	why	evidence	result
 2026-09-04T00:55:00Z	verify	dotnet test Release 405 passed	Sim 269 Net 120 Bot 16; remount occupancy and 1.1 clamp	dotnet test PerformativeMail.sln -c Release	VERIFIED
 2026-09-04T00:55:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T00:55:00Z	verify	Acceptance filter passed	quoted bash filter; remount; 1.1 clamp; bike != walk; mounted predict; snapshot vehicleId; shop 120; Criterion2; ZeroDelay walk	dotnet test --filter 'OnRoadForward_DoesNotCallWalkStep|MountedPredict|MountedListenHost|TryBuy_Bike|Criterion2_200ms|ZeroDelay_PredictedPose|Remount_FreesPreviousBike|Displacement_AboveMaxSpeedTimes1_1'	VERIFIED
+2026-09-04T01:06:06Z	frame	Frame U5.1 as StatSheet and modifier resolution	Issue 94; chapter 08 2.9 already names base x Pi(mul) + Sigma(add); no draft	https://github.com/gfed-official/performative-mail/issues/94	open
+2026-09-04T01:06:06Z	architect	Chose mutable StatSheet with SetBase Add Get	Overlay is the named object; Get hides the product-then-sum rule; PerkDef stays a list	/tmp/u51-architect/synthesis.md	accepted
+2026-09-04T01:06:06Z	architect	Skip four-model arena	Chapter 08 and issue 94 settle the formula; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T01:06:06Z	subtract	No draft team grey-out vehicle apply or new Stat keys	U5.2 and U5.3 own those; U2.3 already closed the enum	src/Sim/Content/Stat.cs	accepted
+2026-09-04T01:06:06Z	architect	Fix chapter 07 Sigma-multipliers to Pi(mul)	Chapter 08 2.9 and the unit table are the contract; ch07 was the stale sum	spec/07-technical-architecture.md	accepted

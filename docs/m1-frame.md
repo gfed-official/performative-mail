@@ -10,13 +10,13 @@ Every M1 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 4. Join state is ≤ 200 KB after 3 shifts. A player who joins in Prep of shift 3 sees the same world and containers.
 5. Generation is ≤ 3 s on a mid-range laptop. 100 random seeds pass validation without manual intervention (reroll rate ≤ 5%).
 
-This run cuts those gates into landable child issues. The current landable unit is U4.2 (issue 93): bike vehicle and driver prediction. Do not start U5+.
+This run cuts those gates into landable child issues. The current landable unit is U5.1 (issue 94): StatSheet and modifier resolution. Do not start U5.2+.
 
 ## Scope
 
-Touch chapters 04 (bike table), 06 (driver prediction), 07 (Vehicles.Step), and 08 (shop vehicle grant). Keep M0 walk netcode. Do not start M2–M5.
+Touch chapters 01 (perks as StatModifier lists), 07 (StatSheet overlay), and 08 §2.9 (resolution formula). Reuse closed `Stat` / `StatModifier` from U2.3. Keep U4 bike and shop. Do not start M2–M5.
 
-U4.2 adds a bike path beside walk `MovementStep`. Mounted snapshots carry `vehicleId`. Shop may grant a parked bike. No StatSheet apply, draft, truck, or NPC driver.
+U5.1 adds `StatSheet` that overlays modifiers on base stats. Resolution is `base × Π(mul) + Σ(add)`. No perk-specific branches, draft offer, team grey-out, or apply into vehicles.
 
 ## Rigor
 

@@ -105,8 +105,8 @@ SimWorld.Tick(tick):
 ## 6. Data-driven content
 
 - All content files are validated at boot (and in CI by tools/ContentValidator) against the schemas in chapter 08: unique ids, referenced ids exist, grid sizes positive, perk modifiers reference known stat keys, recipes reference known items and produce buildings only.
-- Content is loaded into immutable Def records. Runtime state never mutates a Def; perks apply via StatSheet overlays (baseValue × Σmultipliers + Σadders per stat key).
-- Stat keys are a closed enum defined in code (Stat.PlayerSpeed, Stat.BeltSpeedMk1, Stat.SorterFilterSlots, ...). Adding a new stat is a code change; adding a perk that uses an existing stat is not.
+- Content is loaded into immutable Def records. Runtime state never mutates a Def; perks apply via StatSheet overlays (base × Π(mul) + Σ(add) per stat key).
+- Stat keys are a closed enum defined in code (Stat.PlayerSpeed, Stat.BeltSpeed, ...). Adding a new stat is a code change; adding a perk that uses an existing stat is not.
 - Balance constants (content/balance.json) cover every number tagged *tunable* in this spec.
 - Hot reload in the editor: pressing F6 in a debug build reloads content and re-applies perks for rapid balancing.
 
