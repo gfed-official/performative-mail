@@ -206,6 +206,22 @@ public sealed class PlaySessionMachine : IDisposable
         return TrySpawnLetter(server, inventory, hotbar);
     }
 
+    public bool TryStockIntake()
+    {
+        if (!TryHostPlaying(out var server, out _))
+            return false;
+        if (server.World.Inventory is not InventorySystem inventory)
+            return false;
+        if (server.World.Intake.Value == 0)
+            return false;
+        if (TryFirstMail(inventory, server.World.Intake, out _, out _))
+            return true;
+        if (server.Tables is not { Houses.Length: > 0 } tables)
+            return false;
+
+        return TrySpawnLetter(server, inventory, server.World.Intake, tables.Houses[0].Address);
+    }
+
     private bool TryHostPlaying(out ServerRuntime server, out EntityId local)
     {
         server = null!;
@@ -234,16 +250,27 @@ public sealed class PlaySessionMachine : IDisposable
         return true;
     }
 
-    private static bool TrySpawnLetter(ServerRuntime server, InventorySystem inventory, ContainerId hotbar)
+    private static bool TrySpawnLetter(ServerRuntime server, InventorySystem inventory, ContainerId dest)
     {
-        if (server.World.Mail is not MailRegistry mail)
-            return false;
         if (server.World.Atlas is not WorldAtlas atlas)
             return false;
         if (atlas.DeliverableAddresses.Count == 0)
             return false;
 
-        var address = atlas.DeliverableAddresses[0];
+        return TrySpawnLetter(server, inventory, dest, atlas.DeliverableAddresses[0]);
+    }
+
+    private static bool TrySpawnLetter(
+        ServerRuntime server,
+        InventorySystem inventory,
+        ContainerId dest,
+        AddressId address)
+    {
+        if (server.World.Mail is not MailRegistry mail)
+            return false;
+        if (server.World.Atlas is not WorldAtlas atlas)
+            return false;
+
         var id = mail.Allocate();
         var item = new MailItem(
             id,
@@ -254,7 +281,7 @@ public sealed class PlaySessionMachine : IDisposable
             MailSpawnConstants.Shift1);
         if (!mail.Register(item))
             return false;
-        return inventory.Apply(Actor.System, new Deposit(hotbar, MailStack.Single(MailKinds.Letter, address, id)))
+        return inventory.Apply(Actor.System, new Deposit(dest, MailStack.Single(MailKinds.Letter, address, id)))
             is Accepted;
     }
 

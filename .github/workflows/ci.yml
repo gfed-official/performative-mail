@@ -113,3 +113,5 @@ jobs:
         run: bash tools/godot/ci.sh debug-helpers
       - name: Headless Host WorldStage live dump
         run: bash tools/godot/ci.sh worldstage
+      - name: Headless Host interact pickup and deliver
+        run: bash tools/godot/ci.sh interact

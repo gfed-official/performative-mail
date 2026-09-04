@@ -39,7 +39,7 @@ When `PlaySession.Playing.World` is null, `worldHash` is `0x0000000000000000` an
 
 `--host --debug-world` writes the same Playing keys. `worldEntityCounts.houses` and `mailboxes` are `2`, and `worldHash` is `0x4CF184F2FA4D4EEE`.
 
-`--debug-helper=` does not add keys. `intake` and `mailbox` change `pawns[].x` / `pawns[].y`. `overlay` sets `overlayOpen` to true. `give-mail` is visible in inventory, not in this object.
+`--debug-helper=` does not add keys. `intake` and `mailbox` change `pawns[].x` / `pawns[].y`. `overlay` sets `overlayOpen` to true. `give-mail` is visible in inventory, not in this object. `interact` stocks Intake, picks up with Interact, delivers to the first mailbox, and leaves `wallet` at `8` and the local pawn at `200, 1600`.
 
 `--world-dump=` is a sidecar Label3D dump from `WorldStage.Dump`. It is not a SmokeReport key. `tools/godot/ci.sh worldstage` asserts `worldEntityCounts` here and the live labels in that dump.
 

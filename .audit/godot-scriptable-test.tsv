@@ -5,3 +5,4 @@ ts	decision	reason
 2026-09-04T16:10Z	json-report	Grepping Control dumps is brittle; structured --report fields let jq assert wallet/entity counts
 2026-09-04T16:10Z	xunit-pure-helpers	Label/placement math belongs in App/Client helpers; Godot keeps thin mesh wrappers
 2026-09-04T16:10Z	issue-prefix-test-play	Match repo taxonomy: [test] for harness/smokes, [play] for debug world/menu surface
+2026-09-04T23:20Z	interact-helper-sequence	Headless has no Key.E and Prep does not spawn mail; --debug-helper=interact stocks Intake, injects Interact, teleports, asserts wallet 8
