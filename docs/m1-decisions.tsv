@@ -167,3 +167,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T01:26:00Z	verify	dotnet test Release 422 passed	Sim 286 Net 120 Bot 16; nine DraftSession tests; baseline U5.1 was 413	dotnet test PerformativeMail.sln -c Release	VERIFIED
 2026-09-04T01:26:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T01:26:00Z	verify	Acceptance filter 9 passed	Golden seed offers insured quick_hands union_rep; same seed reproduces; stream name perks; shift 2 rare 15	dotnet test --filter DraftSession	VERIFIED
+2026-09-04T01:23:30Z	verify	CI on 9ddd331 both jobs green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33825442353	VERIFIED
