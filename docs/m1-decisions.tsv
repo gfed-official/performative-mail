@@ -12,3 +12,10 @@ ts	phase	decision	why	evidence	result
 2026-09-03T20:36:00Z	verify	CI on acadf1b all 4 checks green	docs-only trail commit	https://github.com/gfed-official/performative-mail/actions/runs/33802970270	VERIFIED
 2026-09-03T20:37:00Z	audit	Accepted PCG32 official first-draw pin	Trail review said empty Fnv and no PCG vector	tests/Sim.Tests/Core/Pcg32Tests.cs	open
 2026-09-03T20:37:00Z	audit	Kept Windows hash as U10.4	Ubuntu golden hash is this unit; cross-OS is a later gate	docs/m1-frame.md	accepted
+2026-09-03T20:45:00Z	u1.2	Frame U1.2 as OpenSimplex2 plus coastline plus falloff	Issue 79; chapter 02 §3.1; WorldHash encoding stays U1.1	https://github.com/gfed-official/performative-mail/issues/79	open
+2026-09-03T20:45:00Z	architect	Chose staged Q16.16 OpenSimplex2 over inlined WorldGen	Hash contract stays on heights; coastline and reroll become testable	src/Sim/World/HeightmapStage.cs	accepted
+2026-09-03T20:45:00Z	architect	Skipped multi-model arena	Parent forbids nested subagents; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-03T20:45:00Z	u1.2	Subtracted U1.1 PCG height fill	Skeleton only proved hash encoding; U1.2 owns the field	src/Sim/World/WorldGen.cs	accepted
+2026-09-03T20:45:00Z	u1.2	Golden hash must change from 0x24849E8EF0DBB228	New height field is not the U1.1 stub; value recorded after first run	tests/Sim.Tests/World/WorldGenHashTests.cs	open
+2026-09-03T21:10:00Z	u1.2	Pinned golden hash 0x936BE960EC16395A	Seed 0x7F3A9C21 after OpenSimplex2 coastline falloff; != U1.1 0x24849E8EF0DBB228	tests/Sim.Tests/World/WorldGenHashTests.cs	tests green
+2026-09-03T21:10:00Z	verify	Golden seed land 10183 sea 79817 buildable 99.7%	Corners -2200; center 1209; valid on attempt 1	/tmp/hmprobe	VERIFIED

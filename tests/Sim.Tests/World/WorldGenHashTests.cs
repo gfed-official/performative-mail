@@ -7,7 +7,12 @@ public sealed class WorldGenHashTests
 {
     public const uint FixedSeed = 0x7F3A9C21;
 
-    public const ulong GoldenWorldHash = 0x24849E8EF0DBB228UL;
+    // U1.1 hashed a PCG stub fill. U1.2 replaces that field with OpenSimplex2 +
+    // coastline + falloff, so the golden must move. Kept to prove this is not a rename.
+    public const ulong U11SkeletonWorldHash = 0x24849E8EF0DBB228UL;
+
+    // Seed 0x7F3A9C21 after the U1.2 height field. Not 0x24849E8EF0DBB228.
+    public const ulong GoldenWorldHash = 0x936BE960EC16395AUL;
 
     [Fact]
     public void GenerateSmallIsland_SameSeed_SameWorldHash()
@@ -41,8 +46,17 @@ public sealed class WorldGenHashTests
         Assert.Equal(WorldGen.SmallIslandTileCm, tables.TileCm);
         Assert.Equal(WorldGen.SmallIslandTiles * WorldGen.SmallIslandTiles, tables.Heights.Length);
         Assert.Empty(tables.Addresses);
+        Assert.Equal(tables.Heights.Length, tables.Buildable.Length);
         foreach (var height in tables.Heights)
-            Assert.InRange(height, -1000, 4000);
+            Assert.InRange(height, short.MinValue, short.MaxValue);
+    }
+
+    [Fact]
+    public void GenerateSmallIsland_ReplacesU11SkeletonHash()
+    {
+        var hash = WorldHash.Compute(WorldGen.GenerateSmallIsland(FixedSeed));
+        Assert.NotEqual(U11SkeletonWorldHash, hash);
+        Assert.Equal(GoldenWorldHash, hash);
     }
 
     [Fact]
