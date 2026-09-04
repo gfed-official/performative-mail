@@ -27,16 +27,21 @@ public partial class Main : Node3D
     private bool _inspectHud;
     private bool _inspectOverlay;
     private bool _inspectLobby;
+    private bool _inspectOverlays;
     private bool _overlayHeld;
     private string? _reportPath;
     private string? _hudDumpPath;
     private string? _overlayDumpPath;
     private string? _lobbyDumpPath;
+    private string? _overlaysDumpPath;
     private int _quitAfterMs;
     private ulong _startedUsec;
     private Hud _hud = null!;
     private Lobby _lobby = null!;
     private InventoryOverlay _overlay = null!;
+    private Payday _payday = null!;
+    private Draft _draft = null!;
+    private Results _results = null!;
 
     public override void _Ready()
     {
@@ -47,6 +52,7 @@ public partial class Main : Node3D
         BuildHud();
         BuildLobby();
         BuildOverlay();
+        BuildPhaseOverlays();
         ApplyArgs(OS.GetCmdlineUserArgs());
         if (_inspectHud)
         {
@@ -63,6 +69,12 @@ public partial class Main : Node3D
         if (_inspectLobby)
         {
             InspectLobby();
+            return;
+        }
+
+        if (_inspectOverlays)
+        {
+            InspectOverlays();
             return;
         }
 
@@ -244,6 +256,30 @@ public partial class Main : Node3D
     private void BindLobby(in LobbySnapshot snapshot) =>
         _lobby.Bind(LobbyFrame.From(in snapshot));
 
+    private void BuildPhaseOverlays()
+    {
+        var layer = new CanvasLayer { Layer = 12 };
+        AddChild(layer);
+        _payday = GD.Load<PackedScene>("res://scenes/payday.tscn").Instantiate<Payday>();
+        layer.AddChild(_payday);
+        _payday.Visible = false;
+        _draft = GD.Load<PackedScene>("res://scenes/draft.tscn").Instantiate<Draft>();
+        layer.AddChild(_draft);
+        _draft.Visible = false;
+        _results = GD.Load<PackedScene>("res://scenes/results.tscn").Instantiate<Results>();
+        layer.AddChild(_results);
+        _results.Visible = false;
+    }
+
+    private void BindPayday(in PaydaySnapshot snapshot) =>
+        _payday.Bind(PaydayFrame.From(in snapshot));
+
+    private void BindDraft(in DraftOffer offer) =>
+        _draft.Bind(DraftFrame.From(in offer));
+
+    private void BindResults(in ResultsPayload payload) =>
+        _results.Bind(ResultsFrame.From(in payload));
+
     private void BuildOverlay()
     {
         _overlay = new InventoryOverlay();
@@ -316,6 +352,26 @@ public partial class Main : Node3D
         GetTree().Quit();
     }
 
+    private void InspectOverlays()
+    {
+        _payday.Visible = true;
+        _draft.Visible = true;
+        _results.Visible = true;
+        BindPayday(PhaseOverlayBoot.Payday());
+        BindDraft(PhaseOverlayBoot.Draft());
+        BindResults(PhaseOverlayBoot.Results());
+        var dump = new StringBuilder();
+        dump.AppendLine(_payday.Dump("payday"));
+        dump.AppendLine(_draft.Dump("draft"));
+        dump.AppendLine(_results.Dump("results"));
+        dump.AppendLine("PHASE_DUMP_END");
+        var text = dump.ToString();
+        GD.Print(text);
+        if (_overlaysDumpPath is not null)
+            File.WriteAllText(_overlaysDumpPath, text);
+        GetTree().Quit();
+    }
+
     private static HudSnapshot InspectMismatch() =>
         DeliveryStub(new InteractPrompt.Deliver("13 Larch Lane", "8 Oak Street"));
 
@@ -355,12 +411,16 @@ public partial class Main : Node3D
                 _inspectOverlay = true;
             else if (arg == "--inspect-lobby")
                 _inspectLobby = true;
+            else if (arg == "--inspect-overlays")
+                _inspectOverlays = true;
             else if (arg.StartsWith("--hud-dump=", StringComparison.Ordinal))
                 _hudDumpPath = arg.Substring("--hud-dump=".Length);
             else if (arg.StartsWith("--overlay-dump=", StringComparison.Ordinal))
                 _overlayDumpPath = arg.Substring("--overlay-dump=".Length);
             else if (arg.StartsWith("--lobby-dump=", StringComparison.Ordinal))
                 _lobbyDumpPath = arg.Substring("--lobby-dump=".Length);
+            else if (arg.StartsWith("--overlays-dump=", StringComparison.Ordinal))
+                _overlaysDumpPath = arg.Substring("--overlays-dump=".Length);
             else if (arg.StartsWith("--quit-after-ms=", StringComparison.Ordinal) &&
                      int.TryParse(arg.AsSpan("--quit-after-ms=".Length), out var ms))
                 _quitAfterMs = ms;

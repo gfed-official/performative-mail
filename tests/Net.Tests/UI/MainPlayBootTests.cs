@@ -8,8 +8,12 @@ public sealed class MainPlayBootTests
         var ready = MethodBody(ReadMain(), "_Ready");
         Assert.DoesNotContain("BindHud", ready);
         Assert.DoesNotContain("BindLobby", ready);
+        Assert.DoesNotContain("BindPayday", ready);
+        Assert.DoesNotContain("BindDraft", ready);
+        Assert.DoesNotContain("BindResults", ready);
         Assert.DoesNotContain("HudBoot.Placeholder", ready);
         Assert.DoesNotContain("LobbyBoot", ready);
+        Assert.DoesNotContain("PhaseOverlayBoot", ready);
         Assert.Contains("BindOverlay", ready);
         Assert.Contains("performative-mail boot ok", ready);
     }
@@ -36,6 +40,26 @@ public sealed class MainPlayBootTests
     {
         var build = MethodBody(ReadMain(), "BuildLobby");
         Assert.Contains("_lobby.Visible = false", build);
+    }
+
+    [Fact]
+    public void InspectOverlays_UsesPhaseBootNotHudPlaceholder()
+    {
+        var inspect = MethodBody(ReadMain(), "InspectOverlays");
+        Assert.Contains("PhaseOverlayBoot.Payday", inspect);
+        Assert.Contains("PhaseOverlayBoot.Draft", inspect);
+        Assert.Contains("PhaseOverlayBoot.Results", inspect);
+        Assert.DoesNotContain("HudBoot.Placeholder", inspect);
+        Assert.DoesNotContain("BindHud", inspect);
+    }
+
+    [Fact]
+    public void BuildPhaseOverlays_HidesPaydayDraftAndResults()
+    {
+        var build = MethodBody(ReadMain(), "BuildPhaseOverlays");
+        Assert.Contains("_payday.Visible = false", build);
+        Assert.Contains("_draft.Visible = false", build);
+        Assert.Contains("_results.Visible = false", build);
     }
 
     private static string ReadMain()
