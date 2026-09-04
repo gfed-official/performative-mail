@@ -96,17 +96,6 @@ public sealed class DeathSessionTests
     }
 
     [Fact]
-    public void Die_DoesNotChangeRunState()
-    {
-        var fx = new Fixture();
-        var run = new RunState(RunPhase.Delivery, 1, 100);
-        fx.Death.Die(fx.Player.Id, DeathTile, 0);
-        fx.Death.AdvanceTo(900);
-        Assert.Equal(RunPhase.Delivery, run.Phase);
-        Assert.Equal(1, run.Shift);
-    }
-
-    [Fact]
     public void Die_WhileDead_IsNoOp()
     {
         var fx = new Fixture();

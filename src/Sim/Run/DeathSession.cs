@@ -37,11 +37,6 @@ public sealed class DeathSession
         _respawnPose = respawnPose;
     }
 
-    public DeathSession(InventorySystem inventory, ContainerId intake)
-        : this(inventory, intake, PlayerPose.Origin)
-    {
-    }
-
     public uint Now { get; private set; }
 
     public void Bind(
