@@ -7,7 +7,6 @@ using PerformativeMail.Game.Net;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Run;
-using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Game;
 
@@ -656,69 +655,8 @@ public partial class Main : Node3D
         GetTree().Quit();
     }
 
-    private static void WriteReport(PlaySession state, string path)
-    {
-        var json = new StringBuilder();
-        json.Append("{\"state\":\"");
-        json.Append(state.GetType().Name);
-        json.Append('\"');
-        if (state is PlaySession.Playing playing)
-        {
-            var hud = HudFrame.From(playing.Hud);
-            json.Append(",\"local\":");
-            json.Append(playing.LocalPlayer.Value);
-            json.Append(",\"worldHash\":\"0x");
-            json.Append((playing.World is { } tables
-                ? WorldHash.Compute(tables)
-                : 0UL).ToString("X16"));
-            json.Append('\"');
-            json.Append(",\"phase\":\"");
-            json.Append(playing.Hud.Phase);
-            json.Append('\"');
-            json.Append(",\"shift\":");
-            json.Append(playing.Hud.Shift);
-            json.Append(",\"wallet\":");
-            json.Append(playing.Hud.Wallet.Value);
-            json.Append(",\"quota\":");
-            json.Append(playing.Hud.Quota.Value);
-            json.Append(",\"hudShift\":\"");
-            json.Append(hud.ShiftLabel);
-            json.Append('\"');
-            json.Append(",\"hudPhase\":\"");
-            json.Append(hud.PhaseLabel);
-            json.Append('\"');
-            json.Append(",\"hudTimer\":\"");
-            json.Append(hud.TimerLabel);
-            json.Append('\"');
-            json.Append(",\"pawns\":[");
-            for (int i = 0; i < playing.Pawns.Count; i++)
-            {
-                if (i > 0)
-                    json.Append(',');
-                var pawn = playing.Pawns[i];
-                json.Append("{\"id\":");
-                json.Append(pawn.Id.Value);
-                json.Append(",\"role\":\"");
-                json.Append(pawn.Role);
-                json.Append("\",\"x\":");
-                json.Append(pawn.Pose.Xcm);
-                json.Append(",\"y\":");
-                json.Append(pawn.Pose.Ycm);
-                json.Append('}');
-            }
-
-            json.Append(']');
-        }
-        else if (state is PlaySession.Failed failed)
-        {
-            json.Append(",\"error\":\"");
-            json.Append(failed.Reason.Message().Replace("\"", "'"));
-            json.Append('\"');
-        }
-
-        json.Append('}');
-        File.WriteAllText(path, json.ToString());
-    }
+    private void WriteReport(PlaySession state, string path) =>
+        SmokeReport.Write(path, state, new SmokeReportUi(_overlay.IsOpen, _debug is { IsOpen: true }));
 
     private static TimeSpan WallNow() =>
         TimeSpan.FromTicks((long)Time.GetTicksUsec() * 10);

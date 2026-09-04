@@ -19,6 +19,16 @@ need_cmd() {
   command -v "$1" >/dev/null 2>&1 || fail "$1 is not on PATH"
 }
 
+need_jq() {
+  if ! command -v jq >/dev/null 2>&1; then
+    if command -v apt-get >/dev/null 2>&1; then
+      DEBIAN_FRONTEND=noninteractive apt-get update -qq
+      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq jq
+    fi
+  fi
+  need_cmd jq
+}
+
 verify_godot() {
   echo "==> command -v godot"
   need_cmd godot
@@ -207,6 +217,21 @@ host_play_smoke() {
     || fail "host play report missing PREP HUD: $(cat "$report")"
   grep -q '"hudShift":"Shift 1 / 5"' "$report" \
     || fail "host play report missing shift HUD: $(cat "$report")"
+  need_jq
+  jq -e '
+    .state == "Playing"
+    and .phase == "Prep"
+    and .shift == 1
+    and .worldHash == "0x821670054873680E"
+    and (.pawns | length) >= 1
+    and .worldEntityCounts.postOffices == 1
+    and .worldEntityCounts.intakes == 1
+    and .worldEntityCounts.houses == 50
+    and .worldEntityCounts.mailboxes == 50
+    and .overlayOpen == false
+    and .debugOpen == false
+  ' "$report" >/dev/null \
+    || fail "host play report failed jq schema: $(cat "$report")"
 }
 
 usage() {

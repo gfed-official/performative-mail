@@ -155,6 +155,14 @@ public sealed class MainPlayBootTests
         Assert.Contains("BindPause(state)", MethodBody(ReadMain(), "OpenPause"));
     }
 
+    [Fact]
+    public void WriteReport_DelegatesToSmokeReport()
+    {
+        var write = SliceMethod(ReadMain(), "WriteReport");
+        Assert.Contains("SmokeReport.Write", write);
+        Assert.DoesNotContain("json.Append", write);
+    }
+
     private static string ReadMain()
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
@@ -193,5 +201,22 @@ public sealed class MainPlayBootTests
         }
 
         throw new InvalidOperationException("unbalanced body for " + name);
+    }
+
+    private static string SliceMethod(string source, string name)
+    {
+        var needle = "void " + name + "(";
+        int start = source.IndexOf(needle, StringComparison.Ordinal);
+        Assert.True(start >= 0, "missing method " + name);
+        int arrow = source.IndexOf("=>", start);
+        int brace = source.IndexOf('{', start);
+        if (arrow >= 0 && (brace < 0 || arrow < brace))
+        {
+            int end = source.IndexOf(';', arrow);
+            Assert.True(end >= 0, "missing body for " + name);
+            return source.Substring(start, end - start + 1);
+        }
+
+        return MethodBody(source, name);
     }
 }
