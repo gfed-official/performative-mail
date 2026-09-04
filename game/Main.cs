@@ -7,6 +7,7 @@ using PerformativeMail.Game.Net;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Game;
 
@@ -14,6 +15,7 @@ public partial class Main : Node3D
 {
     private PlaySessionMachine _session = null!;
     private PawnStage _pawns = null!;
+    private WorldStage _world = null!;
     private Camera3D _camera = null!;
     private LineEdit _address = null!;
     private Label _status = null!;
@@ -111,7 +113,7 @@ public partial class Main : Node3D
         var state = _session.Pump(WallNow(), in intent);
         Render(state);
         if (!_pause.IsOpen)
-            PollOverlayToggle();
+            PollOverlayToggle(state);
         PollPause(state);
         PollDebugToggle();
         if (_debug is { IsOpen: true })
@@ -125,12 +127,14 @@ public partial class Main : Node3D
         {
             case PlaySession.Menu:
                 ShowForm(enabled: true);
+                HidePlayUi();
                 _pawns.DespawnAll();
                 _status.Text = "Host a game, or join a friend by LAN IP.";
                 break;
             case PlaySession.Connecting connecting:
                 ShowForm(enabled: false);
                 _leave.Disabled = false;
+                HidePlayUi();
                 _pawns.DespawnAll();
                 _status.Text = connecting.Describe();
                 break;
@@ -138,6 +142,10 @@ public partial class Main : Node3D
                 ShowForm(enabled: false);
                 _leave.Disabled = false;
                 _pawns.Sync(playing.Pawns);
+                _world.Sync(playing.World);
+                BindHud(playing.Hud);
+                if (_overlay.IsOpen && playing.Overlay is OverlayReplica overlay)
+                    BindOverlay(overlay);
                 _status.Text = StatusFor(playing);
                 if (_pawns.TryLocalOrigin(playing.Pawns, out var focus))
                 {
@@ -147,6 +155,7 @@ public partial class Main : Node3D
                 break;
             case PlaySession.Failed failed:
                 ShowForm(enabled: true);
+                HidePlayUi();
                 _pawns.DespawnAll();
                 _status.Text = failed.Reason.Message();
                 break;
@@ -161,6 +170,13 @@ public partial class Main : Node3D
         _host.Disabled = !enabled;
         _join.Disabled = !enabled;
         _leave.Disabled = enabled;
+    }
+
+    private void HidePlayUi()
+    {
+        _hud.Visible = false;
+        _world.Clear();
+        _overlay.Close();
     }
 
     private static string StatusFor(PlaySession.Playing playing)
@@ -192,13 +208,6 @@ public partial class Main : Node3D
         };
         AddChild(env);
 
-        var ground = new MeshInstance3D
-        {
-            Mesh = new PlaneMesh { Size = new Vector2(40f, 40f) },
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = new Color(0.22f, 0.38f, 0.22f) },
-        };
-        AddChild(ground);
-
         _camera = new Camera3D
         {
             Position = new Vector3(0f, 9f, 8f),
@@ -206,6 +215,9 @@ public partial class Main : Node3D
         };
         AddChild(_camera);
         _camera.LookAt(Vector3.Zero);
+
+        _world = new WorldStage();
+        AddChild(_world);
 
         _pawns = new PawnStage();
         AddChild(_pawns);
@@ -262,10 +274,14 @@ public partial class Main : Node3D
         var layer = new CanvasLayer { Layer = 10 };
         AddChild(layer);
         layer.AddChild(_hud);
+        _hud.Visible = false;
     }
 
-    private void BindHud(in HudSnapshot snapshot) =>
+    private void BindHud(in HudSnapshot snapshot)
+    {
+        _hud.Visible = true;
         _hud.Bind(HudFrame.From(in snapshot));
+    }
 
     private void BuildLobby()
     {
@@ -326,11 +342,21 @@ public partial class Main : Node3D
         _pauseMenu.Bind(_pause.Frame, _pause.IsOpen);
     }
 
-    private void PollOverlayToggle()
+    private void PollOverlayToggle(PlaySession state)
     {
         bool held = Input.IsPhysicalKeyPressed(Key.Tab) || Input.IsPhysicalKeyPressed(Key.Y);
         if (held && !_overlayHeld)
+        {
+            if (!_overlay.IsOpen &&
+                state is PlaySession.Playing playing &&
+                playing.Overlay is OverlayReplica live)
+            {
+                BindOverlay(live);
+            }
+
             _overlay.Toggle();
+        }
+
         _overlayHeld = held;
     }
 
@@ -614,8 +640,32 @@ public partial class Main : Node3D
         json.Append('\"');
         if (state is PlaySession.Playing playing)
         {
+            var hud = HudFrame.From(playing.Hud);
             json.Append(",\"local\":");
             json.Append(playing.LocalPlayer.Value);
+            json.Append(",\"worldHash\":\"0x");
+            json.Append((playing.World is { } tables
+                ? WorldHash.Compute(tables)
+                : 0UL).ToString("X16"));
+            json.Append('\"');
+            json.Append(",\"phase\":\"");
+            json.Append(playing.Hud.Phase);
+            json.Append('\"');
+            json.Append(",\"shift\":");
+            json.Append(playing.Hud.Shift);
+            json.Append(",\"wallet\":");
+            json.Append(playing.Hud.Wallet.Value);
+            json.Append(",\"quota\":");
+            json.Append(playing.Hud.Quota.Value);
+            json.Append(",\"hudShift\":\"");
+            json.Append(hud.ShiftLabel);
+            json.Append('\"');
+            json.Append(",\"hudPhase\":\"");
+            json.Append(hud.PhaseLabel);
+            json.Append('\"');
+            json.Append(",\"hudTimer\":\"");
+            json.Append(hud.TimerLabel);
+            json.Append('\"');
             json.Append(",\"pawns\":[");
             for (int i = 0; i < playing.Pawns.Count; i++)
             {

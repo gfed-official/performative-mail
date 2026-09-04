@@ -183,9 +183,35 @@ assert_playing_with_two_pawns() {
   test "$ids" -ge 2 || fail "$who report expected at least 2 pawns, got $ids: $(cat "$file")"
 }
 
+host_play_smoke() {
+  echo "==> headless host play report"
+  local report log
+  report="$(mktemp)"
+  log="$(mktemp)"
+  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+    --host --quit-after-ms=8000 --report="$report" \
+    >"$log" 2>&1; then
+    cat "$log"
+    fail "host play process exited non-zero"
+  fi
+  if [[ ! -f "$report" ]]; then
+    cat "$log"
+    fail "host play did not write a report"
+  fi
+  cat "$report"
+  echo
+  grep -q '"state":"Playing"' "$report" || fail "host play report is not Playing: $(cat "$report")"
+  grep -q '"worldHash":"0x821670054873680E"' "$report" \
+    || fail "host play report missing golden worldHash: $(cat "$report")"
+  grep -q '"hudPhase":"PREP"' "$report" \
+    || fail "host play report missing PREP HUD: $(cat "$report")"
+  grep -q '"hudShift":"Shift 1 / 5"' "$report" \
+    || fail "host play report missing shift HUD: $(cat "$report")"
+}
+
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join|play]
 
   verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import   godot --import + dotnet build of game/
@@ -196,6 +222,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debu
   overlays bind payday, draft, and results frames and read Control text
   debug    open DebugMenu from DebugBoot and read inspect/cheat labels
   join     two-process LAN host/join on 127.0.0.1:7777
+  play     solo Host play report with golden worldHash and HUD
   all      all of the above (default)
 EOF
 }
@@ -230,6 +257,9 @@ case "$cmd" in
   join)
     host_join_smoke
     ;;
+  play)
+    host_play_smoke
+    ;;
   all)
     verify_godot
     verify_dotnet
@@ -241,6 +271,7 @@ case "$cmd" in
     overlays_inspect
     debug_inspect
     host_join_smoke
+    host_play_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;
   -h|--help)

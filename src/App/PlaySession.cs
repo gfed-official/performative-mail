@@ -1,5 +1,7 @@
 using PerformativeMail.Client;
+using PerformativeMail.Client.UI;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.App;
 
@@ -43,7 +45,13 @@ public abstract record PlaySession
 
     public sealed record Playing : PlaySession
     {
-        public Playing(SessionRole role, EntityId localPlayer, IReadOnlyList<PawnView> pawns)
+        public Playing(
+            SessionRole role,
+            EntityId localPlayer,
+            IReadOnlyList<PawnView> pawns,
+            in HudSnapshot hud,
+            WorldTables? world,
+            OverlayReplica? overlay)
         {
             Role = role;
             LocalPlayer = localPlayer;
@@ -51,6 +59,9 @@ public abstract record PlaySession
             for (int i = 0; i < copy.Length; i++)
                 copy[i] = pawns[i];
             Pawns = copy;
+            Hud = hud;
+            World = world;
+            Overlay = overlay;
         }
 
         public SessionRole Role { get; }
@@ -58,6 +69,12 @@ public abstract record PlaySession
         public EntityId LocalPlayer { get; }
 
         public IReadOnlyList<PawnView> Pawns { get; }
+
+        public HudSnapshot Hud { get; }
+
+        public WorldTables? World { get; }
+
+        public OverlayReplica? Overlay { get; }
     }
 
     public sealed record Failed(FailReason Reason) : PlaySession;

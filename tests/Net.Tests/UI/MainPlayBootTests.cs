@@ -3,6 +3,29 @@ namespace PerformativeMail.Net.Tests.UI;
 public sealed class MainPlayBootTests
 {
     [Fact]
+    public void Render_Playing_BindsHudFromPlaying()
+    {
+        var render = MethodBody(ReadMain(), "Render");
+        Assert.Contains("BindHud(playing.Hud)", render);
+        Assert.Contains("_world.Sync(playing.World)", render);
+        Assert.DoesNotContain("HudBoot.Placeholder", render);
+    }
+
+    [Fact]
+    public void BuildHud_StartsHidden()
+    {
+        Assert.Contains("_hud.Visible = false", MethodBody(ReadMain(), "BuildHud"));
+    }
+
+    [Fact]
+    public void BuildWorld_DropsFortyMetrePlane()
+    {
+        var build = MethodBody(ReadMain(), "BuildWorld");
+        Assert.DoesNotContain("PlaneMesh", build);
+        Assert.Contains("WorldStage", build);
+    }
+
+    [Fact]
     public void Ready_DoesNotBindHudOrLobby()
     {
         var ready = MethodBody(ReadMain(), "_Ready");

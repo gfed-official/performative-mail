@@ -312,3 +312,11 @@ ts	phase	decision	why	evidence	result
 2026-09-04T06:11:09Z	audit	Trail review flagged CI copies the golden hex	Frame said SeedViewer reuses GoldenWorldHash but YAML held a second pin	docs/m1-decisions.tsv	open
 2026-09-04T06:11:09Z	architect	Pin via WorldGenHashTests on both OS	SeedViewer prints; the test constant is the one golden	.github/workflows/ci.yml	accepted
 2026-09-04T06:11:17Z	audit	Dropped YAML GOLDEN_WORLD_HASH copy	WorldGenHashTests.GoldenWorldHash is the pin on both runners	.github/workflows/ci.yml	accepted
+2026-09-04T07:47:09Z	frame	Filed U11 issues 153-161	User asked for GitHub issues per live-loop unit	https://github.com/gfed-official/performative-mail/issues/153	accepted
+2026-09-04T07:47:09Z	architect	Extend Playing with Hud World Overlay	HudSnapshot LobbyFrame Main.Bind already exist; no second view API	src/App/PlaySession.cs	accepted
+2026-09-04T07:47:09Z	architect	WorldAtlas.FromTables instead of rewriting MailSpawner	MailSpawner already takes WorldAtlas; generated tables adapt	src/Sim/World/WorldAtlas.cs	accepted
+2026-09-04T07:47:09Z	architect	Stay Prep after Host so Join still works	JoinGate is Lobby or Prep; auto-Ready would break M0 join tests	src/Server/ServerRuntime.cs	accepted
+2026-09-04T07:47:09Z	architect	Mail spawn only in Delivery when Clock is present	Soak and bots have no ShiftClock and must keep spawning	src/Server/ServerRuntime.cs	accepted
+2026-09-04T07:47:09Z	architect	Skip four-model arena for live loop	U9 already named Snapshot then Frame then Bind; live loop is that path from Playing	docs/m1-live-loop.md	accepted
+2026-09-04T07:47:09Z	verify	dotnet test Release 641 passed	Sim 394 Net 231 Bot 16; LiveLoop golden hash pickup deliver HUD bind	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T07:47:09Z	verify	ContentValidator and BalanceSim exit 0	U10.1 880/600 MET 810/1100 MISS; five paydays duration 1450s	dotnet run ContentValidator BalanceSim -- content	VERIFIED
