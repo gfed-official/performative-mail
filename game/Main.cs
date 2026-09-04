@@ -685,6 +685,13 @@ public partial class Main : Node3D
             dump.AppendLine("OVERLAY_DUMP_END");
             File.WriteAllText(_overlayDumpPath, dump.ToString());
         }
+        if (_hudDumpPath is not null && state is PlaySession.Playing)
+        {
+            var dump = new StringBuilder();
+            dump.AppendLine(_hud.Dump("live"));
+            dump.AppendLine("HUD_DUMP_END");
+            File.WriteAllText(_hudDumpPath, dump.ToString());
+        }
         GetTree().Quit();
     }
 

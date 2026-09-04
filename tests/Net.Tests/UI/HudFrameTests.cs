@@ -151,6 +151,38 @@ public sealed class HudFrameTests
         Assert.Equal("Shift 3 / 5", frame.ShiftLabel);
     }
 
+    [Fact]
+    public void From_PrepReplica_IsNotPlaceholderDelivery()
+    {
+        var live = new HudSnapshot(
+            RunPhase.Prep,
+            1,
+            240,
+            1800,
+            new Cents(1820),
+            InteractPrompt.None.Instance,
+            new Cents(1820),
+            new Cents(640),
+            0);
+        var frame = HudFrame.From(in live);
+        var placeholder = HudFrame.From(HudBoot.Placeholder());
+
+        Assert.Equal("PREP", frame.PhaseLabel);
+        Assert.Equal("Shift 1 / 5", frame.ShiftLabel);
+        Assert.Equal("00:52", frame.TimerLabel);
+        Assert.Equal("", frame.HeldAddress);
+        Assert.Equal("", frame.TargetAddress);
+        Assert.Equal("", frame.MatchLabel);
+        Assert.Equal("0", frame.ComplaintLabel);
+        Assert.NotEqual(placeholder.PhaseLabel, frame.PhaseLabel);
+        Assert.NotEqual(placeholder.TimerLabel, frame.TimerLabel);
+        Assert.NotEqual(placeholder.HeldAddress, frame.HeldAddress);
+        Assert.NotEqual(placeholder.ComplaintLabel, frame.ComplaintLabel);
+        Assert.Equal("DELIVERY", placeholder.PhaseLabel);
+        Assert.Equal("01:30", placeholder.TimerLabel);
+        Assert.Equal("13 Larch Lane", placeholder.HeldAddress);
+    }
+
     private static HudSnapshot Snapshot(
         InteractPrompt interact,
         uint now = 0,

@@ -45,6 +45,8 @@ When `PlaySession.Playing.World` is null, `worldHash` is `0x0000000000000000` an
 
 `--overlay-dump=` is a sidecar Control dump from `InventoryOverlay.Dump`. `--inspect-overlay` writes OverlayBootReplica cases `open` and `closed`. A Playing quit with `--overlay-dump=` writes case `live` from the bound replica. `tools/godot/ci.sh live-overlay` asserts `overlayOpen` here and the live hotbar cell in that dump.
 
+`--hud-dump=` is a sidecar Control dump from `Hud.Dump`. `--inspect-hud` writes `HudBoot.Placeholder` cases `match` and `mismatch`. A Playing quit with `--hud-dump=` writes case `live` from the bound Playing snapshot. `tools/godot/ci.sh live-hud` asserts `hudPhase` / `hudShift` / `hudTimer` here and that dump text, and fails on Placeholder `DELIVERY` / `13 Larch Lane`.
+
 ## Example Playing object
 
 ```json
@@ -66,6 +68,9 @@ jq -e '
   and .worldEntityCounts.intakes == 1
   and .worldEntityCounts.houses == 50
   and .worldEntityCounts.mailboxes == 50
+  and .hudPhase == "PREP"
+  and .hudShift == "Shift 1 / 5"
+  and (.hudTimer | test("^[0-9]{2}:[0-9]{2}$"))
   and .overlayOpen == false
   and .debugOpen == false
 ' "$report"
