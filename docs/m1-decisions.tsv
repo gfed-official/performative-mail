@@ -159,3 +159,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T01:11:53Z	audit	Add-then-mul and interleaved tests pin order-independent resolve	Trail review: muls-then-add also matches sequential apply; add-first sequential is 42; interleaved sequential is 23	tests/Sim.Tests/Content/StatSheetTests.cs	accepted
 2026-09-04T01:11:53Z	audit	Get switches on StatOp and throws on unknown	Trail review: else-as-Add would swallow a future op	src/Sim/Content/StatSheet.cs	accepted
 2026-09-04T01:11:53Z	verify	dotnet test Release 413 passed	Sim 277 Net 120 Bot 16; eight StatSheet tests	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T01:15:26Z	verify	CI on dfb9c84 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33824828590	VERIFIED
