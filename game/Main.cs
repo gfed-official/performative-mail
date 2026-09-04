@@ -56,8 +56,6 @@ public partial class Main : Node3D
             return;
         }
 
-        if (HudBoot.ForPlayReady() is { } playHud)
-            BindHud(playHud);
         BindOverlay(OverlayBootReplica.Build());
         GD.Print("performative-mail boot ok");
     }

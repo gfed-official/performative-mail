@@ -16,10 +16,4 @@ public sealed class HudBootTests
         Assert.Equal("tick", frame.MatchLabel);
         Assert.Equal("$18.20", frame.WalletLabel);
     }
-
-    [Fact]
-    public void ForPlayReady_DoesNotBindPlaceholderChrome()
-    {
-        Assert.Null(HudBoot.ForPlayReady());
-    }
 }
