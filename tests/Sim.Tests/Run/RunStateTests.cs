@@ -106,6 +106,16 @@ public sealed class RunStateTests
     }
 
     [Fact]
+    public void RemainingTicks_DeadlineMinusNow()
+    {
+        var state = new RunState(RunPhase.Prep, 1, 1800);
+        Assert.Equal(1800u, state.RemainingTicks(0));
+        Assert.Equal(1u, state.RemainingTicks(1799));
+        Assert.Equal(0u, state.RemainingTicks(1800));
+        Assert.Equal(0u, state.RemainingTicks(2000));
+    }
+
+    [Fact]
     public void Constructor_ShiftOutOfRange_Throws()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => new RunState(RunPhase.Lobby, 0, 0));
