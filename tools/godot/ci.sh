@@ -115,6 +115,11 @@ lobby_inspect() {
   SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-lobby.sh" "$(mktemp)"
 }
 
+debug_inspect() {
+  echo "==> debug menu Control text inspect"
+  SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-debug.sh" "$(mktemp)"
+}
+
 overlays_inspect() {
   echo "==> payday draft results Control text inspect"
   SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-overlays.sh" "$(mktemp)"
@@ -180,7 +185,7 @@ assert_playing_with_two_pawns() {
 
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|join]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join]
 
   verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import   godot --import + dotnet build of game/
@@ -189,6 +194,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|join
   overlay  open InventoryOverlay from a U2 replica and read cell text
   lobby    bind LobbyFrame and read Control text (seed and ready)
   overlays bind payday, draft, and results frames and read Control text
+  debug    open DebugMenu from DebugBoot and read inspect/cheat labels
   join     two-process LAN host/join on 127.0.0.1:7777
   all      all of the above (default)
 EOF
@@ -218,6 +224,9 @@ case "$cmd" in
   overlays)
     overlays_inspect
     ;;
+  debug)
+    debug_inspect
+    ;;
   join)
     host_join_smoke
     ;;
@@ -230,6 +239,7 @@ case "$cmd" in
     overlay_inspect
     lobby_inspect
     overlays_inspect
+    debug_inspect
     host_join_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;

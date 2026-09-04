@@ -42,6 +42,10 @@ public partial class Main : Node3D
     private Payday _payday = null!;
     private Draft _draft = null!;
     private Results _results = null!;
+    private DebugMenu? _debug;
+    private bool _debugHeld;
+    private bool _inspectDebug;
+    private string? _debugDumpPath;
 
     public override void _Ready()
     {
@@ -78,6 +82,15 @@ public partial class Main : Node3D
             return;
         }
 
+        if (OS.IsDebugBuild() || _inspectDebug)
+            BuildDebugMenu();
+
+        if (_inspectDebug)
+        {
+            InspectDebug();
+            return;
+        }
+
         BindOverlay(OverlayBootReplica.Build());
         GD.Print("performative-mail boot ok");
     }
@@ -92,6 +105,9 @@ public partial class Main : Node3D
         var state = _session.Pump(WallNow(), in intent);
         Render(state);
         PollOverlayToggle();
+        PollDebugToggle();
+        if (_debug is { IsOpen: true })
+            BindDebug(_session.Inspect());
         MaybeFinish(state);
     }
 
@@ -300,6 +316,54 @@ public partial class Main : Node3D
         _overlayHeld = held;
     }
 
+    private void BuildDebugMenu()
+    {
+        _debug = new DebugMenu();
+        var layer = new CanvasLayer { Layer = 20 };
+        AddChild(layer);
+        layer.AddChild(_debug);
+        _debug.GiveWalletPressed += () => _session.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents));
+        _debug.AdvancePhasePressed += () => _session.TryAdvancePhase();
+        _debug.ResetPawnPressed += () => _session.TryResetLocalPawn();
+    }
+
+    private void BindDebug(in DebugSnapshot snapshot)
+    {
+        if (_debug is null)
+            return;
+        _debug.Bind(DebugFrame.From(in snapshot));
+    }
+
+    private void PollDebugToggle()
+    {
+        if (_debug is null)
+            return;
+
+        bool held = Input.IsPhysicalKeyPressed(Key.F3) || Input.IsPhysicalKeyPressed(Key.Quoteleft);
+        if (held && !_debugHeld)
+            _debug.Toggle();
+        _debugHeld = held;
+    }
+
+    private void InspectDebug()
+    {
+        if (_debug is null)
+            return;
+
+        var dump = new StringBuilder();
+        _debug.Open();
+        BindDebug(DebugBoot.Placeholder());
+        dump.AppendLine(_debug.Dump("open"));
+        _debug.Close();
+        dump.AppendLine(_debug.Dump("closed"));
+        dump.AppendLine("DEBUG_DUMP_END");
+        var text = dump.ToString();
+        GD.Print(text);
+        if (_debugDumpPath is not null)
+            File.WriteAllText(_debugDumpPath, text);
+        GetTree().Quit();
+    }
+
     private void InspectHud()
     {
         var dump = new StringBuilder();
@@ -413,6 +477,8 @@ public partial class Main : Node3D
                 _inspectLobby = true;
             else if (arg == "--inspect-overlays")
                 _inspectOverlays = true;
+            else if (arg == "--inspect-debug")
+                _inspectDebug = true;
             else if (arg.StartsWith("--hud-dump=", StringComparison.Ordinal))
                 _hudDumpPath = arg.Substring("--hud-dump=".Length);
             else if (arg.StartsWith("--overlay-dump=", StringComparison.Ordinal))
@@ -421,6 +487,8 @@ public partial class Main : Node3D
                 _lobbyDumpPath = arg.Substring("--lobby-dump=".Length);
             else if (arg.StartsWith("--overlays-dump=", StringComparison.Ordinal))
                 _overlaysDumpPath = arg.Substring("--overlays-dump=".Length);
+            else if (arg.StartsWith("--debug-dump=", StringComparison.Ordinal))
+                _debugDumpPath = arg.Substring("--debug-dump=".Length);
             else if (arg.StartsWith("--quit-after-ms=", StringComparison.Ordinal) &&
                      int.TryParse(arg.AsSpan("--quit-after-ms=".Length), out var ms))
                 _quitAfterMs = ms;

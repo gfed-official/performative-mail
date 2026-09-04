@@ -14,6 +14,8 @@ public sealed class MainPlayBootTests
         Assert.DoesNotContain("HudBoot.Placeholder", ready);
         Assert.DoesNotContain("LobbyBoot", ready);
         Assert.DoesNotContain("PhaseOverlayBoot", ready);
+        Assert.DoesNotContain("BindDebug", ready);
+        Assert.DoesNotContain("DebugBoot", ready);
         Assert.Contains("BindOverlay", ready);
         Assert.Contains("performative-mail boot ok", ready);
     }
@@ -60,6 +62,25 @@ public sealed class MainPlayBootTests
         Assert.Contains("_payday.Visible = false", build);
         Assert.Contains("_draft.Visible = false", build);
         Assert.Contains("_results.Visible = false", build);
+    }
+
+    [Fact]
+    public void InspectDebug_UsesDebugBootNotHudPlaceholder()
+    {
+        var inspect = MethodBody(ReadMain(), "InspectDebug");
+        Assert.Contains("DebugBoot.Placeholder", inspect);
+        Assert.DoesNotContain("HudBoot.Placeholder", inspect);
+        Assert.DoesNotContain("BindHud", inspect);
+    }
+
+    [Fact]
+    public void Ready_BuildsDebugMenuAfterArgs()
+    {
+        var ready = MethodBody(ReadMain(), "_Ready");
+        Assert.Contains("OS.IsDebugBuild()", ready);
+        Assert.Contains("BuildDebugMenu", ready);
+        Assert.Contains("PollDebugToggle", MethodBody(ReadMain(), "_PhysicsProcess"));
+        Assert.Contains("Key.F3", MethodBody(ReadMain(), "PollDebugToggle"));
     }
 
     private static string ReadMain()
