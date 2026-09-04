@@ -140,3 +140,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T00:46:00Z	verify	dotnet test Release 402 passed	Sim 266 Net 120 Bot 16; baseline 389	dotnet test PerformativeMail.sln	VERIFIED
 2026-09-04T00:46:00Z	verify	ContentValidator exits 0 on repo content	prove it on the real CLI	dotnet run --project tools/ContentValidator -- content	VERIFIED
 2026-09-04T00:46:00Z	verify	Acceptance filter passed	bike != walk; mounted predict; snapshot vehicleId; shop 120; Criterion2; ZeroDelay walk	dotnet test --filter OnRoadForward_DoesNotCallWalkStep|MountedPredict|MountedListenHost|TryBuy_Bike|Criterion2_200ms|ZeroDelay_PredictedPose	VERIFIED
+2026-09-04T00:47:30Z	verify	CI on c481b44 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33823088297	VERIFIED
