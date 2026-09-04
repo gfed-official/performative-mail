@@ -7,6 +7,8 @@ namespace PerformativeMail.Sim.Net;
 
 public readonly record struct Hello(uint ProtocolHash);
 
+public readonly record struct AccountHello(uint AccountId);
+
 public readonly record struct HelloOk(EntityId LocalPlayer, uint StartTick);
 
 public enum HelloRejectReason : byte

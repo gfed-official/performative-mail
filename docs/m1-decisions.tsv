@@ -192,3 +192,11 @@ ts	phase	decision	why	evidence	result
 2026-09-04T02:10:00Z	subtract	No disconnect grace chunking lobby UI or full container Reset lists	U6.3 and U10.3 own those; stamps are id plus version	spec/08-data-schemas.md	accepted
 2026-09-04T02:20:00Z	verify	dotnet test Release 448 passed	Sim 301 Net 131 Bot 16; baseline U6.1 was 442	dotnet test PerformativeMail.sln -c Release	VERIFIED
 2026-09-04T02:20:00Z	verify	Acceptance filter 8 passed	Third client Prep hash matches 0x821670054873680E; container versions match; Delivery WrongPhase	dotnet test --filter PrepJoin_ThirdClientHashMatchesHost|PrepJoin_ThirdClientContainerVersionsMatchHost|DeliveryHello_RejectsWrongPhase	VERIFIED
+2026-09-04T02:30:00Z	frame	Frame U6.3 as disconnect grace	Issue 99; chapter 06 6 names 120 s hold; chapter 01 7 names 60 s all-disconnect	https://github.com/gfed-official/performative-mail/issues/99	open
+2026-09-04T02:30:00Z	architect	Chose DisconnectGrace session plus DeathSession.Drop	U6.1 Hello goldens stay; RunState has no Lobby-to-RunOver edge; bag drop must not respawn	src/Sim/Run/DisconnectGrace.cs	accepted
+2026-09-04T02:30:00Z	architect	Skip four-model arena	Chapter 06 already names hold resume and bag; two sketches compared in-thread	docs/m1-frame.md	accepted
+2026-09-04T02:30:00Z	subtract	No Hello account field no Results no lobby UI no host-lost screen	AccountHello=53 is additive; SchemaHash 0x4112C9FA stays	src/Sim/Net/Protocol.cs	accepted
+2026-09-04T02:55:00Z	verify	dotnet test Release 463 passed	Sim 310 Net 137 Bot 16; baseline U6.2 was 448	dotnet test PerformativeMail.sln -c Release	VERIFIED
+2026-09-04T02:55:00Z	verify	ContentValidator exits 0 on repo content	no content files changed this unit	dotnet run --project tools/ContentValidator -- content	VERIFIED
+2026-09-04T02:55:00Z	verify	Acceptance filter passed	HoldTicks 3600; drop bag; resume same entity; empty end 1800; Hello golden	dotnet test --filter HoldTicks_OneHundredTwenty|AfterGrace_DropsInventory|ReconnectWithinGrace|AllDisconnect_EndsWithoutResults|Hello_GoldenRoundTrip	VERIFIED
+2026-09-04T02:36:00Z	verify	CI on 6443e12 all 4 checks green	test and Godot 4.7.2 .NET on ubuntu	https://github.com/gfed-official/performative-mail/actions/runs/33830031394	VERIFIED

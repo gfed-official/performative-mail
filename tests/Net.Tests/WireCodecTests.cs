@@ -249,6 +249,17 @@ public sealed class WireCodecTests
     }
 
     [Fact]
+    public void AccountHello_GoldenRoundTrip()
+    {
+        var hello = new AccountHello(7);
+        var bytes = new byte[] { 0x35, 0x07, 0x00, 0x00, 0x00 };
+        Assert.Equal(bytes, WireCodec.Encode(hello));
+        Assert.True(WireCodec.TryDecode(bytes, out AccountHello decoded));
+        Assert.Equal(hello, decoded);
+        Assert.Equal(53, (byte)MessageKind.AccountHello);
+    }
+
+    [Fact]
     public void InputPacket_OneCmd_GoldenRoundTrip()
     {
         var cmd = new InputCmd(7, -127, 127, 32768, InputButtons.Sprint | InputButtons.Interact);

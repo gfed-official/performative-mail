@@ -13,4 +13,5 @@ public enum MessageKind : byte
     WorldOffer = 50,
     RunSettings = 51,
     JoinState = 52,
+    AccountHello = 53,
 }
