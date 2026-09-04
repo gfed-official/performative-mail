@@ -299,3 +299,4 @@ ts	phase	decision	why	evidence	result
 2026-09-04T05:56:00Z	audit	Kept stamp hashes not full ContainerState	Issue 109 measures encoded JoinState; chapter 08 3.9 waits	src/Sim/Net/JoinState.cs	accepted
 2026-09-04T05:56:00Z	audit	Kept SchemaHash 0x4112C9FA	JoinState itself landed without a bump; empty golden stays	src/Sim/Net/Protocol.cs	accepted
 2026-09-04T05:56:00Z	audit	Left U10.2 GateHolds quota miss on later shifts	Not this unit; chapter 11 bike 200 cannot meet 4p shifts 3-5	docs/m1-decisions.tsv	open
+2026-09-04T06:00:00Z	verify	CI on 4868ce0 all 4 checks green	test and Godot 4.7.2 .NET after clock-walk tighten	https://github.com/gfed-official/performative-mail/actions	VERIFIED
