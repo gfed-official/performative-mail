@@ -1,0 +1,8 @@
+ts	unit	decision	evidence
+2026-09-04T08:04Z	issues	filed 163-167 for FP/markers/chrome/esc	gh issue list
+2026-09-04T08:20Z	rebase	rebased onto #162 live Arcade; kept BindHud+World Sync	origin/main 0e01135
+2026-09-04T08:20Z	fp	eye camera + mouse yaw; hide local body	FirstPersonLook + PawnStage.TryLocalEye
+2026-09-04T08:20Z	chrome	ShowMenuChrome false on Connecting/Playing; no Leave button	Main.Render / BuildMenu
+2026-09-04T08:20Z	markers	AddressText labels on live WorldTables stage	WorldStage.AddLabeledBox
+2026-09-04T08:20Z	esc	host LAN address on Esc pause status	OpenPause listening.Advertisement
+2026-09-04T13:43Z	fp-cam	Each pawn owns Camera3D; only local Current; menu camera fallback when despawned	redesign-from-first-principles; one viewport no splitscreen

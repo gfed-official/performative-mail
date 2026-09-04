@@ -16,13 +16,13 @@ public partial class Main : Node3D
     private PlaySessionMachine _session = null!;
     private PawnStage _pawns = null!;
     private WorldStage _world = null!;
-    private Camera3D _camera = null!;
+    private Camera3D _menuCamera = null!;
     private LineEdit _address = null!;
     private Label _status = null!;
     private Button _host = null!;
     private Button _join = null!;
-    private Button _leave = null!;
-    private Control _form = null!;
+    private Control _menuChrome = null!;
+    private FirstPersonLookState _look;
 
     private bool _walk;
     private bool _reported;
@@ -103,13 +103,22 @@ public partial class Main : Node3D
 
     public override void _ExitTree() => _session.Dispose();
 
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (_pause.IsOpen || _menuChrome.Visible)
+            return;
+        if (@event is not InputEventMouseMotion motion)
+            return;
+        FirstPersonLook.ApplyMouse(ref _look, motion.Relative.X, motion.Relative.Y);
+    }
+
     public override void _PhysicsProcess(double delta)
     {
         var intent = _pause.IsOpen
-            ? MoveIntent.Idle
+            ? new MoveIntent(0, 0, _look.Yaw, InputButtons.None)
             : _walk
-                ? new MoveIntent(0, sbyte.MaxValue, 0, InputButtons.None)
-                : InputSampler.Sample();
+                ? new MoveIntent(0, sbyte.MaxValue, _look.Yaw, InputButtons.None)
+                : InputSampler.Sample(in _look);
         var state = _session.Pump(WallNow(), in intent);
         Render(state);
         if (!_pause.IsOpen)
@@ -126,37 +135,32 @@ public partial class Main : Node3D
         switch (state)
         {
             case PlaySession.Menu:
-                ShowForm(enabled: true);
+                ShowMenuChrome(true);
+                SetMouseCaptured(false);
                 HidePlayUi();
-                _pawns.DespawnAll();
+                UseMenuCamera();
                 _status.Text = "Host a game, or join a friend by LAN IP.";
                 break;
-            case PlaySession.Connecting connecting:
-                ShowForm(enabled: false);
-                _leave.Disabled = false;
+            case PlaySession.Connecting:
+                ShowMenuChrome(false);
+                SetMouseCaptured(false);
                 HidePlayUi();
-                _pawns.DespawnAll();
-                _status.Text = connecting.Describe();
+                UseMenuCamera();
                 break;
             case PlaySession.Playing playing:
-                ShowForm(enabled: false);
-                _leave.Disabled = false;
-                _pawns.Sync(playing.Pawns);
+                ShowMenuChrome(false);
+                SetMouseCaptured(!_pause.IsOpen);
+                _pawns.Sync(playing.Pawns, _look.PitchRadians);
                 _world.Sync(playing.World);
                 BindHud(playing.Hud);
                 if (_overlay.IsOpen && playing.Overlay is OverlayReplica overlay)
                     BindOverlay(overlay);
-                _status.Text = StatusFor(playing);
-                if (_pawns.TryLocalOrigin(playing.Pawns, out var focus))
-                {
-                    _camera.Position = focus + new Vector3(0f, 9f, 8f);
-                    _camera.LookAt(focus);
-                }
                 break;
             case PlaySession.Failed failed:
-                ShowForm(enabled: true);
+                ShowMenuChrome(true);
+                SetMouseCaptured(false);
                 HidePlayUi();
-                _pawns.DespawnAll();
+                UseMenuCamera();
                 _status.Text = failed.Reason.Message();
                 break;
             default:
@@ -164,12 +168,12 @@ public partial class Main : Node3D
         }
     }
 
-    private void ShowForm(bool enabled)
+    private void ShowMenuChrome(bool visible)
     {
-        _form.Visible = true;
-        _host.Disabled = !enabled;
-        _join.Disabled = !enabled;
-        _leave.Disabled = enabled;
+        _menuChrome.Visible = visible;
+        _host.Disabled = !visible;
+        _join.Disabled = !visible;
+        _lobby.Visible = false;
     }
 
     private void HidePlayUi()
@@ -179,11 +183,17 @@ public partial class Main : Node3D
         _overlay.Close();
     }
 
-    private static string StatusFor(PlaySession.Playing playing)
+    private void UseMenuCamera()
     {
-        if (playing.Role is SessionRole.Listening listening)
-            return $"Hosting. Friends join {listening.Advertisement}. WASD to walk.";
-        return $"Joined. {playing.Pawns.Count} pawn(s) in view. WASD to walk.";
+        _pawns.DespawnAll();
+        _menuCamera.Current = true;
+    }
+
+    private void SetMouseCaptured(bool captured)
+    {
+        Input.MouseMode = captured
+            ? Input.MouseModeEnum.Captured
+            : Input.MouseModeEnum.Visible;
     }
 
     private void BuildWorld()
@@ -208,13 +218,14 @@ public partial class Main : Node3D
         };
         AddChild(env);
 
-        _camera = new Camera3D
+        _menuCamera = new Camera3D
         {
-            Position = new Vector3(0f, 9f, 8f),
+            Name = "MenuCamera",
+            Position = new Vector3(0f, FirstPersonLook.EyeHeightMeters, 8f),
             Current = true,
         };
-        AddChild(_camera);
-        _camera.LookAt(Vector3.Zero);
+        AddChild(_menuCamera);
+        _menuCamera.LookAt(new Vector3(0f, FirstPersonLook.EyeHeightMeters, 0f));
 
         _world = new WorldStage();
         AddChild(_world);
@@ -228,27 +239,27 @@ public partial class Main : Node3D
         var layer = new CanvasLayer();
         AddChild(layer);
 
-        var root = new MarginContainer();
-        root.SetAnchorsPreset(Control.LayoutPreset.TopWide);
-        root.AddThemeConstantOverride("margin_left", 16);
-        root.AddThemeConstantOverride("margin_top", 16);
-        root.AddThemeConstantOverride("margin_right", 16);
-        layer.AddChild(root);
+        _menuChrome = new MarginContainer();
+        _menuChrome.SetAnchorsPreset(Control.LayoutPreset.TopWide);
+        _menuChrome.AddThemeConstantOverride("margin_left", 16);
+        _menuChrome.AddThemeConstantOverride("margin_top", 16);
+        _menuChrome.AddThemeConstantOverride("margin_right", 16);
+        layer.AddChild(_menuChrome);
 
         var column = new VBoxContainer();
         column.AddThemeConstantOverride("separation", 8);
-        root.AddChild(column);
+        _menuChrome.AddChild(column);
 
         _status = new Label { Text = "Host a game, or join a friend by LAN IP." };
         column.AddChild(_status);
 
-        _form = new HBoxContainer();
-        _form.AddThemeConstantOverride("separation", 8);
-        column.AddChild(_form);
+        var form = new HBoxContainer();
+        form.AddThemeConstantOverride("separation", 8);
+        column.AddChild(form);
 
         _host = new Button { Text = "Host" };
         _host.Pressed += () => _session.Host();
-        _form.AddChild(_host);
+        form.AddChild(_host);
 
         _address = new LineEdit
         {
@@ -256,15 +267,11 @@ public partial class Main : Node3D
             CustomMinimumSize = new Vector2(220, 0),
             Text = "127.0.0.1",
         };
-        _form.AddChild(_address);
+        form.AddChild(_address);
 
         _join = new Button { Text = "Join" };
         _join.Pressed += OnJoinPressed;
-        _form.AddChild(_join);
-
-        _leave = new Button { Text = "Leave", Disabled = true };
-        _leave.Pressed += () => _session.Leave();
-        column.AddChild(_leave);
+        form.AddChild(_join);
     }
 
     private void BuildHud()
@@ -373,7 +380,7 @@ public partial class Main : Node3D
         if (_pause.IsOpen && _pause.Snapshot.ClockPaused != _session.ClockPaused)
         {
             _pause.SetClockPaused(_session.ClockPaused);
-            _pauseMenu.Bind(_pause.Frame, true);
+            BindPause(state);
         }
 
         bool held = InputSampler.MenuHeld();
@@ -384,21 +391,37 @@ public partial class Main : Node3D
 
         if (!_pause.IsOpen)
         {
-            OpenPause();
+            OpenPause(state);
             return;
         }
 
         if (!_pause.Back())
             ClosePause();
         else
-            _pauseMenu.Bind(_pause.Frame, true);
+            BindPause(state);
     }
 
-    private void OpenPause()
+    private void OpenPause(PlaySession state)
     {
         _overlay.Close();
         _pause.Open(_session.TrySetClockPaused(true));
-        _pauseMenu.Bind(_pause.Frame, true);
+        BindPause(state);
+    }
+
+    private void BindPause(PlaySession state)
+    {
+        var frame = _pause.Frame;
+        if (state is PlaySession.Playing { Role: SessionRole.Listening listening })
+        {
+            string baseStatus = frame.StatusLabel;
+            string join = "Join " + listening.Advertisement;
+            frame = frame with
+            {
+                StatusLabel = baseStatus.Length == 0 ? join : baseStatus + " · " + join,
+            };
+        }
+
+        _pauseMenu.Bind(frame, true);
     }
 
     private void ClosePause()
@@ -424,7 +447,7 @@ public partial class Main : Node3D
             return;
         }
 
-        _pauseMenu.Bind(_pause.Frame, true);
+        BindPause(_session.State);
     }
 
     private void BuildDebugMenu()
@@ -558,6 +581,7 @@ public partial class Main : Node3D
     {
         if (!JoinTarget.TryParse(_address.Text, SessionOptions.DefaultPort, out var target))
         {
+            ShowMenuChrome(true);
             _status.Text = "Enter a host like 192.168.1.20 or 192.168.1.20:7777.";
             return;
         }

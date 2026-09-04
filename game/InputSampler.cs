@@ -7,7 +7,7 @@ namespace PerformativeMail.Game;
 
 public static class InputSampler
 {
-    public static MoveIntent Sample()
+    public static MoveIntent Sample(in FirstPersonLookState look)
     {
         sbyte axisX = Axis(Key.D, Key.Right, Key.A, Key.Left);
         sbyte axisY = Axis(Key.W, Key.Up, Key.S, Key.Down);
@@ -22,7 +22,7 @@ public static class InputSampler
                 buttons |= InputButtons.Interact;
         }
 
-        return new MoveIntent(axisX, axisY, Yaw: 0, buttons);
+        return new MoveIntent(axisX, axisY, look.Yaw, buttons);
     }
 
     public static bool MenuHeld()

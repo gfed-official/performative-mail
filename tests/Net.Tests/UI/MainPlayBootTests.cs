@@ -114,6 +114,47 @@ public sealed class MainPlayBootTests
         Assert.Contains("InputSampler.Sample", body);
     }
 
+    [Fact]
+    public void Playing_HidesMenuChromeAndUsesPerPawnCameras()
+    {
+        var render = MethodBody(ReadMain(), "Render");
+        Assert.Contains("ShowMenuChrome(false)", render);
+        Assert.Contains("_pawns.Sync(playing.Pawns, _look.PitchRadians)", render);
+        Assert.DoesNotContain("ApplyFirstPersonCamera", ReadMain());
+        Assert.Contains("BindHud(playing.Hud)", render);
+        Assert.Contains("_world.Sync(playing.World)", render);
+        Assert.DoesNotContain("0f, 9f, 8f", ReadMain());
+        Assert.DoesNotContain("_leave", ReadMain());
+        Assert.Contains("ShowMenuChrome(true)", render);
+        Assert.Contains("UseMenuCamera", render);
+    }
+
+    [Fact]
+    public void BuildWorld_UsesMenuCameraFallback()
+    {
+        var build = MethodBody(ReadMain(), "BuildWorld");
+        Assert.Contains("MenuCamera", build);
+        Assert.Contains("FirstPersonLook.EyeHeightMeters", build);
+        Assert.DoesNotContain("PlaneMesh", build);
+    }
+
+    [Fact]
+    public void PauseChoice_StillLeavesSession()
+    {
+        var body = MethodBody(ReadMain(), "OnPauseChoice");
+        Assert.Contains("_session.Leave()", body);
+        Assert.Contains("_pause.WantsLeave", body);
+    }
+
+    [Fact]
+    public void OpenPause_SurfacesHostAdvertisement()
+    {
+        var body = MethodBody(ReadMain(), "BindPause");
+        Assert.Contains("listening.Advertisement", body);
+        Assert.Contains("Join ", body);
+        Assert.Contains("BindPause(state)", MethodBody(ReadMain(), "OpenPause"));
+    }
+
     private static string ReadMain()
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
