@@ -83,6 +83,14 @@ public sealed class MainPlayBootTests
         Assert.Contains("Key.F3", MethodBody(ReadMain(), "PollDebugToggle"));
     }
 
+    [Fact]
+    public void PhysicsProcess_PollsPauseMenu()
+    {
+        var body = MethodBody(ReadMain(), "_PhysicsProcess");
+        Assert.Contains("PollPause", body);
+        Assert.Contains("InputSampler.Sample", body);
+    }
+
     private static string ReadMain()
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })

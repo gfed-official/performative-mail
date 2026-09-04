@@ -17,6 +17,20 @@ public static class InputSampler
         return new MoveIntent(axisX, axisY, Yaw: 0, buttons);
     }
 
+    public static bool MenuHeld()
+    {
+        if (Input.IsPhysicalKeyPressed(Key.Escape))
+            return true;
+
+        for (int id = 0; id < 8; id++)
+        {
+            if (Input.IsJoyButtonPressed(id, JoyButton.Start))
+                return true;
+        }
+
+        return false;
+    }
+
     private static sbyte Axis(Key positiveA, Key positiveB, Key negativeA, Key negativeB)
     {
         int value = 0;

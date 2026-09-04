@@ -102,9 +102,12 @@ public sealed class ServerRuntime
     {
     }
 
-    public void TickOnce()
+    public void TickOnce(bool advanceSim = true)
     {
         Drain();
+        if (!advanceSim)
+            return;
+
         DropExpired();
         Deaths?.AdvanceTo(_tick);
         World.Tick(_tick++);

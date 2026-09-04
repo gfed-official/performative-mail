@@ -29,6 +29,7 @@ public partial class Main : Node3D
     private bool _inspectLobby;
     private bool _inspectOverlays;
     private bool _overlayHeld;
+    private bool _pauseHeld;
     private string? _reportPath;
     private string? _hudDumpPath;
     private string? _overlayDumpPath;
@@ -42,6 +43,8 @@ public partial class Main : Node3D
     private Payday _payday = null!;
     private Draft _draft = null!;
     private Results _results = null!;
+    private PauseMenu _pauseMenu = null!;
+    private readonly PauseMenuState _pause = new();
     private DebugMenu? _debug;
     private bool _debugHeld;
     private bool _inspectDebug;
@@ -57,6 +60,7 @@ public partial class Main : Node3D
         BuildLobby();
         BuildOverlay();
         BuildPhaseOverlays();
+        BuildPause();
         ApplyArgs(OS.GetCmdlineUserArgs());
         if (_inspectHud)
         {
@@ -99,12 +103,16 @@ public partial class Main : Node3D
 
     public override void _PhysicsProcess(double delta)
     {
-        var intent = _walk
-            ? new MoveIntent(0, sbyte.MaxValue, 0, InputButtons.None)
-            : InputSampler.Sample();
+        var intent = _pause.IsOpen
+            ? MoveIntent.Idle
+            : _walk
+                ? new MoveIntent(0, sbyte.MaxValue, 0, InputButtons.None)
+                : InputSampler.Sample();
         var state = _session.Pump(WallNow(), in intent);
         Render(state);
-        PollOverlayToggle();
+        if (!_pause.IsOpen)
+            PollOverlayToggle();
+        PollPause(state);
         PollDebugToggle();
         if (_debug is { IsOpen: true })
             BindDebug(_session.Inspect());
@@ -308,12 +316,89 @@ public partial class Main : Node3D
     private void BindOverlay(in OverlayReplica replica) =>
         _overlay.Bind(OverlayFrame.From(in replica));
 
+    private void BuildPause()
+    {
+        _pauseMenu = new PauseMenu();
+        var layer = new CanvasLayer { Layer = 15 };
+        AddChild(layer);
+        layer.AddChild(_pauseMenu);
+        _pauseMenu.ChoicePicked = OnPauseChoice;
+        _pauseMenu.Bind(_pause.Frame, _pause.IsOpen);
+    }
+
     private void PollOverlayToggle()
     {
         bool held = Input.IsPhysicalKeyPressed(Key.Tab) || Input.IsPhysicalKeyPressed(Key.Y);
         if (held && !_overlayHeld)
             _overlay.Toggle();
         _overlayHeld = held;
+    }
+
+    private void PollPause(PlaySession state)
+    {
+        if (state is not PlaySession.Playing)
+        {
+            if (_pause.IsOpen)
+                ClosePause();
+            _pauseHeld = InputSampler.MenuHeld();
+            return;
+        }
+
+        if (_pause.IsOpen && _pause.Snapshot.ClockPaused != _session.ClockPaused)
+        {
+            _pause.SetClockPaused(_session.ClockPaused);
+            _pauseMenu.Bind(_pause.Frame, true);
+        }
+
+        bool held = InputSampler.MenuHeld();
+        bool edge = held && !_pauseHeld;
+        _pauseHeld = held;
+        if (!edge)
+            return;
+
+        if (!_pause.IsOpen)
+        {
+            OpenPause();
+            return;
+        }
+
+        if (!_pause.Back())
+            ClosePause();
+        else
+            _pauseMenu.Bind(_pause.Frame, true);
+    }
+
+    private void OpenPause()
+    {
+        _overlay.Close();
+        _pause.Open(_session.TrySetClockPaused(true));
+        _pauseMenu.Bind(_pause.Frame, true);
+    }
+
+    private void ClosePause()
+    {
+        _session.TrySetClockPaused(false);
+        _pause.Close();
+        _pauseMenu.Bind(_pause.Frame, false);
+    }
+
+    private void OnPauseChoice(string id)
+    {
+        _pause.Apply(id);
+        if (_pause.WantsLeave)
+        {
+            ClosePause();
+            _session.Leave();
+            return;
+        }
+
+        if (!_pause.IsOpen)
+        {
+            ClosePause();
+            return;
+        }
+
+        _pauseMenu.Bind(_pause.Frame, true);
     }
 
     private void BuildDebugMenu()
