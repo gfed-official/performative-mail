@@ -438,6 +438,46 @@ public sealed class ConstructRegistryTests
     }
 
     [Fact]
+    public void Deconstruct_BeltPrep_RefundsBothInputs()
+    {
+        var fx = Loaded(logs: 0, planks: 1, iron: 1);
+        var placed = Assert.IsType<Placed>(fx.Registry.TryPlace("belt_mk1", Origin, Facing.East));
+
+        Assert.IsType<Deconstructed>(fx.Registry.TryDeconstruct(placed.Construct.Id, 1.0));
+
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.Equal(1, CountItem(fx.Inv, fx.Bag, PlankId));
+        Assert.Equal(1, CountItem(fx.Inv, fx.Bag, IronId));
+    }
+
+    [Fact]
+    public void Deconstruct_SecondRefundNoRoom_KeepsConstructAndTakesBack()
+    {
+        var catalog = new MaterialCatalog(otherMax: 1);
+        var inv = new InventorySystem(catalog);
+        var bag = inv.CreateContainer(new ContainerSpec(ContainerShape.Grid(2, 1), null));
+        Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(PlankId, 1))));
+        Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(IronId, 1))));
+        var registry = new ConstructRegistry(
+            LoadBuildings(),
+            LoadRecipes(),
+            PlacementField.Flat(3, 3, 200),
+            inv,
+            bag,
+            Ids());
+        var placed = Assert.IsType<Placed>(registry.TryPlace("belt_mk1", Origin, Facing.East));
+        Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(PlankId, 1))));
+
+        var rejected = Assert.IsType<DeconstructRejected>(registry.TryDeconstruct(placed.Construct.Id, 1.0));
+
+        Assert.Equal(DeconstructReject.NoRoom, rejected.Reason);
+        Assert.Equal(1, registry.Count);
+        Assert.True(registry.TryGet(placed.Construct.Id, out _));
+        Assert.Equal(1, CountItem(inv, bag, PlankId));
+        Assert.Equal(0, CountItem(inv, bag, IronId));
+    }
+
+    [Fact]
     public void Deconstruct_Unknown_Rejected()
     {
         var fx = Loaded(logs: 3);
@@ -454,12 +494,9 @@ public sealed class ConstructRegistryTests
         var catalog = new MaterialCatalog();
         var inv = new InventorySystem(catalog);
         var bag = inv.CreateContainer(ContainerSpec.Chest);
-        if (logs > 0)
-            Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(LogId, logs))));
-        if (planks > 0)
-            Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(PlankId, planks))));
-        if (iron > 0)
-            Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(IronId, iron))));
+        DepositChunks(inv, bag, LogId, logs, 10);
+        DepositChunks(inv, bag, PlankId, planks, 20);
+        DepositChunks(inv, bag, IronId, iron, 20);
         var registry = new ConstructRegistry(
             LoadBuildings(),
             LoadRecipes(),
@@ -499,6 +536,22 @@ public sealed class ConstructRegistryTests
         ["plank"] = PlankId,
         ["iron_ingot"] = IronId
     };
+
+    private static void DepositChunks(
+        InventorySystem inv,
+        ContainerId bag,
+        ItemDefId id,
+        int count,
+        int maxStack)
+    {
+        int left = count;
+        while (left > 0)
+        {
+            int n = left < maxStack ? left : maxStack;
+            Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(id, n))));
+            left -= n;
+        }
+    }
 
     private static int CountLog(Fixture fx) => CountItem(fx.Inv, fx.Bag, LogId);
 
@@ -547,6 +600,15 @@ public sealed class ConstructRegistryTests
 
     private sealed class MaterialCatalog : IStackCatalog
     {
+        private readonly int _logMax;
+        private readonly int _otherMax;
+
+        public MaterialCatalog(int logMax = 10, int otherMax = 20)
+        {
+            _logMax = logMax;
+            _otherMax = otherMax;
+        }
+
         public Footprint FootprintOf(StackKey key)
         {
             if (key.IsMail) throw new ArgumentException("Unknown stack key.", nameof(key));
@@ -558,8 +620,8 @@ public sealed class ConstructRegistryTests
         public int MaxStackOf(StackKey key)
         {
             if (key.IsMail) throw new ArgumentException("Unknown stack key.", nameof(key));
-            if (key.Def == LogId.Value) return 64;
-            if (key.Def == PlankId.Value || key.Def == IronId.Value) return 20;
+            if (key.Def == LogId.Value) return _logMax;
+            if (key.Def == PlankId.Value || key.Def == IronId.Value) return _otherMax;
             throw new ArgumentException("Unknown stack key.", nameof(key));
         }
 

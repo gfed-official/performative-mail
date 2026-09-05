@@ -198,25 +198,46 @@ public sealed class ConstructRegistry
             refunds.Add(new ItemStack(itemId, give));
         }
 
-        Unregister(row, building);
+        int accepted = 0;
         for (int i = 0; i < refunds.Count; i++)
         {
             if (_inventory.Apply(Actor.System, new Deposit(_from, refunds[i])) is Accepted)
+            {
+                accepted++;
                 continue;
-            Register(row, building);
+            }
+
+            for (int j = 0; j < accepted; j++)
+                TakeBack(refunds[j]);
             return new DeconstructRejected(DeconstructReject.NoRoom);
         }
 
+        Unregister(row, building);
         return new Deconstructed(row);
     }
 
-    private void Register(ConstructRecord row, BuildingDef building)
+    private void TakeBack(ItemStack stack)
     {
-        var covered = Covered(building, row.Tile, row.Rotation);
-        _byId.Add(row.Id.Value, row);
-        for (int i = 0; i < covered.Length; i++)
-            _at.Add(covered[i], row.Id);
-        _order.Add(row);
+        if (_inventory is null || !_inventory.TryGetContainer(_from, out var grid))
+            return;
+
+        int need = stack.Count;
+        var takes = new List<(EntryId Id, int Count)>();
+        foreach (var entry in grid.Entries)
+        {
+            if (need < 1) break;
+            if (entry.Stack is not ItemStack item || !item.Item.Equals(stack.Item))
+                continue;
+            int take = item.Count < need ? item.Count : need;
+            takes.Add((entry.Id, take));
+            need -= take;
+        }
+
+        for (int i = 0; i < takes.Count; i++)
+        {
+            var step = takes[i];
+            _inventory.Apply(Actor.System, new Withdraw(_from, step.Id, Amount.Of(step.Count)));
+        }
     }
 
     private void Unregister(ConstructRecord row, BuildingDef building)
