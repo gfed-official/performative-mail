@@ -200,7 +200,7 @@ public partial class PauseMenu : Control
             Name = id,
         };
         string picked = id;
-        button.Pressed += () => ChoicePicked?.Invoke(picked);
+        button.Pressed += () => Callable.From(() => ChoicePicked?.Invoke(picked)).CallDeferred();
         parent.AddChild(button);
         return button;
     }
@@ -208,6 +208,10 @@ public partial class PauseMenu : Control
     private static void ClearColumn(VBoxContainer column)
     {
         while (column.GetChildCount() > 0)
-            column.GetChild(0).Free();
+        {
+            var child = column.GetChild(0);
+            column.RemoveChild(child);
+            child.QueueFree();
+        }
     }
 }
