@@ -39,6 +39,60 @@ public sealed class ConstructRegistryTests
     }
 
     [Fact]
+    public void ApplyPlaced_DoesNotConsumeReplicaBag()
+    {
+        var server = Loaded(logs: 3);
+        var placed = Assert.IsType<Placed>(server.Registry.TryPlace("wall_wood", Origin, Facing.North, Owner));
+        var replica = Loaded(logs: 3);
+
+        Assert.True(replica.Registry.TryApplyPlaced(placed.Construct));
+
+        Assert.Equal(1, replica.Registry.Count);
+        Assert.True(replica.Registry.TryGet(placed.Construct.Id, out var row));
+        Assert.Equal(placed.Construct, row);
+        Assert.Equal(3, CountLog(replica));
+        Assert.Equal(0, CountLog(server));
+    }
+
+    [Fact]
+    public void ApplyRemoved_ClearsReplicaWithoutRefund()
+    {
+        var server = Loaded(logs: 3);
+        var placed = Assert.IsType<Placed>(server.Registry.TryPlace("wall_wood", Origin, Facing.North, Owner));
+        var replica = Loaded(logs: 3);
+        Assert.True(replica.Registry.TryApplyPlaced(placed.Construct));
+
+        Assert.True(replica.Registry.TryApplyRemoved(placed.Construct.Id));
+
+        Assert.Equal(0, replica.Registry.Count);
+        Assert.Equal(3, CountLog(replica));
+        Assert.Equal(1, server.Registry.Count);
+    }
+
+    [Fact]
+    public void TryPlace_ConsumeFromOverridesDefaultBag()
+    {
+        var catalog = new MaterialCatalog();
+        var inv = new InventorySystem(catalog);
+        var unused = inv.CreateContainer(ContainerSpec.Chest);
+        var used = inv.CreateContainer(ContainerSpec.Chest);
+        DepositChunks(inv, unused, LogId, 3, 10);
+        DepositChunks(inv, used, LogId, 3, 10);
+        var registry = new ConstructRegistry(
+            LoadBuildings(),
+            LoadRecipes(),
+            PlacementField.Flat(3, 3, 200),
+            inv,
+            unused,
+            Ids());
+
+        Assert.IsType<Placed>(registry.TryPlace("wall_wood", Origin, Facing.North, Owner, used));
+
+        Assert.Equal(3, CountItem(inv, unused, LogId));
+        Assert.Equal(0, CountItem(inv, used, LogId));
+    }
+
+    [Fact]
     public void Chest_FourLog_ConsumesAndRegisters()
     {
         var fx = Loaded(logs: 4);

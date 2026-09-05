@@ -1,4 +1,5 @@
 using System;
+using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
@@ -20,6 +21,8 @@ public sealed class SimWorld
     public WorldAtlas? Atlas { get; }
 
     public InventorySystem? Inventory { get; }
+
+    public ConstructRegistry? Constructs { get; set; }
 
     public MailRegistry? Mail { get; }
 

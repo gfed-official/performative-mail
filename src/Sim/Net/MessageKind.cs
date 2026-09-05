@@ -14,4 +14,8 @@ public enum MessageKind : byte
     RunSettings = 51,
     JoinState = 52,
     AccountHello = 53,
+    PlaceConstruct = 60,
+    PlaceConstructConfirmed = 61,
+    RemoveConstruct = 62,
+    RemoveConstructConfirmed = 63,
 }

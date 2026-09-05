@@ -48,3 +48,10 @@ ts	phase	decision	why	evidence	result
 2026-09-05T04:25:00Z	subtract	No new MessageKind, no WorldTables.Heights write, no PlaceConstruct	JoinState already carries FlattenedTiles; U2.2 owns place net requests	src/Sim/Net/JoinState.cs	accepted
 2026-09-05T04:25:00Z	u2.1	Apply flatten only after recipe consume	A MissingInput must not change heights	src/Sim/Building/ConstructRegistry.cs	accepted
 2026-09-05T04:28:00Z	verify	U2.1 acceptance on 1eaab76	Sim 487, Net 295, Bot 16, ContentValidator 0	https://github.com/gfed-official/performative-mail/pull/247	open
+2026-09-05T04:40:00Z	u2.2	Skip arena for U2.2	Frame already names PlaceConstruct and RemoveConstruct requests; chapter 06 §4 is E+R	docs/m2-frame.md	accepted
+2026-09-05T04:40:00Z	architect	Chose four MessageKinds plus ConstructCodec over one ConstructOp flag	Hello/HelloOk already split request and reply; InventoryEvent is events-only	src/Sim/Net/ConstructCodec.cs	accepted
+2026-09-05T04:40:00Z	subtract	No reject message, no JoinState construct list, no SchemaHash bump, no Godot ghost	Reject is silence; JoinState list is join-in-progress; InventoryEvent already added kinds without a hash bump	src/Sim/Net/Protocol.cs	accepted
+2026-09-05T04:40:00Z	architect	Chose TryApplyPlaced on ConstructRegistry over a second replica type	Occupancy and All already live there; replica must not call TryPlace	src/Sim/Building/ConstructRegistry.cs	accepted
+2026-09-05T04:40:00Z	u2.2	TryPlace consumeFrom is the requester bag	One registry owns occupancy; each player has a bag	src/Server/ServerRuntime.cs	accepted
+2026-09-05T04:50:00Z	fix	BindPlayerBags writes _bags	PlaceConstruct returned before TryPlace because only EquipPlayer filled the map	src/Server/ServerRuntime.cs	accepted
+2026-09-05T04:50:00Z	verify	U2.2 local suite on BindPlayerBags fix	Sim 490, Net 302, Bot 16, ContentValidator 0	tests/Net.Tests/ConstructEventTests.cs	VERIFIED
