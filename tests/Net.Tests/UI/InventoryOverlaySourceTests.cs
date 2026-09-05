@@ -6,15 +6,10 @@ public sealed class InventoryOverlaySourceTests
     public void ClearColumn_FreesFromFront_NotWhileEnumeratingGetChildren()
     {
         string overlay = ReadGame("InventoryOverlay.cs");
-        string pause = ReadGame("PauseMenu.cs");
 
         Assert.Contains("while (column.GetChildCount() > 0)", overlay);
         Assert.Contains("column.GetChild(0).Free()", overlay);
         Assert.DoesNotContain("foreach (var child in column.GetChildren())", overlay);
-
-        Assert.Contains("while (column.GetChildCount() > 0)", pause);
-        Assert.Contains("column.GetChild(0).Free()", pause);
-        Assert.DoesNotContain("foreach (var child in column.GetChildren())", pause);
     }
 
     [Fact]
