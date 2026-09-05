@@ -10,7 +10,10 @@ namespace PerformativeMail.Sim.Tests.Building;
 public sealed class ConstructRegistryTests
 {
     private static readonly TileCoord Origin = new(1, 1);
+    private static readonly TileCoord LineEnd = new(6, 1);
     private static readonly ItemDefId LogId = new(1);
+    private static readonly ItemDefId PlankId = new(2);
+    private static readonly ItemDefId IronId = new(3);
     private static readonly EntityId Owner = EntityId.FromClassAndCounter(EntityClass.Player, 1);
 
     [Fact]
@@ -178,6 +181,9 @@ public sealed class ConstructRegistryTests
         Assert.Equal(80, belt.Hp);
         Assert.False(belt.OnStreet);
         Assert.Equal(BuildingBehaviour.Belt, belt.Behaviour);
+        Assert.True(wall.DragLine);
+        Assert.True(belt.DragLine);
+        Assert.False(chest.DragLine);
 
         Assert.True(buildings.TryGetValue("belt_mk1_ramp", out var ramp));
         Assert.True(recipes.TryGetValue(ramp.Recipe, out var rampRecipe));
@@ -247,13 +253,250 @@ public sealed class ConstructRegistryTests
         Assert.Equal(1, mergerRecipe.Inputs[1].Count);
     }
 
-    private static Fixture Loaded(int logs, PlacementField? field = null)
+    [Fact]
+    public void PlaceLine_SixWalls_OneRequestConsumesEighteenLogs()
+    {
+        var fx = Loaded(logs: 18, PlacementField.Flat(8, 3, 200));
+
+        var line = Assert.IsType<PlaceLineApplied>(
+            fx.Registry.TryPlaceLine("wall_wood", Origin, LineEnd, Facing.North, Owner));
+
+        Assert.Equal(6, line.Tiles.Count);
+        for (int i = 0; i < line.Tiles.Count; i++)
+        {
+            Assert.Equal(new TileCoord(1 + i, 1), line.Tiles[i].Tile);
+            var placed = Assert.IsType<Placed>(line.Tiles[i].Result);
+            Assert.Equal("wall_wood", placed.Construct.DefId);
+            Assert.Equal(new TileCoord(1 + i, 1), placed.Construct.Tile);
+        }
+
+        Assert.Equal(6, fx.Registry.Count);
+        Assert.Equal(0, CountLog(fx));
+    }
+
+    [Fact]
+    public void PlaceLine_SixBelts_OneRequestConsumesSixEach()
+    {
+        var fx = Loaded(logs: 0, PlacementField.Flat(8, 3, 200), planks: 6, iron: 6);
+
+        var line = Assert.IsType<PlaceLineApplied>(
+            fx.Registry.TryPlaceLine("belt_mk1", Origin, LineEnd, Facing.East, Owner));
+
+        Assert.Equal(6, line.Tiles.Count);
+        for (int i = 0; i < line.Tiles.Count; i++)
+            Assert.IsType<Placed>(line.Tiles[i].Result);
+
+        Assert.Equal(6, fx.Registry.Count);
+        Assert.Equal(0, CountItem(fx.Inv, fx.Bag, PlankId));
+        Assert.Equal(0, CountItem(fx.Inv, fx.Bag, IronId));
+    }
+
+    [Fact]
+    public void PlaceLine_MidOccupied_FivePlaceOneReject()
+    {
+        var fx = Loaded(logs: 18, PlacementField.Flat(8, 3, 200));
+        Assert.IsType<Placed>(fx.Registry.TryPlace("wall_wood", new TileCoord(3, 1), Facing.North));
+
+        var line = Assert.IsType<PlaceLineApplied>(
+            fx.Registry.TryPlaceLine("wall_wood", Origin, LineEnd, Facing.North, Owner));
+
+        Assert.Equal(6, line.Tiles.Count);
+        int placed = 0;
+        int rejected = 0;
+        for (int i = 0; i < line.Tiles.Count; i++)
+        {
+            if (line.Tiles[i].Result is Placed)
+            {
+                placed++;
+                continue;
+            }
+
+            var fail = Assert.IsType<PlaceRejected>(line.Tiles[i].Result);
+            Assert.Equal(PlaceReject.Occupied, fail.Reason);
+            Assert.Equal(new TileCoord(3, 1), line.Tiles[i].Tile);
+            rejected++;
+        }
+
+        Assert.Equal(5, placed);
+        Assert.Equal(1, rejected);
+        Assert.Equal(6, fx.Registry.Count);
+        Assert.Equal(0, CountLog(fx));
+    }
+
+    [Fact]
+    public void PlaceLine_MaterialsForThreeOfSix_ThreeMissingInput()
+    {
+        var fx = Loaded(logs: 9, PlacementField.Flat(8, 3, 200));
+
+        var line = Assert.IsType<PlaceLineApplied>(
+            fx.Registry.TryPlaceLine("wall_wood", Origin, LineEnd, Facing.North, Owner));
+
+        Assert.Equal(6, line.Tiles.Count);
+        for (int i = 0; i < 3; i++)
+            Assert.IsType<Placed>(line.Tiles[i].Result);
+        for (int i = 3; i < 6; i++)
+        {
+            var rejected = Assert.IsType<PlaceRejected>(line.Tiles[i].Result);
+            Assert.Equal(PlaceReject.MissingInput, rejected.Reason);
+        }
+
+        Assert.Equal(3, fx.Registry.Count);
+        Assert.Equal(0, CountLog(fx));
+    }
+
+    [Fact]
+    public void PlaceLine_Diagonal_RejectedNoConsume()
+    {
+        var fx = Loaded(logs: 18, PlacementField.Flat(8, 3, 200));
+
+        var rejected = Assert.IsType<PlaceLineRejected>(
+            fx.Registry.TryPlaceLine("wall_wood", Origin, new TileCoord(3, 2), Facing.North));
+
+        Assert.Equal(PlaceLineReject.NotStraight, rejected.Reason);
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.Equal(18, CountLog(fx));
+    }
+
+    [Fact]
+    public void PlaceLine_Chest_RejectedNoConsume()
+    {
+        var fx = Loaded(logs: 8, PlacementField.Flat(8, 3, 200));
+
+        var rejected = Assert.IsType<PlaceLineRejected>(
+            fx.Registry.TryPlaceLine("chest", Origin, LineEnd, Facing.North));
+
+        Assert.Equal(PlaceLineReject.NotDragLine, rejected.Reason);
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.Equal(8, CountLog(fx));
+    }
+
+    [Fact]
+    public void Deconstruct_WallPrep_RefundsThreeLogs()
+    {
+        var fx = Loaded(logs: 3);
+        var placed = Assert.IsType<Placed>(fx.Registry.TryPlace("wall_wood", Origin, Facing.North));
+
+        var gone = Assert.IsType<Deconstructed>(fx.Registry.TryDeconstruct(placed.Construct.Id, 1.0));
+
+        Assert.Equal(placed.Construct, gone.Construct);
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.False(fx.Registry.TryGet(placed.Construct.Id, out _));
+        Assert.Equal(3, CountLog(fx));
+        Assert.IsType<Placed>(fx.Registry.TryPlace("wall_wood", Origin, Facing.North));
+    }
+
+    [Fact]
+    public void Deconstruct_WallDelivery_RefundsOneLog()
+    {
+        var fx = Loaded(logs: 3);
+        var placed = Assert.IsType<Placed>(fx.Registry.TryPlace("wall_wood", Origin, Facing.North));
+
+        Assert.IsType<Deconstructed>(fx.Registry.TryDeconstruct(placed.Construct.Id, 0.5));
+
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.Equal(1, CountLog(fx));
+    }
+
+    [Fact]
+    public void Deconstruct_ChestDelivery_RefundsTwoLogs()
+    {
+        var fx = Loaded(logs: 4);
+        var placed = Assert.IsType<Placed>(fx.Registry.TryPlace("chest", Origin, Facing.East));
+
+        Assert.IsType<Deconstructed>(fx.Registry.TryDeconstruct(placed.Construct.Id, 0.5));
+
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.Equal(2, CountLog(fx));
+    }
+
+    [Fact]
+    public void PlaceLine_SixWalls_PrepRefundsEighteen_DeliveryRefundsSix()
+    {
+        var prep = Loaded(logs: 18, PlacementField.Flat(8, 3, 200));
+        var prepLine = Assert.IsType<PlaceLineApplied>(
+            prep.Registry.TryPlaceLine("wall_wood", Origin, LineEnd, Facing.North, Owner));
+        for (int i = 0; i < prepLine.Tiles.Count; i++)
+        {
+            var placed = Assert.IsType<Placed>(prepLine.Tiles[i].Result);
+            Assert.IsType<Deconstructed>(prep.Registry.TryDeconstruct(placed.Construct.Id, 1.0));
+        }
+
+        Assert.Equal(0, prep.Registry.Count);
+        Assert.Equal(18, CountLog(prep));
+
+        var delivery = Loaded(logs: 18, PlacementField.Flat(8, 3, 200));
+        var deliveryLine = Assert.IsType<PlaceLineApplied>(
+            delivery.Registry.TryPlaceLine("wall_wood", Origin, LineEnd, Facing.North, Owner));
+        for (int i = 0; i < deliveryLine.Tiles.Count; i++)
+        {
+            var placed = Assert.IsType<Placed>(deliveryLine.Tiles[i].Result);
+            Assert.IsType<Deconstructed>(delivery.Registry.TryDeconstruct(placed.Construct.Id, 0.5));
+        }
+
+        Assert.Equal(0, delivery.Registry.Count);
+        Assert.Equal(6, CountLog(delivery));
+    }
+
+    [Fact]
+    public void Deconstruct_BeltPrep_RefundsBothInputs()
+    {
+        var fx = Loaded(logs: 0, planks: 1, iron: 1);
+        var placed = Assert.IsType<Placed>(fx.Registry.TryPlace("belt_mk1", Origin, Facing.East));
+
+        Assert.IsType<Deconstructed>(fx.Registry.TryDeconstruct(placed.Construct.Id, 1.0));
+
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.Equal(1, CountItem(fx.Inv, fx.Bag, PlankId));
+        Assert.Equal(1, CountItem(fx.Inv, fx.Bag, IronId));
+    }
+
+    [Fact]
+    public void Deconstruct_SecondRefundNoRoom_KeepsConstructAndTakesBack()
+    {
+        var catalog = new MaterialCatalog(otherMax: 1);
+        var inv = new InventorySystem(catalog);
+        var bag = inv.CreateContainer(new ContainerSpec(ContainerShape.Grid(2, 1), null));
+        Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(PlankId, 1))));
+        Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(IronId, 1))));
+        var registry = new ConstructRegistry(
+            LoadBuildings(),
+            LoadRecipes(),
+            PlacementField.Flat(3, 3, 200),
+            inv,
+            bag,
+            Ids());
+        var placed = Assert.IsType<Placed>(registry.TryPlace("belt_mk1", Origin, Facing.East));
+        Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(PlankId, 1))));
+
+        var rejected = Assert.IsType<DeconstructRejected>(registry.TryDeconstruct(placed.Construct.Id, 1.0));
+
+        Assert.Equal(DeconstructReject.NoRoom, rejected.Reason);
+        Assert.Equal(1, registry.Count);
+        Assert.True(registry.TryGet(placed.Construct.Id, out _));
+        Assert.Equal(1, CountItem(inv, bag, PlankId));
+        Assert.Equal(0, CountItem(inv, bag, IronId));
+    }
+
+    [Fact]
+    public void Deconstruct_Unknown_Rejected()
+    {
+        var fx = Loaded(logs: 3);
+        var missing = EntityId.FromClassAndCounter(EntityClass.Construct, 99);
+
+        var rejected = Assert.IsType<DeconstructRejected>(fx.Registry.TryDeconstruct(missing, 1.0));
+
+        Assert.Equal(DeconstructReject.UnknownConstruct, rejected.Reason);
+        Assert.Equal(3, CountLog(fx));
+    }
+
+    private static Fixture Loaded(int logs, PlacementField? field = null, int planks = 0, int iron = 0)
     {
         var catalog = new MaterialCatalog();
         var inv = new InventorySystem(catalog);
         var bag = inv.CreateContainer(ContainerSpec.Chest);
-        if (logs > 0)
-            Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(LogId, logs))));
+        DepositChunks(inv, bag, LogId, logs, 10);
+        DepositChunks(inv, bag, PlankId, planks, 20);
+        DepositChunks(inv, bag, IronId, iron, 20);
         var registry = new ConstructRegistry(
             LoadBuildings(),
             LoadRecipes(),
@@ -289,8 +532,26 @@ public sealed class ConstructRegistryTests
 
     private static Dictionary<string, ItemDefId> Ids() => new(StringComparer.Ordinal)
     {
-        ["log"] = LogId
+        ["log"] = LogId,
+        ["plank"] = PlankId,
+        ["iron_ingot"] = IronId
     };
+
+    private static void DepositChunks(
+        InventorySystem inv,
+        ContainerId bag,
+        ItemDefId id,
+        int count,
+        int maxStack)
+    {
+        int left = count;
+        while (left > 0)
+        {
+            int n = left < maxStack ? left : maxStack;
+            Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(id, n))));
+            left -= n;
+        }
+    }
 
     private static int CountLog(Fixture fx) => CountItem(fx.Inv, fx.Bag, LogId);
 
@@ -339,16 +600,29 @@ public sealed class ConstructRegistryTests
 
     private sealed class MaterialCatalog : IStackCatalog
     {
+        private readonly int _logMax;
+        private readonly int _otherMax;
+
+        public MaterialCatalog(int logMax = 10, int otherMax = 20)
+        {
+            _logMax = logMax;
+            _otherMax = otherMax;
+        }
+
         public Footprint FootprintOf(StackKey key)
         {
             if (key.IsMail) throw new ArgumentException("Unknown stack key.", nameof(key));
-            return key.Def == LogId.Value ? new Footprint(1, 2) : new Footprint(1, 1);
+            if (key.Def == LogId.Value) return new Footprint(1, 2);
+            if (key.Def == PlankId.Value || key.Def == IronId.Value) return new Footprint(1, 1);
+            throw new ArgumentException("Unknown stack key.", nameof(key));
         }
 
         public int MaxStackOf(StackKey key)
         {
             if (key.IsMail) throw new ArgumentException("Unknown stack key.", nameof(key));
-            return key.Def == LogId.Value ? 10 : 20;
+            if (key.Def == LogId.Value) return _logMax;
+            if (key.Def == PlankId.Value || key.Def == IronId.Value) return _otherMax;
+            throw new ArgumentException("Unknown stack key.", nameof(key));
         }
 
         public WeightClass WeightOf(StackKey key)

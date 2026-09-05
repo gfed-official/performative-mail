@@ -90,6 +90,25 @@ public sealed class BeltMk1Tests
     }
 
     [Fact]
+    public void PlaceLine_SixEast_CompilesOneSegment()
+    {
+        var fx = Loaded(planks: 6, iron: 6);
+
+        var line = Assert.IsType<PlaceLineApplied>(
+            fx.Registry.TryPlaceLine(BeltNetwork.BuildingId, Origin, new TileCoord(6, 1), Facing.East, Owner));
+
+        Assert.Equal(6, line.Tiles.Count);
+        for (int i = 0; i < line.Tiles.Count; i++)
+            Assert.IsType<Placed>(line.Tiles[i].Result);
+
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+        var segment = Assert.Single(belts.Segments);
+        Assert.Equal(6, segment.Tiles.Count);
+        Assert.Equal(12f, segment.LengthMetres);
+    }
+
+    [Fact]
     public void Place_FourTiles_ConsumesOnePlankAndOneIngotEach()
     {
         var fx = Loaded(planks: 4, iron: 4);
