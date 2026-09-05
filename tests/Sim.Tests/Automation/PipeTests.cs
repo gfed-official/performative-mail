@@ -252,6 +252,20 @@ public sealed class PipeTests
     }
 
     [Fact]
+    public void Accept_ChestBetween_HasNoPath()
+    {
+        var exit = Pipe42;
+        var fx = Loaded(iron: 5, glass: 2, logs: 4);
+        Place(fx, PipeNetwork.InletId, Inlet);
+        Assert.IsType<Placed>(fx.Registry.TryPlace("chest", Pipe32, Facing.East, Owner));
+        Place(fx, PipeNetwork.OutletId, exit);
+        var pipes = new PipeNetwork();
+        pipes.Compile(fx.Registry.All);
+        Assert.True(pipes.SetDefaultOutlet(Inlet, exit));
+        Assert.False(pipes.TryAccept(Inlet, 62, MailKinds.Letter, Address(street: 4)));
+    }
+
+    [Fact]
     public void Accept_BlockedOutlet_RoutesAroundJunction()
     {
         var pipes = RoutedJunction();

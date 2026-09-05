@@ -21,6 +21,7 @@ public sealed class PipeNetwork
     public const string OutletId = "pipe_outlet";
     public const string JunctionId = "pipe_junction";
     public const string UndergroundId = "pipe_underground";
+    public const string ClimbId = "wall_wood";
     public const float TileMetres = 2f;
     public const float MetresPerSecond = 5f;
     public const float MinSpacingMetres = 1f;
@@ -72,11 +73,13 @@ public sealed class PipeNetwork
         for (int i = 0; i < constructs.Count; i++)
         {
             var row = constructs[i];
-            if (!IsFamily(row.DefId))
+            if (IsClimb(row.DefId))
             {
                 _climbs.Add(row.Tile);
                 continue;
             }
+
+            if (!IsFamily(row.DefId)) continue;
 
             _nodes.Add(row.Tile);
             if (string.Equals(row.DefId, InletId, StringComparison.Ordinal))
@@ -292,6 +295,9 @@ public sealed class PipeNetwork
     }
 
     private bool Walkable(TileCoord tile) => _nodes.Contains(tile) || _climbs.Contains(tile);
+
+    private static bool IsClimb(string defId) =>
+        string.Equals(defId, ClimbId, StringComparison.Ordinal);
 
     private static bool IsFamily(string defId) =>
         string.Equals(defId, PipeId, StringComparison.Ordinal)
