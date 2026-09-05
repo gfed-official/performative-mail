@@ -1,0 +1,18 @@
+{
+  "id": "pipe_underground",
+  "name": "Underground Pipe",
+  "footprint": [1, 1],
+  "rotations": 4,
+  "hp": 200,
+  "placement": {
+    "onStreet": true,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": true
+  },
+  "behaviour": "pipe",
+  "params": { "speed": 5, "underground": true },
+  "recipe": "recipe_pipe_underground",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["automation"]
+}

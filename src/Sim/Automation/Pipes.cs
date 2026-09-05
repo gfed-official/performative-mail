@@ -19,11 +19,15 @@ public sealed class PipeNetwork
     public const string PipeId = "pipe";
     public const string InletId = "pipe_inlet";
     public const string OutletId = "pipe_outlet";
+    public const string JunctionId = "pipe_junction";
+    public const string UndergroundId = "pipe_underground";
     public const float TileMetres = 2f;
     public const float MetresPerSecond = 5f;
     public const float MinSpacingMetres = 1f;
 
     private readonly HashSet<TileCoord> _nodes = new HashSet<TileCoord>();
+    private readonly HashSet<TileCoord> _climbs = new HashSet<TileCoord>();
+    private readonly HashSet<TileCoord> _blocked = new HashSet<TileCoord>();
     private readonly HashSet<TileCoord> _inletSet = new HashSet<TileCoord>();
     private readonly HashSet<TileCoord> _outletSet = new HashSet<TileCoord>();
     private readonly List<TileCoord> _inlets = new List<TileCoord>();
@@ -54,6 +58,8 @@ public sealed class PipeNetwork
     {
         if (constructs is null) throw new ArgumentNullException(nameof(constructs));
         _nodes.Clear();
+        _climbs.Clear();
+        _blocked.Clear();
         _inletSet.Clear();
         _outletSet.Clear();
         _inlets.Clear();
@@ -66,7 +72,12 @@ public sealed class PipeNetwork
         for (int i = 0; i < constructs.Count; i++)
         {
             var row = constructs[i];
-            if (!IsFamily(row.DefId)) continue;
+            if (!IsFamily(row.DefId))
+            {
+                _climbs.Add(row.Tile);
+                continue;
+            }
+
             _nodes.Add(row.Tile);
             if (string.Equals(row.DefId, InletId, StringComparison.Ordinal))
             {
@@ -120,13 +131,29 @@ public sealed class PipeNetwork
             {
                 var rule = rules[i];
                 if (!rule.Filter.Matches(item)) continue;
+                if (_blocked.Contains(rule.Outlet)) continue;
                 outlet = rule.Outlet;
                 return true;
             }
         }
 
-        if (!_defaults.TryGetValue(inlet, out outlet))
+        if (!_defaults.TryGetValue(inlet, out outlet) || _blocked.Contains(outlet))
+        {
+            outlet = default;
             return false;
+        }
+
+        return true;
+    }
+
+    public bool SetOutletBlocked(TileCoord outlet, bool blocked)
+    {
+        if (!_outletSet.Contains(outlet))
+            return false;
+        if (blocked)
+            _blocked.Add(outlet);
+        else
+            _blocked.Remove(outlet);
         return true;
     }
 
@@ -191,13 +218,36 @@ public sealed class PipeNetwork
             var updated = row.Capsule with { MetresAlongPath = metres };
             if (row.Ticks * (int)MetresPerSecond >= row.Hops * (int)TileMetres * TickClock.TickHz)
             {
-                _emitted[updated.TargetOutlet].Add(updated);
-                _moving.RemoveAt(i);
+                if (TryEmitOrReroute(row, updated))
+                    _moving.RemoveAt(i);
+                else
+                    row.Capsule = updated;
                 continue;
             }
 
             row.Capsule = updated;
         }
+    }
+
+    private bool TryEmitOrReroute(InFlight row, Capsule updated)
+    {
+        if (!_blocked.Contains(updated.TargetOutlet))
+        {
+            _emitted[updated.TargetOutlet].Add(updated);
+            return true;
+        }
+
+        var item = new BeltItem(updated.ItemId, 0f, updated.Kind, updated.Address);
+        if (!TryRoute(row.Inlet, item, out var alt) || !TryPathHops(row.Inlet, alt, out int hops))
+            return false;
+
+        row.Capsule = updated with { TargetOutlet = alt };
+        row.Hops = hops;
+        if (row.Ticks * (int)MetresPerSecond < hops * (int)TileMetres * TickClock.TickHz)
+            return false;
+
+        _emitted[alt].Add(row.Capsule);
+        return true;
     }
 
     private bool TryPathHops(TileCoord start, TileCoord goal, out int hops)
@@ -231,7 +281,8 @@ public sealed class PipeNetwork
             for (int d = 0; d < 4; d++)
             {
                 var next = BeltNetwork.Next(at, (Facing)d);
-                if (!_nodes.Contains(next) || !visited.Add(next)) continue;
+                if (_blocked.Contains(next) || !Walkable(next) || !visited.Add(next))
+                    continue;
                 parent[next] = at;
                 queue.Enqueue(next);
             }
@@ -240,10 +291,14 @@ public sealed class PipeNetwork
         return false;
     }
 
+    private bool Walkable(TileCoord tile) => _nodes.Contains(tile) || _climbs.Contains(tile);
+
     private static bool IsFamily(string defId) =>
         string.Equals(defId, PipeId, StringComparison.Ordinal)
         || string.Equals(defId, InletId, StringComparison.Ordinal)
-        || string.Equals(defId, OutletId, StringComparison.Ordinal);
+        || string.Equals(defId, OutletId, StringComparison.Ordinal)
+        || string.Equals(defId, JunctionId, StringComparison.Ordinal)
+        || string.Equals(defId, UndergroundId, StringComparison.Ordinal);
 
     private static int CompareTiles(TileCoord a, TileCoord b)
     {

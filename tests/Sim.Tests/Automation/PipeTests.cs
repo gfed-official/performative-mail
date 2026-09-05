@@ -17,6 +17,7 @@ public sealed class PipeTests
     private static readonly TileCoord OutletA = new(5, 2);
     private static readonly TileCoord Pipe33 = new(3, 3);
     private static readonly TileCoord OutletB = new(3, 4);
+    private static readonly ItemDefId LogId = new(1);
     private static readonly ItemDefId IronId = new(3);
     private static readonly ItemDefId GlassId = new(5);
     private static readonly EntityId Owner = EntityId.FromClassAndCounter(EntityClass.Player, 1);
@@ -31,6 +32,13 @@ public sealed class PipeTests
         AssertPipeBuilding(buildings[PipeNetwork.PipeId], "recipe_pipe", 100, dragLine: true);
         AssertPipeBuilding(buildings[PipeNetwork.InletId], "recipe_pipe_inlet", 150, dragLine: false);
         AssertPipeBuilding(buildings[PipeNetwork.OutletId], "recipe_pipe_outlet", 120, dragLine: false);
+        AssertPipeBuilding(buildings[PipeNetwork.JunctionId], "recipe_pipe_junction", 120, dragLine: false);
+        AssertPipeBuilding(
+            buildings[PipeNetwork.UndergroundId],
+            "recipe_pipe_underground",
+            200,
+            dragLine: true,
+            onStreet: true);
 
         var pipe = recipes["recipe_pipe"];
         Assert.Equal(PipeNetwork.PipeId, pipe.ProducesBuilding);
@@ -54,6 +62,22 @@ public sealed class PipeTests
         Assert.Equal("iron_ingot", outlet.Inputs[0].Item);
         Assert.Equal(2, outlet.Inputs[0].Count);
         Assert.Single(outlet.Inputs);
+
+        var junction = recipes["recipe_pipe_junction"];
+        Assert.Equal(PipeNetwork.JunctionId, junction.ProducesBuilding);
+        Assert.Equal("bp_pipes", junction.Blueprint);
+        Assert.Equal("iron_ingot", junction.Inputs[0].Item);
+        Assert.Equal(2, junction.Inputs[0].Count);
+        Assert.Equal("glass", junction.Inputs[1].Item);
+        Assert.Equal(1, junction.Inputs[1].Count);
+
+        var underground = recipes["recipe_pipe_underground"];
+        Assert.Equal(PipeNetwork.UndergroundId, underground.ProducesBuilding);
+        Assert.Equal("bp_pipes", underground.Blueprint);
+        Assert.Equal("iron_ingot", underground.Inputs[0].Item);
+        Assert.Equal(2, underground.Inputs[0].Count);
+        Assert.Equal("glass", underground.Inputs[1].Item);
+        Assert.Equal(2, underground.Inputs[1].Count);
 
         Assert.True(shop.TryGetValue("bp_pipes", out var row));
         Assert.Equal(ShopKind.Blueprint, row.Kind);
@@ -80,6 +104,24 @@ public sealed class PipeTests
         Assert.Equal(PlaceReject.Street, rejected.Reason);
         Assert.Equal(1, CountItem(street, IronId));
         Assert.Equal(1, CountItem(street, GlassId));
+    }
+
+    [Fact]
+    public void Place_JunctionAndUnderground_ConsumesRecipesAndSpansStreet()
+    {
+        var fx = Loaded(iron: 4, glass: 3);
+        Assert.IsType<Placed>(fx.Registry.TryPlace(PipeNetwork.JunctionId, new TileCoord(1, 1), Facing.East, Owner));
+        Assert.IsType<Placed>(
+            fx.Registry.TryPlace(PipeNetwork.UndergroundId, new TileCoord(2, 1), Facing.East, Owner));
+        Assert.Equal(2, fx.Registry.Count);
+        Assert.Equal(0, CountItem(fx, IronId));
+        Assert.Equal(0, CountItem(fx, GlassId));
+
+        var streetTile = new TileCoord(1, 1);
+        var street = Loaded(iron: 2, glass: 2, field: PlacementField.Flat(8, 8, 200).WithStreet(streetTile));
+        Assert.IsType<Placed>(street.Registry.TryPlace(PipeNetwork.UndergroundId, streetTile, Facing.East, Owner));
+        Assert.Equal(0, CountItem(street, IronId));
+        Assert.Equal(0, CountItem(street, GlassId));
     }
 
     [Fact]
@@ -173,6 +215,68 @@ public sealed class PipeTests
     }
 
     [Fact]
+    public void Accept_UndergroundStreetSpan_ExitsOutlet()
+    {
+        var streetTile = new TileCoord(3, 2);
+        var fx = Loaded(iron: 8, glass: 6, field: PlacementField.Flat(8, 8, 200).WithStreet(streetTile));
+        var exit = Pipe42;
+        Place(fx, PipeNetwork.InletId, Inlet);
+        Place(fx, PipeNetwork.UndergroundId, streetTile);
+        Place(fx, PipeNetwork.OutletId, exit);
+        var pipes = new PipeNetwork();
+        pipes.Compile(fx.Registry.All);
+        Assert.True(pipes.SetDefaultOutlet(Inlet, exit));
+        Assert.True(pipes.TryAccept(Inlet, 51, MailKinds.Letter, Address(street: 4)));
+        pipes.StepTicks(23);
+        Assert.Single(pipes.Capsules);
+        pipes.StepTicks(1);
+        Assert.Empty(pipes.Capsules);
+        Assert.Equal(51, Assert.Single(pipes.Emitted(exit)).ItemId);
+    }
+
+    [Fact]
+    public void Accept_VerticalOverBuilding_ExitsOutlet()
+    {
+        var fx = Loaded(iron: 5, glass: 2, logs: 3);
+        var exit = Pipe42;
+        Place(fx, PipeNetwork.InletId, Inlet);
+        Assert.IsType<Placed>(fx.Registry.TryPlace("wall_wood", Pipe32, Facing.East, Owner));
+        Place(fx, PipeNetwork.OutletId, exit);
+        var pipes = new PipeNetwork();
+        pipes.Compile(fx.Registry.All);
+        Assert.True(pipes.SetDefaultOutlet(Inlet, exit));
+        Assert.True(pipes.TryAccept(Inlet, 61, MailKinds.Letter, Address(street: 4)));
+        pipes.StepTicks(24);
+        Assert.Empty(pipes.Capsules);
+        Assert.Equal(61, Assert.Single(pipes.Emitted(exit)).ItemId);
+    }
+
+    [Fact]
+    public void Accept_BlockedOutlet_RoutesAroundJunction()
+    {
+        var pipes = RoutedJunction();
+        Assert.True(pipes.SetOutletBlocked(OutletA, true));
+        Assert.True(pipes.TryAccept(Inlet, 71, MailKinds.Letter, Address(street: 4)));
+        pipes.StepTicks(36);
+        Assert.Empty(pipes.Capsules);
+        Assert.Empty(pipes.Emitted(OutletA));
+        Assert.Equal(71, Assert.Single(pipes.Emitted(OutletB)).ItemId);
+    }
+
+    [Fact]
+    public void Step_BlockedOutlet_DoesNotDropCapsule()
+    {
+        var pipes = RoutedJunction();
+        Assert.True(pipes.TryAccept(Inlet, 81, MailKinds.Letter, Address(street: 4)));
+        Assert.True(pipes.SetOutletBlocked(OutletA, true));
+        Assert.True(pipes.SetOutletBlocked(OutletB, true));
+        pipes.StepTicks(36);
+        Assert.Equal(81, Assert.Single(pipes.Capsules).ItemId);
+        Assert.Empty(pipes.Emitted(OutletA));
+        Assert.Empty(pipes.Emitted(OutletB));
+    }
+
+    [Fact]
     public void Route_FirstMatchingFilterWins()
     {
         var pipes = CompileFork();
@@ -184,14 +288,19 @@ public sealed class PipeTests
         Assert.Equal(OutletA, pipes.Route(Inlet, item));
     }
 
-    private static void AssertPipeBuilding(BuildingDef building, string recipe, int hp, bool dragLine)
+    private static void AssertPipeBuilding(
+        BuildingDef building,
+        string recipe,
+        int hp,
+        bool dragLine,
+        bool onStreet = false)
     {
         Assert.Equal(recipe, building.Recipe);
         Assert.Equal(hp, building.Hp);
         Assert.Equal(1, building.Footprint.W);
         Assert.Equal(1, building.Footprint.H);
         Assert.Equal(4, building.Rotations);
-        Assert.False(building.OnStreet);
+        Assert.Equal(onStreet, building.OnStreet);
         Assert.Equal(WaterPlacement.None, building.OnWater);
         Assert.Equal(15, building.MaxSlopeDeg);
         Assert.Equal(dragLine, building.DragLine);
@@ -220,13 +329,29 @@ public sealed class PipeTests
         return pipes;
     }
 
+    private static PipeNetwork RoutedJunction()
+    {
+        var fx = Loaded(iron: 13, glass: 6, field: PlacementField.Flat(8, 8, 200));
+        Place(fx, PipeNetwork.InletId, Inlet);
+        Place(fx, PipeNetwork.JunctionId, Pipe32);
+        Place(fx, PipeNetwork.PipeId, Pipe42);
+        Place(fx, PipeNetwork.OutletId, OutletA);
+        Place(fx, PipeNetwork.PipeId, Pipe33);
+        Place(fx, PipeNetwork.OutletId, OutletB);
+        var pipes = new PipeNetwork();
+        pipes.Compile(fx.Registry.All);
+        Assert.True(pipes.SetFilter(Inlet, AddressFilter.ForStreet(4), OutletA));
+        Assert.True(pipes.SetDefaultOutlet(Inlet, OutletB));
+        return pipes;
+    }
+
     private static void Place(Fixture fx, string id, TileCoord tile)
         => Assert.IsType<Placed>(fx.Registry.TryPlace(id, tile, Facing.East, Owner));
 
     private static AddressId Address(byte street, byte district = 1, byte number = 13, byte unit = 0)
         => new(district, street, number, unit);
 
-    private static Fixture Loaded(int iron = 0, int glass = 0, PlacementField? field = null)
+    private static Fixture Loaded(int iron = 0, int glass = 0, int logs = 0, PlacementField? field = null)
     {
         var catalog = new MaterialCatalog();
         var inv = new InventorySystem(catalog);
@@ -235,6 +360,8 @@ public sealed class PipeTests
             Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(IronId, iron))));
         if (glass > 0)
             Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(GlassId, glass))));
+        if (logs > 0)
+            Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(LogId, logs))));
         var registry = new ConstructRegistry(
             LoadBuildings(),
             LoadRecipes(),
@@ -274,6 +401,7 @@ public sealed class PipeTests
 
     private static Dictionary<string, ItemDefId> Ids() => new(StringComparer.Ordinal)
     {
+        ["log"] = LogId,
         ["iron_ingot"] = IronId,
         ["glass"] = GlassId
     };
