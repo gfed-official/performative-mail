@@ -6,4 +6,8 @@ ts	phase	decision	why	evidence	result
 2026-09-05T01:50:01Z	architect	Chose the ten-family cut over a transport lump	Family cut keeps U1.1 one PR; the lump mixes Sim, net, and UI	docs/m2-frame.md	accepted
 2026-09-05T01:50:01Z	how	Reuse ConstructRegistry and BuildingDef	BuildingBehaviour.Belt and TryPlace already consume recipes and reject street or slope	src/Sim/Building/ConstructRegistry.cs	accepted
 2026-09-05T01:53:14Z	frame	Created M2 child issues 198-239	Same U fields as M1; parent #14; U1.1 is #208	https://github.com/gfed-official/performative-mail/issues/208	accepted
-2026-09-05T01:53:14Z	verify	gh issue 14 lists families 198-207	Ten sub-issues; U1.1 208 is a child of 198	gh issue view 14 --json subIssues	VERIFIED
+2026-09-05T01:53:14Z	verify	gh issue 14 lists families 198-207	Ten sub-issues; U1.1 208 is a child of 198	gh issue view 208 --json parent	VERIFIED
+2026-09-05T01:55:40Z	verify	Rewrote PR 197 so GitHub cannot close issue 14	The phrase Does not close hash 14 is a close keyword	gh pr view 197 --json closingIssuesReferences	open
+2026-09-05T01:55:40Z	u1.1	Both lanes must step in U1.1 tests	Trail review: lane 0 only left lane 1 unproven	docs/m2-frame.md	accepted
+2026-09-05T01:55:40Z	u1.1	U1.1 segment id is the current tile run	Recompile after place; stable ids wait for U3 events	docs/m2-frame.md	accepted
+2026-09-05T01:55:40Z	audit	Kept chapter 12 fps wording	60 fps is the M2 gate in spec; this slice does not rewrite it	spec/12-milestones.md:M2	accepted

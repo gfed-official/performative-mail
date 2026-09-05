@@ -73,8 +73,8 @@ Landable change:
 
 - Add `content/buildings/belt_mk1.json` and `content/recipes/recipe_belt_mk1.json` (chapter 10 §2.1: 1 tile, 80 HP, 1 Plank + 1 Iron Ingot, no blueprint).
 - Place through `ConstructRegistry.TryPlace("belt_mk1", tile, facing, owner)`. Reuse slope, bounds, water, street, occupied, and recipe consume.
-- Compile consecutive same-facing `belt_mk1` tiles into one straight `BeltSegment` with two lanes.
-- Step lanes in Sim at Mk1 2 m/s. Minimum spacing is 0.5 m (4 letter slots per lane per 2 m tile).
+- Compile consecutive same-facing `belt_mk1` tiles into one straight `BeltSegment` with two lanes. U1.1 segment identity is the current tile run. Recompile after place. Stable ids wait for U3.
+- Step both lanes in Sim at Mk1 2 m/s. Minimum spacing is 0.5 m (4 letter slots per lane per 2 m tile).
 - Letters only. Cargo both-lanes waits for U1.5 item rules or a later occupancy test on this segment type.
 - New types live under `src/Sim/Automation/`. Sim stays free of Godot refs.
 
@@ -90,7 +90,8 @@ Verify:
 
 - `dotnet test` places `belt_mk1` and consumes the recipe.
 - A 4-tile east-facing line compiles to exactly one segment of length 8 m.
-- Insert at lane 0 position 0. After 30 ticks (1 s at 30 Hz) the item is at 2 m. Lane 1 does not move.
+- Insert at lane 0 position 0. After 30 ticks (1 s at 30 Hz) the item is at 2 m. Lane 1 is empty.
+- Insert at lane 1 position 0 on a fresh segment. After 30 ticks that item is at 2 m. Lane 0 is empty.
 - A second insert on the same lane closer than 0.5 m behind the head is rejected or blocked.
 - The same segment hashed or listed twice matches. A 3-tile line is a different segment length.
 - `ContentValidator` still exits 0 on repo content.
