@@ -76,3 +76,10 @@ ts	phase	decision	why	evidence	result
 2026-09-05T06:20:00Z	architect	Server interest set plus LaneReplica Advance/Draw over a client BeltNetwork shadow	Shadow Step would duplicate U3.1 replica and break U3.2 matching counts	src/Client/LaneReplica.cs	accepted
 2026-09-05T06:20:00Z	subtract	No new MessageKind, no SchemaHash bump, no Godot view, no speed on the wire	Mk1 2 m/s is the only tier; LaneState enter is walk-in only so in-range Insert stays U3.2	src/Sim/Net/MessageKind.cs	accepted
 2026-09-05T06:20:00Z	architect	LaneState on walk-in of a known segment; Insert when a segment is born in range	U3.2 MatchingChecksums expects no LaneState on the happy path	src/Server/ServerRuntime.cs	accepted
+2026-09-05T06:30:00Z	frame	U4.1 done is 1000-item zero misroute and overflow is the unmatched set	Issue 219 plus m2-frame U4.1; no filter panel, inserter, depot, or Godot	docs/m2-frame.md	accepted
+2026-09-05T06:30:00Z	how	Belts compile without sorter tiles; Drain air-drops AheadTile unless FeedsJunction	Splitter already marks input ends; sorter is 2x2 with directed ports	src/Sim/Automation/BeltNetwork.cs	accepted
+2026-09-05T06:30:00Z	architect	Skip 4-model arena; two in-thread sketches	Frame says U4 composes a named spec table	docs/m2-frame.md	accepted
+2026-09-05T06:30:00Z	architect	Chose AddressSorter machine plus network attach over BeltJunction subclass	Junctions are 1-tile kind/RR; sorter needs buffer, 0.5 s examine, address filters	src/Sim/Automation/AddressSorter.cs	accepted
+2026-09-05T06:30:00Z	subtract	No BuildingDef.params parse, no sorter_buffer container, no bp_sorting shop item	Catalog already ignores params; ConstructRegistry does not gate blueprints; hand-sort is U9.2	src/Sim/Content/BuildingCatalog.cs	accepted
+2026-09-05T06:30:00Z	architect	Three filtered faces plus overflow on the input side	spec/04 §2.4; issue 219 said 4 outputs plus overflow; frame plus spec win	spec/04-automation.md	accepted
+2026-09-05T06:30:00Z	subtract	No new MessageKind, no SimWorld.Tick hook, no filter UI	World.Tick does not step belts; U9.2 owns the panel	src/Sim/SimWorld.cs	accepted

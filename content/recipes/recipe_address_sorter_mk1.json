@@ -1,0 +1,9 @@
+{
+  "id": "recipe_address_sorter_mk1",
+  "produces": { "building": "address_sorter_mk1" },
+  "inputs": [
+    { "item": "iron_ingot", "count": 4 },
+    { "item": "stone", "count": 6 }
+  ],
+  "unlockShift": 1
+}

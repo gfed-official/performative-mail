@@ -33,11 +33,13 @@ public sealed class ContentStarterTests
         Assert.Contains("belt_mk1", buildings);
         Assert.Contains("belt_mk1_ramp", buildings);
         Assert.Contains("belt_mk1_elevated", buildings);
+        Assert.Contains("address_sorter_mk1", buildings);
         Assert.Contains("recipe_wall_wood", recipes);
         Assert.Contains("recipe_chest", recipes);
         Assert.Contains("recipe_belt_mk1", recipes);
         Assert.Contains("recipe_belt_mk1_ramp", recipes);
         Assert.Contains("recipe_belt_mk1_elevated", recipes);
+        Assert.Contains("recipe_address_sorter_mk1", recipes);
         Assert.Contains("bandage_x3", shop);
         Assert.Contains("bike", shop);
         Assert.Equal(12, perks.Count);
