@@ -20,4 +20,6 @@ public enum MessageKind : byte
     RemoveConstructConfirmed = 63,
     LaneInsert = 70,
     LaneRemove = 71,
+    LaneChecksum = 72,
+    LaneState = 73,
 }

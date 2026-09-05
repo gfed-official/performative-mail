@@ -28,6 +28,35 @@ public static class LaneCodec
         return writer.ToArray();
     }
 
+    public static byte[] Encode(LaneChecksum message)
+    {
+        var writer = new BitWriter();
+        writer.WriteByte((byte)MessageKind.LaneChecksum);
+        writer.WriteUInt64(message.Segment.Value);
+        writer.WriteByte(message.Lane);
+        writer.WriteUInt16(message.Count);
+        writer.WriteUInt32(message.Hash);
+        return writer.ToArray();
+    }
+
+    public static byte[] Encode(LaneState message)
+    {
+        if (message.Items is null) throw new ArgumentNullException(nameof(message));
+
+        var writer = new BitWriter();
+        writer.WriteByte((byte)MessageKind.LaneState);
+        writer.WriteUInt64(message.Segment.Value);
+        writer.WriteByte(message.Lane);
+        writer.WriteUInt16((ushort)message.Items.Length);
+        for (int i = 0; i < message.Items.Length; i++)
+        {
+            writer.WriteInt32(message.Items[i].MailId);
+            writer.WriteInt32(message.Items[i].PositionCm);
+        }
+
+        return writer.ToArray();
+    }
+
     public static bool TryDecode(ReadOnlySpan<byte> payload, out LaneInsert message)
     {
         message = null!;
@@ -61,6 +90,44 @@ public static class LaneCodec
         if (!reader.AtEnd) return false;
 
         message = new LaneRemove(new SegmentId(segment), lane);
+        return true;
+    }
+
+    public static bool TryDecode(ReadOnlySpan<byte> payload, out LaneChecksum message)
+    {
+        message = null!;
+        var reader = new BitReader(payload);
+        if (!TryReadKind(reader, MessageKind.LaneChecksum)) return false;
+        if (!reader.TryReadUInt64(out var segment)) return false;
+        if (!TryReadLane(reader, out var lane)) return false;
+        if (!reader.TryReadUInt16(out var count)) return false;
+        if (!reader.TryReadUInt32(out var hash)) return false;
+        if (!reader.AtEnd) return false;
+
+        message = new LaneChecksum(new SegmentId(segment), lane, count, hash);
+        return true;
+    }
+
+    public static bool TryDecode(ReadOnlySpan<byte> payload, out LaneState message)
+    {
+        message = null!;
+        var reader = new BitReader(payload);
+        if (!TryReadKind(reader, MessageKind.LaneState)) return false;
+        if (!reader.TryReadUInt64(out var segment)) return false;
+        if (!TryReadLane(reader, out var lane)) return false;
+        if (!reader.TryReadUInt16(out var count)) return false;
+
+        var items = new LaneStateItem[count];
+        for (int i = 0; i < count; i++)
+        {
+            if (!reader.TryReadInt32(out var mailId)) return false;
+            if (!reader.TryReadInt32(out var positionCm)) return false;
+            if (positionCm < 0) return false;
+            items[i] = new LaneStateItem(mailId, positionCm);
+        }
+
+        if (!reader.AtEnd) return false;
+        message = new LaneState(new SegmentId(segment), lane, items);
         return true;
     }
 

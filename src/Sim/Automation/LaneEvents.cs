@@ -14,3 +14,16 @@ public sealed record LaneInsert(
 public sealed record LaneRemove(
     SegmentId Segment,
     byte Lane) : LaneDelta(Segment, Lane);
+
+public sealed record LaneChecksum(
+    SegmentId Segment,
+    byte Lane,
+    ushort Count,
+    uint Hash);
+
+public readonly record struct LaneStateItem(int MailId, int PositionCm);
+
+public sealed record LaneState(
+    SegmentId Segment,
+    byte Lane,
+    LaneStateItem[] Items);
