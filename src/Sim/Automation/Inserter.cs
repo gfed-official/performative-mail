@@ -95,6 +95,13 @@ public sealed class InserterNetwork
 
     public void BindChest(TileCoord tile, ContainerId chest) => _chests[tile] = chest;
 
+    public void BindTiles(ContainerId container, params TileCoord[] tiles)
+    {
+        if (tiles is null) throw new ArgumentNullException(nameof(tiles));
+        for (int i = 0; i < tiles.Length; i++)
+            BindChest(tiles[i], container);
+    }
+
     public void Compile(IReadOnlyList<ConstructRecord> constructs, BeltNetwork belts)
     {
         if (constructs is null) throw new ArgumentNullException(nameof(constructs));

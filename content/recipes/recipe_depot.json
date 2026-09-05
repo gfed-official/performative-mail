@@ -1,0 +1,10 @@
+{
+  "id": "recipe_depot",
+  "produces": { "building": "depot" },
+  "inputs": [
+    { "item": "stone", "count": 8 },
+    { "item": "iron_ingot", "count": 4 },
+    { "item": "plank", "count": 4 }
+  ],
+  "unlockShift": 1
+}

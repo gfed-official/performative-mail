@@ -29,7 +29,20 @@ public sealed class BeltEndpoints
 
     public void BindMailbox(TileCoord tile, DestinationId destination) => _mailboxes[tile] = destination;
 
+    public void BindInventory(InventorySystem inventory, MailRegistry mail)
+    {
+        _inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+        _mail = mail ?? throw new ArgumentNullException(nameof(mail));
+    }
+
     public void BindChest(TileCoord tile, ContainerId chest) => _chests[tile] = chest;
+
+    public void BindTiles(ContainerId container, params TileCoord[] tiles)
+    {
+        if (tiles is null) throw new ArgumentNullException(nameof(tiles));
+        for (int i = 0; i < tiles.Length; i++)
+            BindChest(tiles[i], container);
+    }
 
     public void BindIntake(
         ContainerId intake,
@@ -38,11 +51,10 @@ public sealed class BeltEndpoints
         InventorySystem inventory,
         MailRegistry mail)
     {
+        BindInventory(inventory, mail);
         _intake = intake;
         _intakeTile = tile;
         _intakeFace = face;
-        _inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
-        _mail = mail ?? throw new ArgumentNullException(nameof(mail));
         _intakeBound = true;
     }
 
