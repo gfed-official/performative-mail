@@ -73,7 +73,7 @@ public sealed class AddressSorterTests
     [Fact]
     public void Place_StreetTile_Rejects()
     {
-        var fx = Loaded(iron: 4, stone: 6, PlacementField.Flat(8, 8, 200).WithStreet(Origin));
+        var fx = Loaded(iron: 4, stone: 6, field: PlacementField.Flat(8, 8, 200).WithStreet(Origin));
         var rejected = Assert.IsType<PlaceRejected>(
             fx.Registry.TryPlace(AddressSorter.BuildingId, Origin, Facing.East, Owner));
         Assert.Equal(PlaceReject.Street, rejected.Reason);
@@ -204,7 +204,7 @@ public sealed class AddressSorterTests
     [Fact]
     public void Compile_BeltIntoSorter_MarksInputAndRoutesStreet()
     {
-        var fx = Loaded(planks: 5, iron: 9, stone: 6, PlacementField.Flat(12, 10, 200));
+        var fx = Loaded(planks: 5, iron: 9, stone: 6, field: PlacementField.Flat(12, 10, 200));
         Assert.IsType<Placed>(fx.Registry.TryPlace(AddressSorter.BuildingId, Origin, Facing.East, Owner));
         Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.BuildingId, new TileCoord(3, 4), Facing.East, Owner));
         Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.BuildingId, new TileCoord(6, 4), Facing.East, Owner));
