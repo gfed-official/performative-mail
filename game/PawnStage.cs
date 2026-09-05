@@ -21,6 +21,8 @@ public partial class PawnStage : Node3D
     public const string CameraName = "Camera";
     public const string BodyName = "Body";
     public const string LabelName = "Label";
+    public const int LabelOutlineSize = 8;
+    public const float LabelPixelSize = 0.01f;
 
     private readonly Dictionary<uint, Node3D> _nodes = new();
 
@@ -106,7 +108,8 @@ public partial class PawnStage : Node3D
             Text = pawn.DisplayName,
             Position = new Vector3(labelAt.X, labelAt.Y, labelAt.Z),
             FontSize = 48,
-            OutlineSize = 8,
+            OutlineSize = LabelOutlineSize,
+            PixelSize = LabelPixelSize,
             Modulate = Colors.White,
             Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
             Visible = !local,

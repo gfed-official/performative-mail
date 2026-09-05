@@ -44,4 +44,22 @@ public sealed class WorldLabelPlacementTests
         Assert.Equal(1.145f + WorldLabelPlacement.RoofClearanceMeters, y, 3);
         Assert.True(y > 1.15f);
     }
+
+    [Fact]
+    public void AboveStreetFace_HouseWithRoof_ClearsStackedRoof()
+    {
+        float bodyY = 1.8f;
+        float heightCenter = 0.9f;
+        float stack = WorldPropPlacement.HouseRoofHeightMeters;
+        var (_, y, _) = WorldLabelPlacement.AboveStreetFace(
+            5.6f,
+            bodyY + stack,
+            5.6f,
+            heightCenter + stack * 0.5f,
+            0f,
+            0f);
+        float roofTop = bodyY + stack;
+        Assert.True(y > roofTop);
+        Assert.Equal(roofTop + WorldLabelPlacement.RoofClearanceMeters, y);
+    }
 }
