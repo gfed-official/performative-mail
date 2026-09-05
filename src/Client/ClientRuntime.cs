@@ -61,6 +61,10 @@ public sealed class ClientRuntime
 
     public int InventoryEventCount { get; private set; }
 
+    public int LaneChecksumCount { get; private set; }
+
+    public int LaneStateCount { get; private set; }
+
     public ClientRuntime()
     {
     }
@@ -156,6 +160,12 @@ public sealed class ClientRuntime
                 break;
             case MessageKind.LaneRemove:
                 ApplyLaneRemove(payload);
+                break;
+            case MessageKind.LaneChecksum:
+                ApplyLaneChecksum(payload);
+                break;
+            case MessageKind.LaneState:
+                ApplyLaneState(payload);
                 break;
             case MessageKind.HelloReject:
                 ApplyHelloReject(payload);
@@ -308,6 +318,23 @@ public sealed class ClientRuntime
             return;
 
         Lanes.Apply(remove);
+    }
+
+    private void ApplyLaneChecksum(byte[] payload)
+    {
+        if (!LaneCodec.TryDecode(payload, out LaneChecksum _))
+            return;
+
+        LaneChecksumCount++;
+    }
+
+    private void ApplyLaneState(byte[] payload)
+    {
+        if (!LaneCodec.TryDecode(payload, out LaneState state))
+            return;
+
+        Lanes.Apply(state);
+        LaneStateCount++;
     }
 
     private void ApplySnapshot(byte[] payload)

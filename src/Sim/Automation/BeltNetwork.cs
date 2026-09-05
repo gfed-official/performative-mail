@@ -157,6 +157,26 @@ public sealed class BeltSegment
         throw new ArgumentOutOfRangeException(nameof(index), index, null);
     }
 
+    public LaneChecksum Checksum(int lane)
+    {
+        var items = Lane(lane);
+        var positions = new int[items.Count];
+        for (int i = 0; i < items.Count; i++)
+            positions[i] = BeltNetwork.PositionAtTickCm(items[i].MetresFromStart);
+        return new LaneChecksum(Id, (byte)lane, (ushort)items.Count, LaneHash.Of(positions));
+    }
+
+    public LaneState CaptureState(int lane)
+    {
+        var items = Lane(lane);
+        var rows = new LaneStateItem[items.Count];
+        for (int i = 0; i < items.Count; i++)
+            rows[i] = new LaneStateItem(
+                items[i].ItemId,
+                BeltNetwork.PositionAtTickCm(items[i].MetresFromStart));
+        return new LaneState(Id, (byte)lane, rows);
+    }
+
     public bool TryInsert(int lane, int itemId, float metresFromStart)
         => TryInsert(lane, itemId, metresFromStart, MailKinds.Letter, default);
 

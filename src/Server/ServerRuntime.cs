@@ -219,6 +219,7 @@ public sealed class ServerRuntime
         _tick++;
         FlushInventoryEvents();
         FlushLaneEvents();
+        FlushLaneChecksums();
 
         if (SnapshotCadence.ShouldSend(World.CurrentTick))
             Broadcast();
@@ -736,6 +737,21 @@ public sealed class ServerRuntime
         }
     }
 
+    public bool ResendLane(SegmentId segment, byte lane)
+    {
+        if (lane > 1) return false;
+        var segments = World.Belts.Segments;
+        for (int i = 0; i < segments.Count; i++)
+        {
+            var row = segments[i];
+            if (!row.Id.Equals(segment)) continue;
+            BroadcastReliable(LaneCodec.Encode(row.CaptureState(lane)));
+            return true;
+        }
+
+        return false;
+    }
+
     private void FlushLaneEvents()
     {
         var deltas = World.Belts.DrainLaneDeltas();
@@ -750,6 +766,21 @@ public sealed class ServerRuntime
                     BroadcastReliable(LaneCodec.Encode(remove));
                     break;
             }
+        }
+    }
+
+    private void FlushLaneChecksums()
+    {
+        int period = TickClock.TicksFromSeconds(2);
+        if (_tick == 0 || _tick % period != 0)
+            return;
+
+        var segments = World.Belts.Segments;
+        for (int i = 0; i < segments.Count; i++)
+        {
+            var segment = segments[i];
+            for (byte lane = 0; lane < BeltNetwork.LaneCount; lane++)
+                BroadcastReliable(LaneCodec.Encode(segment.Checksum(lane)));
         }
     }
 

@@ -64,3 +64,9 @@ ts	phase	decision	why	evidence	result
 2026-09-05T05:50:00Z	architect	addressColour is district plus street; position is i32 cm	Chapter 09 wants both swatches; BitWriter has no float	src/Sim/Core/Ids.cs	accepted
 2026-09-05T05:50:00Z	subtract	LaneRemove is segment plus lane; Compile emits nothing	Head take is the only remove; compile wipe is later	src/Sim/Automation/LaneEvents.cs	accepted
 2026-09-05T06:00:00Z	verify	U3.1 local suite after head-at-end insert	Sim 490, Net 308, Bot 16, ContentValidator 0	tests/Net.Tests/LaneEventTests.cs	VERIFIED
+2026-09-05T06:10:00Z	frame	U3.2 done is checksum every 2s and one LaneState on 0.25m mismatch	Issue 217 plus m2-frame U3.2; matching emits none; interest is U3.3	docs/m2-frame.md	accepted
+2026-09-05T06:10:00Z	how	World.Tick does not step belts; replica insert positions stay live	Matching checksums work without visual sim; U3.3 owns local advance	src/Sim/SimWorld.cs	accepted
+2026-09-05T06:10:00Z	architect	Skip 4-model arena; two in-thread sketches	U3.2 composes chapter 06 §4 and 08 §3.6; U3.1 already settled the journal	docs/m2-frame.md	accepted
+2026-09-05T06:10:00Z	architect	Cadence plus compare plus ResendLane over client nack	Nack and visual shadow are U3.3 surface; spec has no request kind	src/Server/ServerRuntime.cs	accepted
+2026-09-05T06:10:00Z	subtract	Kinds 72/73, no tick, no speed, no SchemaHash bump, no interest	Family tens; U3.1 omitted tick; speed waits for visual sim	src/Sim/Net/MessageKind.cs	accepted
+2026-09-05T06:10:00Z	architect	Hash is FNV-32 of floor(cm/25) head-first	Quantised 0.25m; count is a sibling field; Fnv already exists	src/Sim/Automation/LaneHash.cs	accepted
