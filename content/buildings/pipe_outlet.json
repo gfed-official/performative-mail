@@ -1,0 +1,18 @@
+{
+  "id": "pipe_outlet",
+  "name": "Pipe Outlet",
+  "footprint": [1, 1],
+  "rotations": 4,
+  "hp": 120,
+  "placement": {
+    "onStreet": false,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": false
+  },
+  "behaviour": "pipe",
+  "params": { "speed": 5, "role": "outlet" },
+  "recipe": "recipe_pipe_outlet",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["automation"]
+}

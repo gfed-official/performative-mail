@@ -1,0 +1,18 @@
+{
+  "id": "pipe_inlet",
+  "name": "Pipe Inlet",
+  "footprint": [1, 1],
+  "rotations": 4,
+  "hp": 150,
+  "placement": {
+    "onStreet": false,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": false
+  },
+  "behaviour": "pipe",
+  "params": { "speed": 5, "role": "inlet" },
+  "recipe": "recipe_pipe_inlet",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["automation"]
+}
