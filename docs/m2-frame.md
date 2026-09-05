@@ -11,7 +11,7 @@ Every M2 acceptance criterion in `spec/12-milestones.md` is falsifiable and must
 5. An NPC truck completes a 3-stop route and delivers only matching mail in an integration test. Player takeover and hand-back finish within one tick.
 6. Solo shift 3 and shift 5 viability checks pass in BalanceSim with the automation agents.
 
-This run cuts those gates into landable child issues. The current landable unit is U1.1. Do not start U1.1 implementation in the frame PR. Do not start M3.
+This run cuts those gates into landable child issues. The current landable unit is U1.1 (issue 208). Do not start U1.1 implementation in the frame PR. Do not start M3.
 
 ## Scope
 
@@ -180,50 +180,48 @@ Parent: [#14](https://github.com/gfed-official/performative-mail/issues/14).
 
 | Unit | Issue |
 | --- | ---: |
-| U1 | _pending create_ |
-| U1.1 | _pending create_ |
-| U1.2 | _pending create_ |
-| U1.3 | _pending create_ |
-| U1.4 | _pending create_ |
-| U1.5 | _pending create_ |
-| U1.6 | _pending create_ |
-| U2 | _pending create_ |
-| U2.1 | _pending create_ |
-| U2.2 | _pending create_ |
-| U3 | _pending create_ |
-| U3.1 | _pending create_ |
-| U3.2 | _pending create_ |
-| U3.3 | _pending create_ |
-| U4 | _pending create_ |
-| U4.1 | _pending create_ |
-| U4.2 | _pending create_ |
-| U4.3 | _pending create_ |
-| U5 | _pending create_ |
-| U5.1 | _pending create_ |
-| U5.2 | _pending create_ |
-| U6 | _pending create_ |
-| U6.1 | _pending create_ |
-| U6.2 | _pending create_ |
-| U6.3 | _pending create_ |
-| U6.4 | _pending create_ |
-| U7 | _pending create_ |
-| U7.1 | _pending create_ |
-| U7.2 | _pending create_ |
-| U7.3 | _pending create_ |
-| U8 | _pending create_ |
-| U8.1 | _pending create_ |
-| U8.2 | _pending create_ |
-| U9 | _pending create_ |
-| U9.1 | _pending create_ |
-| U9.2 | _pending create_ |
-| U10 | _pending create_ |
-| U10.1 | _pending create_ |
-| U10.2 | _pending create_ |
-| U10.3 | _pending create_ |
-| U10.4 | _pending create_ |
-| U10.5 | _pending create_ |
-
-If `gh issue create` returns 403, leave this table pending and use the paste-ready list in the frame PR. Do not invent issue numbers.
+| U1 | [#198](https://github.com/gfed-official/performative-mail/issues/198) |
+| U1.1 | [#208](https://github.com/gfed-official/performative-mail/issues/208) |
+| U1.2 | [#209](https://github.com/gfed-official/performative-mail/issues/209) |
+| U1.3 | [#210](https://github.com/gfed-official/performative-mail/issues/210) |
+| U1.4 | [#211](https://github.com/gfed-official/performative-mail/issues/211) |
+| U1.5 | [#212](https://github.com/gfed-official/performative-mail/issues/212) |
+| U1.6 | [#213](https://github.com/gfed-official/performative-mail/issues/213) |
+| U2 | [#199](https://github.com/gfed-official/performative-mail/issues/199) |
+| U2.1 | [#214](https://github.com/gfed-official/performative-mail/issues/214) |
+| U2.2 | [#215](https://github.com/gfed-official/performative-mail/issues/215) |
+| U3 | [#200](https://github.com/gfed-official/performative-mail/issues/200) |
+| U3.1 | [#216](https://github.com/gfed-official/performative-mail/issues/216) |
+| U3.2 | [#217](https://github.com/gfed-official/performative-mail/issues/217) |
+| U3.3 | [#218](https://github.com/gfed-official/performative-mail/issues/218) |
+| U4 | [#201](https://github.com/gfed-official/performative-mail/issues/201) |
+| U4.1 | [#219](https://github.com/gfed-official/performative-mail/issues/219) |
+| U4.2 | [#220](https://github.com/gfed-official/performative-mail/issues/220) |
+| U4.3 | [#221](https://github.com/gfed-official/performative-mail/issues/221) |
+| U5 | [#202](https://github.com/gfed-official/performative-mail/issues/202) |
+| U5.1 | [#222](https://github.com/gfed-official/performative-mail/issues/222) |
+| U5.2 | [#223](https://github.com/gfed-official/performative-mail/issues/223) |
+| U6 | [#203](https://github.com/gfed-official/performative-mail/issues/203) |
+| U6.1 | [#224](https://github.com/gfed-official/performative-mail/issues/224) |
+| U6.2 | [#225](https://github.com/gfed-official/performative-mail/issues/225) |
+| U6.3 | [#226](https://github.com/gfed-official/performative-mail/issues/226) |
+| U6.4 | [#227](https://github.com/gfed-official/performative-mail/issues/227) |
+| U7 | [#204](https://github.com/gfed-official/performative-mail/issues/204) |
+| U7.1 | [#228](https://github.com/gfed-official/performative-mail/issues/228) |
+| U7.2 | [#229](https://github.com/gfed-official/performative-mail/issues/229) |
+| U7.3 | [#230](https://github.com/gfed-official/performative-mail/issues/230) |
+| U8 | [#205](https://github.com/gfed-official/performative-mail/issues/205) |
+| U8.1 | [#231](https://github.com/gfed-official/performative-mail/issues/231) |
+| U8.2 | [#232](https://github.com/gfed-official/performative-mail/issues/232) |
+| U9 | [#206](https://github.com/gfed-official/performative-mail/issues/206) |
+| U9.1 | [#233](https://github.com/gfed-official/performative-mail/issues/233) |
+| U9.2 | [#234](https://github.com/gfed-official/performative-mail/issues/234) |
+| U10 | [#207](https://github.com/gfed-official/performative-mail/issues/207) |
+| U10.1 | [#235](https://github.com/gfed-official/performative-mail/issues/235) |
+| U10.2 | [#236](https://github.com/gfed-official/performative-mail/issues/236) |
+| U10.3 | [#237](https://github.com/gfed-official/performative-mail/issues/237) |
+| U10.4 | [#238](https://github.com/gfed-official/performative-mail/issues/238) |
+| U10.5 | [#239](https://github.com/gfed-official/performative-mail/issues/239) |
 
 ## Playbook
 

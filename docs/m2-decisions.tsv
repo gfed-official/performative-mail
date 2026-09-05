@@ -5,3 +5,5 @@ ts	phase	decision	why	evidence	result
 2026-09-05T01:50:01Z	architect	Skip arena for the U1.1 skeleton	Chapter 04 already names compiled runs, two lanes, 0.5 m, Mk1 2 m/s; ConstructRegistry.TryPlace exists	spec/04-automation.md:2.1	accepted
 2026-09-05T01:50:01Z	architect	Chose the ten-family cut over a transport lump	Family cut keeps U1.1 one PR; the lump mixes Sim, net, and UI	docs/m2-frame.md	accepted
 2026-09-05T01:50:01Z	how	Reuse ConstructRegistry and BuildingDef	BuildingBehaviour.Belt and TryPlace already consume recipes and reject street or slope	src/Sim/Building/ConstructRegistry.cs	accepted
+2026-09-05T01:53:14Z	frame	Created M2 child issues 198-239	Same U fields as M1; parent #14; U1.1 is #208	https://github.com/gfed-official/performative-mail/issues/208	accepted
+2026-09-05T01:53:14Z	verify	gh issue 14 lists families 198-207	Ten sub-issues; U1.1 208 is a child of 198	gh issue view 14 --json subIssues	VERIFIED
