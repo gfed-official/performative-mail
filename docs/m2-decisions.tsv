@@ -1,0 +1,7 @@
+ts	phase	decision	why	evidence	result
+2026-09-05T01:50:01Z	frame	Chose figure-it-out for the M2 cut	Cross-cutting milestone cut, not a single Feature unit	spec/12-milestones.md:M2	open
+2026-09-05T01:50:01Z	frame	U1.1 is belt_mk1 place plus one straight compile and lane step	Riskiest unknown is compiled segments and lane arrays; smallest landable that still steps	docs/m2-frame.md	open
+2026-09-05T01:50:01Z	subtract	Skip Godot build mode, LaneInsert, sorter, truck, and boat in U1.1	Subtract before add; those systems are later units	docs/m2-frame.md	accepted
+2026-09-05T01:50:01Z	architect	Skip arena for the U1.1 skeleton	Chapter 04 already names compiled runs, two lanes, 0.5 m, Mk1 2 m/s; ConstructRegistry.TryPlace exists	spec/04-automation.md:2.1	accepted
+2026-09-05T01:50:01Z	architect	Chose the ten-family cut over a transport lump	Family cut keeps U1.1 one PR; the lump mixes Sim, net, and UI	docs/m2-frame.md	accepted
+2026-09-05T01:50:01Z	how	Reuse ConstructRegistry and BuildingDef	BuildingBehaviour.Belt and TryPlace already consume recipes and reject street or slope	src/Sim/Building/ConstructRegistry.cs	accepted
