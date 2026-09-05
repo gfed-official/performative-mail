@@ -89,3 +89,9 @@ ts	phase	decision	why	evidence	result
 2026-09-05T07:10:00Z	u5.1	Capsule is its own type; AddressFilter reused; path edge is 2 m; speed 5 m/s; spacing 1 m	spec/04 §2.2; AddressFilter.Matches already takes BeltItem	src/Sim/Automation/Pipes.cs	accepted
 2026-09-05T07:20:00Z	u5.1	Step in integer ticks; exit when ticks * 5 >= hops * 2 * 30	Float metre adds miss the 6 m exit; tick compare is exact	src/Sim/Automation/Pipes.cs	accepted
 2026-09-05T07:20:00Z	u5.1	1 m spacing is per inlet, not per outlet	Shared first tile; two destinations still occupy the inlet	src/Sim/Automation/Pipes.cs	accepted
+2026-09-05T07:30:00Z	frame	U5.2 Feature inside the figure-it-out frame; done is street span plus blocked outlet does not drop	Issue 223 plus m2-frame U5.2; U6 stays closed	docs/m2-frame.md	accepted
+2026-09-05T07:30:00Z	architect	Skip 4-model arena; two in-thread sketches; chose family nodes plus climb waypoints over 2-port pipes plus occupancy overlay	U5.1 fork of a plain pipe must stay; ConstructRegistry stays one occupant per tile	src/Sim/Automation/Pipes.cs	accepted
+2026-09-05T07:30:00Z	subtract	No params parse, no MessageKind, no pipe_vertical def, no same-tile overlay	Catalog already ignores params; vertical is a climb through a non-pipe tile	src/Sim/Content/BuildingCatalog.cs	accepted
+2026-09-05T07:32:00Z	u5.2	Climb host is wall_wood only	Every non-family tile as a hop would bridge chests and belts	src/Sim/Automation/Pipes.cs	accepted
+2026-09-05T07:30:00Z	u5.2	Underground OnStreet and 2 iron plus 2 glass; junction is a graph node	Chapter 10 §2.1; issue verify is a street span	content/buildings/pipe_underground.json	accepted
+2026-09-05T07:30:00Z	u5.2	TryRoute skips blocked outlets; emit holds or reroutes	Frame: graph routes around a blocked outlet; issue: capsule is not dropped	src/Sim/Automation/Pipes.cs	accepted

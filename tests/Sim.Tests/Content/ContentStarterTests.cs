@@ -39,6 +39,8 @@ public sealed class ContentStarterTests
         Assert.Contains("pipe", buildings);
         Assert.Contains("pipe_inlet", buildings);
         Assert.Contains("pipe_outlet", buildings);
+        Assert.Contains("pipe_junction", buildings);
+        Assert.Contains("pipe_underground", buildings);
         Assert.Contains("recipe_wall_wood", recipes);
         Assert.Contains("recipe_chest", recipes);
         Assert.Contains("recipe_belt_mk1", recipes);
@@ -50,6 +52,8 @@ public sealed class ContentStarterTests
         Assert.Contains("recipe_pipe", recipes);
         Assert.Contains("recipe_pipe_inlet", recipes);
         Assert.Contains("recipe_pipe_outlet", recipes);
+        Assert.Contains("recipe_pipe_junction", recipes);
+        Assert.Contains("recipe_pipe_underground", recipes);
         Assert.Contains("bp_pipes", shop);
         Assert.Contains("bandage_x3", shop);
         Assert.Contains("bike", shop);
