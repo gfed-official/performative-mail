@@ -1,0 +1,23 @@
+{
+  "id": "address_sorter_mk1",
+  "name": "Address Sorter",
+  "footprint": [2, 2],
+  "rotations": 4,
+  "hp": 500,
+  "placement": {
+    "onStreet": false,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": false
+  },
+  "behaviour": "sorter",
+  "params": {
+    "throughputPerSecond": 2.0,
+    "outputs": 4,
+    "filterSlotsPerOutput": 1,
+    "bufferGrid": [4, 2]
+  },
+  "recipe": "recipe_address_sorter_mk1",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["automation", "sorting"]
+}
