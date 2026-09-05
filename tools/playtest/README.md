@@ -69,7 +69,7 @@ Run only with `--gui`, `--gui-only`, or `--deep-gui`. Scripted Host play uses ex
 | G-D | Teleport helper (intake) | `--debug-helper=intake` |
 | G-E | Overlay helper | `--debug-helper=overlay`; expects `overlayOpen: true` |
 | G-F | Leave / Esc | `--debug-helper=leave`; report `state` is `Menu` |
-| G-G | Screenshot set | At least one PNG under `shots/` |
+| G-G | Screenshot set | Timed `scrot` / `import` / `ffmpeg` x11grab **while** the Host window is up |
 
 ## GUI gaps
 

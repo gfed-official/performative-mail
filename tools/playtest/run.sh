@@ -231,19 +231,35 @@ run_gui_host() {
   local report="$OUT/gui-${tag}.json"
   local shot="$OUT/shots/${tag}.png"
   local ms="$GUI_MS"
-  mkdir -p "$OUT/shots"
-
-  # Existing CLI: Host + debug helpers / teleports. No new Sim.
-  if ! run_logged "$log" godot --path "$PROJECT_PATH" -- \
-    --host --debug-world --quit-after-ms="$ms" --report="$report" "$@"; then
-    echo "godot $tag exited non-zero" >>"$log"
+  local shot_wait=2
+  local pid rc=0
+  mkdir -p "$OUT/shots" "$(dirname "$log")"
+  if [[ "$DEEP_GUI" -eq 1 ]]; then
+    shot_wait=5
   fi
 
-  if capture_display "$shot"; then
+  # Existing CLI: Host + debug helpers / teleports. Shot while the window is up.
+  godot --path "$PROJECT_PATH" -- \
+    --host --debug-world --quit-after-ms="$ms" --report="$report" "$@" \
+    >"$log" 2>&1 &
+  pid=$!
+  sleep "$shot_wait"
+  if kill -0 "$pid" 2>/dev/null && capture_display "$shot"; then
     record_shot "$shot" || true
   else
-    echo "screenshot failed for $tag" >>"$log"
+    echo "screenshot failed for $tag (process gone or no capture tool)" >>"$log"
     shot=""
+  fi
+  if [[ "$DEEP_GUI" -eq 1 && -n "$shot" ]] && kill -0 "$pid" 2>/dev/null; then
+    sleep "$shot_wait"
+    local shot2="$OUT/shots/${tag}-2.png"
+    if capture_display "$shot2"; then
+      record_shot "$shot2" || true
+    fi
+  fi
+  wait "$pid" || rc=$?
+  if [[ "$rc" -ne 0 ]]; then
+    echo "godot $tag exited $rc" >>"$log"
   fi
 
   printf '%s\t%s\t%s\n' "$log" "$report" "$shot"
