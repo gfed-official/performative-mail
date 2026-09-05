@@ -4,7 +4,6 @@ using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
-using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Net.Tests.App;
