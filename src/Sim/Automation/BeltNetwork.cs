@@ -198,7 +198,18 @@ public sealed class BeltNetwork
         next = new TileCoord(tile.X + dx, tile.Y + dy);
     }
 
-    private static bool Opposite(Facing a, Facing b) => ((int)a ^ (int)b) == 2;
+    private static bool Opposite(Facing a, Facing b)
+    {
+        switch (a)
+        {
+            case Facing.North: return b == Facing.South;
+            case Facing.East: return b == Facing.West;
+            case Facing.South: return b == Facing.North;
+            case Facing.West: return b == Facing.East;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(a), a, null);
+        }
+    }
 
     private static int CompareTiles(TileCoord a, TileCoord b)
     {
