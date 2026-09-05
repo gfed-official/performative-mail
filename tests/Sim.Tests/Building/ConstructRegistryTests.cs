@@ -2,6 +2,7 @@ using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
+using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.Tests.World;
 using PerformativeMail.Sim.World;
 
@@ -65,16 +66,19 @@ public sealed class ConstructRegistryTests
     }
 
     [Fact]
-    public void Slope_AtOrAbove15Deg_Rejected()
+    public void Slope_AtOrAbove15Deg_FlattensAndPlaces()
     {
         var field = PlacementField.Flat(3, 3, 200, 100).WithHeight(new TileCoord(2, 1), 154);
         var fx = Loaded(logs: 3, field);
 
-        var rejected = Assert.IsType<PlaceRejected>(fx.Registry.TryPlace("wall_wood", Origin, Facing.North));
+        Assert.IsType<Placed>(fx.Registry.TryPlace("wall_wood", Origin, Facing.North));
 
-        Assert.Equal(PlaceReject.Slope, rejected.Reason);
-        Assert.Equal(0, fx.Registry.Count);
-        Assert.Equal(3, CountLog(fx));
+        Assert.Equal(1, fx.Registry.Count);
+        Assert.Equal(0, CountLog(fx));
+        Assert.Equal(101, field.HeightAt(Origin));
+        Assert.Equal(154, field.HeightAt(new TileCoord(2, 1)));
+        Assert.False(field.SlopeExceeds(Origin));
+        Assert.Equal(new FlattenedTile(1, 1, 101), Assert.Single(fx.Registry.FlattenedTiles));
     }
 
     [Fact]
@@ -85,6 +89,43 @@ public sealed class ConstructRegistryTests
 
         Assert.IsType<Placed>(fx.Registry.TryPlace("wall_wood", Origin, Facing.North));
         Assert.Equal(0, CountLog(fx));
+        Assert.Equal(100, field.HeightAt(Origin));
+        Assert.Empty(fx.Registry.FlattenedTiles);
+    }
+
+    [Fact]
+    public void Slope_NeedsMoreThan1m_Rejected()
+    {
+        var field = PlacementField.Flat(3, 3, 200, 100).WithHeight(new TileCoord(2, 1), 254);
+        var fx = Loaded(logs: 3, field);
+
+        var rejected = Assert.IsType<PlaceRejected>(fx.Registry.TryPlace("wall_wood", Origin, Facing.North));
+
+        Assert.Equal(PlaceReject.Slope, rejected.Reason);
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.Equal(3, CountLog(fx));
+        Assert.Equal(100, field.HeightAt(Origin));
+        Assert.Empty(fx.Registry.FlattenedTiles);
+    }
+
+    [Fact]
+    public void Flatten_DoesNotRewriteWorldHash()
+    {
+        var tables = WorldGen.GenerateSmallIsland(WorldGenHashTests.FixedSeed);
+        ulong before = WorldHash.Compute(tables);
+        short generated = tables.Heights[0];
+        var worldField = PlacementField.FromWorld(tables);
+        worldField.ApplyFlatten(new[] { new FlattenedTile(0, 0, generated + 1) });
+        var field = PlacementField.Flat(3, 3, 200, 100).WithHeight(new TileCoord(2, 1), 154);
+        var fx = Loaded(logs: 3, field);
+
+        Assert.IsType<Placed>(fx.Registry.TryPlace("wall_wood", Origin, Facing.North));
+
+        Assert.Equal(WorldGenHashTests.GoldenWorldHash, before);
+        Assert.Equal(generated, tables.Heights[0]);
+        Assert.Equal(before, WorldHash.Compute(tables));
+        Assert.Equal((short)(generated + 1), worldField.HeightAt(new TileCoord(0, 0)));
+        Assert.Equal(new FlattenedTile(1, 1, 101), Assert.Single(fx.Registry.FlattenedTiles));
     }
 
     [Fact]

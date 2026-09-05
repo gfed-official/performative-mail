@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Sim.Building;
@@ -7,6 +9,7 @@ public sealed class PlacementField
 {
     public const int Tan15Num = 2679;
     public const int Tan15Den = 10000;
+    public const int MaxFlattenCm = 100;
 
     private readonly short[] _heights;
     private readonly bool[] _street;
@@ -86,6 +89,75 @@ public sealed class PlacementField
 
     public bool IsWater(TileCoord tile) => InBounds(tile) && _heights[Idx(tile, Width)] <= 0;
 
+    public short HeightAt(TileCoord tile)
+    {
+        RequireInBounds(tile);
+        return _heights[Idx(tile, Width)];
+    }
+
+    public int MaxLegalSlopeCm() => TileCm * Tan15Num / Tan15Den;
+
+    public bool TryPlanFlatten(IReadOnlyList<TileCoord> tiles, out FlattenedTile[] planned)
+    {
+        planned = Array.Empty<FlattenedTile>();
+        if (tiles is null) throw new ArgumentNullException(nameof(tiles));
+        if (tiles.Count == 0) return true;
+
+        int maxLegalDh = MaxLegalSlopeCm();
+        int lo = int.MinValue / 4;
+        int hi = int.MaxValue / 4;
+        long sum = 0;
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            var tile = tiles[i];
+            if (!InBounds(tile)) return false;
+            int h = _heights[Idx(tile, Width)];
+            sum += h;
+            lo = Math.Max(lo, h - MaxFlattenCm);
+            hi = Math.Min(hi, h + MaxFlattenCm);
+        }
+
+        lo = Math.Max(lo, 1);
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            var tile = tiles[i];
+            TightenByNeighbor(tile.X - 1, tile.Y, tiles, maxLegalDh, ref lo, ref hi);
+            TightenByNeighbor(tile.X + 1, tile.Y, tiles, maxLegalDh, ref lo, ref hi);
+            TightenByNeighbor(tile.X, tile.Y - 1, tiles, maxLegalDh, ref lo, ref hi);
+            TightenByNeighbor(tile.X, tile.Y + 1, tiles, maxLegalDh, ref lo, ref hi);
+        }
+
+        if (lo > hi) return false;
+
+        int prefer = (int)(sum / tiles.Count);
+        int target = prefer < lo ? lo : prefer > hi ? hi : prefer;
+        var changed = new List<FlattenedTile>(tiles.Count);
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            var tile = tiles[i];
+            short h = _heights[Idx(tile, Width)];
+            if (h == target) continue;
+            changed.Add(new FlattenedTile(tile.X, tile.Y, target));
+        }
+
+        planned = changed.Count == 0 ? Array.Empty<FlattenedTile>() : changed.ToArray();
+        return true;
+    }
+
+    public void ApplyFlatten(IReadOnlyList<FlattenedTile> planned)
+    {
+        if (planned is null) throw new ArgumentNullException(nameof(planned));
+        for (int i = 0; i < planned.Count; i++)
+        {
+            var delta = planned[i];
+            if (delta.H < short.MinValue || delta.H > short.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(planned), "Height must fit in a short.");
+            var tile = new TileCoord(delta.X, delta.Y);
+            RequireInBounds(tile);
+            _heights[Idx(tile, Width)] = (short)delta.H;
+        }
+    }
+
     public bool SlopeExceeds(TileCoord tile)
     {
         if (!InBounds(tile)) return true;
@@ -103,6 +175,32 @@ public sealed class PlacementField
         int dh = here - _heights[Idx(new TileCoord(x, y), Width)];
         if (dh < 0) dh = -dh;
         return (long)dh * Tan15Den > (long)TileCm * Tan15Num;
+    }
+
+    private void TightenByNeighbor(
+        int x,
+        int y,
+        IReadOnlyList<TileCoord> footprint,
+        int maxLegalDh,
+        ref int lo,
+        ref int hi)
+    {
+        var neighbor = new TileCoord(x, y);
+        if (!InBounds(neighbor, Width, Height) || InFootprint(footprint, neighbor))
+            return;
+        int hn = _heights[Idx(neighbor, Width)];
+        lo = Math.Max(lo, hn - maxLegalDh);
+        hi = Math.Min(hi, hn + maxLegalDh);
+    }
+
+    private static bool InFootprint(IReadOnlyList<TileCoord> tiles, TileCoord tile)
+    {
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            if (tiles[i] == tile) return true;
+        }
+
+        return false;
     }
 
     private void RequireInBounds(TileCoord tile)
