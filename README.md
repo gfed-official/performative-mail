@@ -32,6 +32,8 @@ export PATH=$HOME/.dotnet:$PATH
 dotnet test PerformativeMail.sln
 ```
 
+PM Playtest / routines: `bash tools/playtest/run.sh` (headless). Optional `--gui` / `--gui-only` on `DISPLAY` (default `:19`). Check IDs and `report.json` are in [`tools/playtest/README.md`](tools/playtest/README.md).
+
 Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4.7.2` (official Godot **4.7.2** .NET / C# editor). The `godot` job runs `tools/godot/ci.sh` once per command.
 
 - `verify` checks Godot 4.7.2 .NET, `godot --headless --quit`, and `dotnet` 8.x.
