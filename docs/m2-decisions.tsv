@@ -11,3 +11,7 @@ ts	phase	decision	why	evidence	result
 2026-09-05T01:55:40Z	u1.1	Both lanes must step in U1.1 tests	Trail review: lane 0 only left lane 1 unproven	docs/m2-frame.md	accepted
 2026-09-05T01:55:40Z	u1.1	U1.1 segment id is the current tile run	Recompile after place; stable ids wait for U3 events	docs/m2-frame.md	accepted
 2026-09-05T01:55:40Z	audit	Kept chapter 12 fps wording	60 fps is the M2 gate in spec; this slice does not rewrite it	spec/12-milestones.md:M2	accepted
+2026-09-05T02:30:00Z	u1.1	BeltNetwork compiles from ConstructRegistry.All	Placement stays in ConstructRegistry; compile and step live under src/Sim/Automation	src/Sim/Automation/BeltNetwork.cs	accepted
+2026-09-05T02:30:00Z	u1.1	Run identity is facing plus ordered tiles	Recompile after place; no stable id until U3	docs/m2-frame.md	accepted
+2026-09-05T02:30:00Z	subtract	Letters only; head blocks at segment length	Cargo occupancy and sinks wait for U1.5	docs/m2-frame.md	accepted
+
