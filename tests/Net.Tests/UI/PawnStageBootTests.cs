@@ -13,7 +13,14 @@ public sealed class PawnStageBootTests
         Assert.Contains("ViewFrame.From", source);
         Assert.Contains("camera.Current = local", source);
         Assert.Contains("localPitchRadians", source);
+        Assert.Contains("OutlineSize = LabelOutlineSize", source);
+        Assert.Contains("PixelSize = LabelPixelSize", source);
+        Assert.Contains("LabelOutlineSize = 8", source);
+        Assert.Contains("LabelPixelSize = 0.01f", source);
+        Assert.Contains("Modulate = Colors.White", source);
+        Assert.Contains("Billboard = BaseMaterial3D.BillboardModeEnum.Enabled", source);
         Assert.DoesNotContain("TryLocalEye", source);
+        Assert.DoesNotContain("QuadMesh", source);
     }
 
     private static string ReadPawnStage()
