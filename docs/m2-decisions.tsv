@@ -26,3 +26,4 @@ ts	phase	decision	why	evidence	result
 2026-09-05T03:30:00Z	subtract	Do not parse BuildingDef.params; ways=3 is a constant	Catalog already ignores params; filterable is Splitter vs Merger	src/Sim/Content/BuildingCatalog.cs	accepted
 2026-09-05T03:35:00Z	u1.4	BeltItem carries MailKindId; TryInsert defaults to Letter	Kind filter needs a kind on the item; U1.1 inserts stay letters	src/Sim/Automation/BeltNetwork.cs	accepted
 2026-09-05T03:35:00Z	u1.4	Step then transfer; RR over connected ports only	Skip blocked or filtered; merger cursor is per lane	src/Sim/Automation/BeltNetwork.cs	accepted
+2026-09-05T03:39:00Z	verify	U1.4 acceptance on 0bc5c3d	Sim 441, Net 287, Bot 16, ContentValidator 0, CI 8 of 8	https://github.com/gfed-official/performative-mail/pull/243	VERIFIED
