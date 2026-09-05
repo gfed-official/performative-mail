@@ -24,3 +24,5 @@ ts	phase	decision	why	evidence	result
 2026-09-05T03:30:00Z	u1.4	Skip arena; frame named the U1.4 table	docs/m2-frame.md says U1.2-U1.6 compose named spec tables	docs/m2-frame.md	accepted
 2026-09-05T03:30:00Z	architect	Chose junction nodes plus transfer pass over 0-length segments	A splitter is not part of a belt segment; keep IsFamily belt-only	src/Sim/Automation/BeltNetwork.cs	accepted
 2026-09-05T03:30:00Z	subtract	Do not parse BuildingDef.params; ways=3 is a constant	Catalog already ignores params; filterable is Splitter vs Merger	src/Sim/Content/BuildingCatalog.cs	accepted
+2026-09-05T03:35:00Z	u1.4	BeltItem carries MailKindId; TryInsert defaults to Letter	Kind filter needs a kind on the item; U1.1 inserts stay letters	src/Sim/Automation/BeltNetwork.cs	accepted
+2026-09-05T03:35:00Z	u1.4	Step then transfer; RR over connected ports only	Skip blocked or filtered; merger cursor is per lane	src/Sim/Automation/BeltNetwork.cs	accepted

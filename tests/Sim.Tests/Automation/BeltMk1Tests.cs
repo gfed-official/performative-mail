@@ -3,6 +3,7 @@ using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
+using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Sim.Tests.Automation;
@@ -564,6 +565,259 @@ public sealed class BeltMk1Tests
             Assert.Equal(8f, segment.Lane(lane)[0].MetresFromStart, 3);
             Assert.Equal(7.5f, segment.Lane(lane)[1].MetresFromStart, 3);
         }
+    }
+
+    [Fact]
+    public void RepoDefs_SplitterAndMerger_MatchChapterCosts()
+    {
+        var buildings = Index(LoadBuildings());
+        var recipes = Index(LoadRecipes());
+
+        Assert.True(buildings.TryGetValue(BeltNetwork.SplitterId, out var splitter));
+        Assert.True(recipes.TryGetValue(splitter.Recipe, out var splitterRecipe));
+        Assert.Equal("recipe_splitter", splitter.Recipe);
+        Assert.Equal(BeltNetwork.SplitterId, splitterRecipe.ProducesBuilding);
+        Assert.Equal(150, splitter.Hp);
+        Assert.Equal(1, splitter.Footprint.W);
+        Assert.Equal(1, splitter.Footprint.H);
+        Assert.False(splitter.OnStreet);
+        Assert.Equal(WaterPlacement.None, splitter.OnWater);
+        Assert.Equal(15, splitter.MaxSlopeDeg);
+        Assert.Equal(BuildingBehaviour.Splitter, splitter.Behaviour);
+        Assert.Null(splitterRecipe.Blueprint);
+        Assert.Equal("iron_ingot", splitterRecipe.Inputs[0].Item);
+        Assert.Equal(2, splitterRecipe.Inputs[0].Count);
+        Assert.Equal("plank", splitterRecipe.Inputs[1].Item);
+        Assert.Equal(1, splitterRecipe.Inputs[1].Count);
+
+        Assert.True(buildings.TryGetValue(BeltNetwork.MergerId, out var merger));
+        Assert.True(recipes.TryGetValue(merger.Recipe, out var mergerRecipe));
+        Assert.Equal("recipe_merger", merger.Recipe);
+        Assert.Equal(BeltNetwork.MergerId, mergerRecipe.ProducesBuilding);
+        Assert.Equal(150, merger.Hp);
+        Assert.Equal(1, merger.Footprint.W);
+        Assert.Equal(1, merger.Footprint.H);
+        Assert.False(merger.OnStreet);
+        Assert.Equal(WaterPlacement.None, merger.OnWater);
+        Assert.Equal(15, merger.MaxSlopeDeg);
+        Assert.Equal(BuildingBehaviour.Merger, merger.Behaviour);
+        Assert.Null(mergerRecipe.Blueprint);
+        Assert.Equal("iron_ingot", mergerRecipe.Inputs[0].Item);
+        Assert.Equal(2, mergerRecipe.Inputs[0].Count);
+        Assert.Equal("plank", mergerRecipe.Inputs[1].Item);
+        Assert.Equal(1, mergerRecipe.Inputs[1].Count);
+    }
+
+    [Fact]
+    public void Place_Splitter_ConsumesAndStreetRejects()
+    {
+        PlaceJunctionConsumesAndStreetRejects(BeltNetwork.SplitterId);
+    }
+
+    [Fact]
+    public void Place_Merger_ConsumesAndStreetRejects()
+    {
+        PlaceJunctionConsumesAndStreetRejects(BeltNetwork.MergerId);
+    }
+
+    [Fact]
+    public void Compile_BeltSplitterBelt_TwoSegmentsAndOneJunction()
+    {
+        var fx = Loaded(planks: 3, iron: 4);
+        PlaceId(fx, BeltNetwork.BuildingId, new TileCoord(2, 2), Facing.East);
+        PlaceId(fx, BeltNetwork.SplitterId, JunctionOrigin, Facing.East);
+        PlaceId(fx, BeltNetwork.BuildingId, new TileCoord(4, 2), Facing.East);
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+
+        Assert.Equal(2, belts.Segments.Count);
+        AssertNoSegmentContains(belts, JunctionOrigin);
+        var junction = Assert.Single(belts.Junctions);
+        Assert.True(junction.IsSplitter);
+        Assert.Equal(JunctionOrigin, junction.Tile);
+        Assert.Equal(Facing.East, junction.Facing);
+        var input = Assert.Single(junction.Inputs);
+        Assert.Equal(new TileCoord(2, 2), input.Tile);
+        Assert.Equal(Facing.East, input.Facing);
+        var output = Assert.Single(junction.Outputs);
+        Assert.Equal(new TileCoord(4, 2), output.Tile);
+        Assert.Equal(Facing.East, output.Facing);
+    }
+
+    [Fact]
+    public void Splitter_RoundRobin_ForwardLeftRight()
+    {
+        var belts = CompileSplitterStar();
+        var input = SegmentOn(belts, new TileCoord(2, 2));
+        Assert.True(input.TryInsert(0, 1, 2.0f));
+        Assert.True(input.TryInsert(0, 2, 1.5f));
+        Assert.True(input.TryInsert(0, 3, 1.0f));
+
+        belts.StepTicks(TickClock.TickHz);
+
+        Assert.Empty(input.Lane(0));
+        Assert.Equal(1, Assert.Single(SegmentOn(belts, new TileCoord(4, 2)).Lane(0)).ItemId);
+        Assert.Equal(2, Assert.Single(SegmentOn(belts, new TileCoord(3, 3)).Lane(0)).ItemId);
+        Assert.Equal(3, Assert.Single(SegmentOn(belts, new TileCoord(3, 1)).Lane(0)).ItemId);
+    }
+
+    [Fact]
+    public void Splitter_SkipBlockedForward()
+    {
+        var belts = CompileSplitterStar();
+        var input = SegmentOn(belts, new TileCoord(2, 2));
+        var forward = SegmentOn(belts, new TileCoord(4, 2));
+        Assert.True(forward.TryInsert(0, 99, 0f));
+        Assert.True(input.TryInsert(0, 1, 2.0f));
+        Assert.True(input.TryInsert(0, 2, 1.5f));
+        Assert.True(input.TryInsert(0, 3, 1.0f));
+
+        belts.StepTicks(TickClock.TickHz);
+
+        Assert.Empty(input.Lane(0));
+        Assert.Equal(1, Assert.Single(SegmentOn(belts, new TileCoord(3, 3)).Lane(0)).ItemId);
+        Assert.Equal(2, Assert.Single(SegmentOn(belts, new TileCoord(3, 1)).Lane(0)).ItemId);
+        Assert.Contains(forward.Lane(0), item => item.ItemId == 99);
+        Assert.DoesNotContain(forward.Lane(0), item => item.ItemId == 1);
+        Assert.DoesNotContain(forward.Lane(0), item => item.ItemId == 2);
+    }
+
+    [Fact]
+    public void Splitter_KindFilter_SkipsEastForLetter()
+    {
+        var belts = CompileSplitterStar();
+        var splitterTile = JunctionOrigin;
+        Assert.True(belts.SetOutputFilter(splitterTile, Facing.East, MailKinds.Postcard));
+        Assert.False(belts.SetOutputFilter(new TileCoord(0, 0), Facing.East, MailKinds.Postcard));
+        var input = SegmentOn(belts, new TileCoord(2, 2));
+        Assert.True(input.TryInsert(0, 7, 2.0f));
+
+        belts.StepTicks(1);
+
+        Assert.Empty(input.Lane(0));
+        Assert.Empty(SegmentOn(belts, new TileCoord(4, 2)).Lane(0));
+        Assert.Equal(7, Assert.Single(SegmentOn(belts, new TileCoord(3, 3)).Lane(0)).ItemId);
+        Assert.Empty(SegmentOn(belts, new TileCoord(3, 1)).Lane(0));
+    }
+
+    [Fact]
+    public void Merger_RoundRobin_DoesNotStarve()
+    {
+        var belts = CompileMergerStar();
+        AssertNoSegmentContains(belts, JunctionOrigin);
+        var west = SegmentOn(belts, new TileCoord(2, 2));
+        var north = SegmentOn(belts, new TileCoord(3, 3));
+        var south = SegmentOn(belts, new TileCoord(3, 1));
+        var output = SegmentOn(belts, new TileCoord(4, 2));
+        Assert.True(west.TryInsert(0, 10, 2.0f));
+        Assert.True(west.TryInsert(0, 11, 1.5f));
+        Assert.True(west.TryInsert(0, 12, 1.0f));
+        Assert.True(north.TryInsert(0, 20, 2.0f));
+        Assert.True(south.TryInsert(0, 30, 2.0f));
+
+        belts.StepTicks(20);
+
+        var ids = new HashSet<int>();
+        foreach (var item in output.Lane(0))
+            ids.Add(item.ItemId);
+        Assert.Contains(20, ids);
+        Assert.Contains(10, ids);
+        Assert.Contains(30, ids);
+        Assert.Equal(3, ids.Count);
+        Assert.DoesNotContain(11, ids);
+        Assert.DoesNotContain(12, ids);
+    }
+
+    [Fact]
+    public void Compile_Merger_TileIsNotInAnySegment()
+    {
+        var belts = CompileMergerStar();
+        var junction = Assert.Single(belts.Junctions);
+        Assert.False(junction.IsSplitter);
+        Assert.Equal(JunctionOrigin, junction.Tile);
+        Assert.Equal(Facing.East, junction.Facing);
+        AssertNoSegmentContains(belts, JunctionOrigin);
+        Assert.Equal(3, junction.Inputs.Count);
+        Assert.Equal(new TileCoord(3, 3), junction.Inputs[0].Tile);
+        Assert.Equal(Facing.South, junction.Inputs[0].Facing);
+        Assert.Equal(new TileCoord(2, 2), junction.Inputs[1].Tile);
+        Assert.Equal(Facing.East, junction.Inputs[1].Facing);
+        Assert.Equal(new TileCoord(3, 1), junction.Inputs[2].Tile);
+        Assert.Equal(Facing.North, junction.Inputs[2].Facing);
+        var output = Assert.Single(junction.Outputs);
+        Assert.Equal(new TileCoord(4, 2), output.Tile);
+        Assert.Equal(Facing.East, output.Facing);
+    }
+
+    private static readonly TileCoord JunctionOrigin = new(3, 2);
+
+    private static void PlaceJunctionConsumesAndStreetRejects(string id)
+    {
+        var fx = Loaded(planks: 1, iron: 2);
+        PlaceId(fx, id, JunctionOrigin, Facing.East);
+        Assert.Equal(1, fx.Registry.Count);
+        Assert.Equal(0, CountItem(fx, PlankId));
+        Assert.Equal(0, CountItem(fx, IronId));
+
+        var street = PlacementField.Flat(8, 6, 200).WithStreet(JunctionOrigin);
+        var blocked = Loaded(planks: 1, iron: 2, street);
+        var rejected = Assert.IsType<PlaceRejected>(
+            blocked.Registry.TryPlace(id, JunctionOrigin, Facing.East));
+        Assert.Equal(PlaceReject.Street, rejected.Reason);
+        Assert.Equal(0, blocked.Registry.Count);
+        Assert.Equal(1, CountItem(blocked, PlankId));
+        Assert.Equal(2, CountItem(blocked, IronId));
+    }
+
+    private static BeltNetwork CompileSplitterStar()
+    {
+        var fx = Loaded(planks: 5, iron: 6);
+        PlaceId(fx, BeltNetwork.BuildingId, new TileCoord(2, 2), Facing.East);
+        PlaceId(fx, BeltNetwork.SplitterId, JunctionOrigin, Facing.East);
+        PlaceId(fx, BeltNetwork.BuildingId, new TileCoord(4, 2), Facing.East);
+        PlaceId(fx, BeltNetwork.BuildingId, new TileCoord(3, 3), Facing.North);
+        PlaceId(fx, BeltNetwork.BuildingId, new TileCoord(3, 1), Facing.South);
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+        return belts;
+    }
+
+    private static BeltNetwork CompileMergerStar()
+    {
+        var fx = Loaded(planks: 5, iron: 6);
+        PlaceId(fx, BeltNetwork.BuildingId, new TileCoord(2, 2), Facing.East);
+        PlaceId(fx, BeltNetwork.MergerId, JunctionOrigin, Facing.East);
+        PlaceId(fx, BeltNetwork.BuildingId, new TileCoord(4, 2), Facing.East);
+        PlaceId(fx, BeltNetwork.BuildingId, new TileCoord(3, 3), Facing.South);
+        PlaceId(fx, BeltNetwork.BuildingId, new TileCoord(3, 1), Facing.North);
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+        return belts;
+    }
+
+    private static void PlaceId(Fixture fx, string id, TileCoord tile, Facing facing)
+    {
+        Assert.IsType<Placed>(fx.Registry.TryPlace(id, tile, facing, Owner));
+    }
+
+    private static BeltSegment SegmentOn(BeltNetwork belts, TileCoord tile)
+    {
+        foreach (var segment in belts.Segments)
+        {
+            for (int i = 0; i < segment.Tiles.Count; i++)
+            {
+                if (segment.Tiles[i].Equals(tile))
+                    return segment;
+            }
+        }
+
+        throw new InvalidOperationException($"No segment covers {tile.X},{tile.Y}.");
+    }
+
+    private static void AssertNoSegmentContains(BeltNetwork belts, TileCoord tile)
+    {
+        foreach (var segment in belts.Segments)
+            Assert.DoesNotContain(tile, segment.Tiles);
     }
 
     private static BeltNetwork CompileEastNetwork(int tiles)
