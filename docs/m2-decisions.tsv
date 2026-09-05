@@ -64,3 +64,4 @@ ts	phase	decision	why	evidence	result
 2026-09-05T05:50:00Z	architect	addressColour is district plus street; position is i32 cm	Chapter 09 wants both swatches; BitWriter has no float	src/Sim/Core/Ids.cs	accepted
 2026-09-05T05:50:00Z	subtract	LaneRemove is segment plus lane; Compile emits nothing	Head take is the only remove; compile wipe is later	src/Sim/Automation/LaneEvents.cs	accepted
 2026-09-05T06:00:00Z	verify	U3.1 local suite after head-at-end insert	Sim 490, Net 308, Bot 16, ContentValidator 0	tests/Net.Tests/LaneEventTests.cs	VERIFIED
+2026-09-05T06:05:00Z	verify	U3.1 CI 8 of 8 on b652d0b	test, both worldHash jobs, Godot 4.7.2	https://github.com/gfed-official/performative-mail/pull/253	VERIFIED
