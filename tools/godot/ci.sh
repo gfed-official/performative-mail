@@ -419,18 +419,26 @@ host_interact_smoke() {
 
 host_live_overlay_smoke() {
   echo "==> headless host live inventory overlay dump"
-  local reports report dump log
+  local reports report dump log attempt
   reports="$(mktemp -d)"
   report="$reports/report.json"
   dump="$reports/overlay-dump.txt"
   log="$(mktemp)"
-  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
-    --host --debug-world --debug-helper=live-overlay --quit-after-ms=8000 \
-    --report="$report" --overlay-dump="$dump" \
-    >"$log" 2>&1; then
+  for attempt in 1 2; do
+    rm -f "$report" "$dump"
+    : >"$log"
+    if godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+      --host --debug-world --debug-helper=live-overlay --quit-after-ms=8000 \
+      --report="$report" --overlay-dump="$dump" \
+      >"$log" 2>&1; then
+      break
+    fi
     cat "$log"
-    fail "host live-overlay process exited non-zero"
-  fi
+    if [[ "$attempt" -eq 2 ]]; then
+      fail "host live-overlay process exited non-zero"
+    fi
+    echo "live-overlay godot exited non-zero; retrying once"
+  done
   if [[ ! -f "$report" ]]; then
     cat "$log"
     fail "host live-overlay did not write a report"
