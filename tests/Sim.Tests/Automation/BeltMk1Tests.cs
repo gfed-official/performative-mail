@@ -11,6 +11,7 @@ namespace PerformativeMail.Sim.Tests.Automation;
 public sealed class BeltMk1Tests
 {
     private static readonly TileCoord Origin = new(1, 1);
+    private static readonly TileCoord JunctionOrigin = new(3, 2);
     private static readonly ItemDefId LogId = new(1);
     private static readonly ItemDefId PlankId = new(2);
     private static readonly ItemDefId IronId = new(3);
@@ -748,8 +749,6 @@ public sealed class BeltMk1Tests
         Assert.Equal(new TileCoord(4, 2), output.Tile);
         Assert.Equal(Facing.East, output.Facing);
     }
-
-    private static readonly TileCoord JunctionOrigin = new(3, 2);
 
     private static void PlaceJunctionConsumesAndStreetRejects(string id)
     {

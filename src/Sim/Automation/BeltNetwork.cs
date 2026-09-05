@@ -16,9 +16,9 @@ public sealed class BeltJunction
     private readonly BeltJunctionPort[] _inputs;
     private readonly BeltJunctionPort[] _outputs;
     private readonly MailKindId?[] _filters = new MailKindId?[4];
-    internal readonly BeltSegment[] InputSegments;
-    internal readonly BeltSegment[] OutputSegments;
-    internal readonly int[] Cursors;
+    private readonly BeltSegment[] _inputSegments;
+    private readonly BeltSegment[] _outputSegments;
+    private readonly int[] _cursors;
 
     internal BeltJunction(
         TileCoord tile,
@@ -34,9 +34,9 @@ public sealed class BeltJunction
         IsSplitter = isSplitter;
         _inputs = inputs;
         _outputs = outputs;
-        InputSegments = inputSegments;
-        OutputSegments = outputSegments;
-        Cursors = new int[BeltNetwork.LaneCount];
+        _inputSegments = inputSegments;
+        _outputSegments = outputSegments;
+        _cursors = new int[BeltNetwork.LaneCount];
     }
 
     public TileCoord Tile { get; }
@@ -56,12 +56,56 @@ public sealed class BeltJunction
         _filters[i] = kind;
     }
 
-    internal bool Accepts(Facing outputFace, MailKindId kind)
+    private bool Accepts(Facing outputFace, MailKindId kind)
     {
         int i = (int)outputFace;
         if ((uint)i >= 4) return true;
         MailKindId? want = _filters[i];
         return want is null || want.Value.Equals(kind);
+    }
+
+    internal void TransferLane(int lane)
+    {
+        if (IsSplitter)
+            TransferSplit(lane);
+        else
+            TransferMerge(lane);
+    }
+
+    private void TransferSplit(int lane)
+    {
+        if (_inputSegments.Length == 0 || _outputSegments.Length == 0) return;
+        var input = _inputSegments[0];
+        if (!input.TryPeekHead(lane, out var item)) return;
+
+        int n = _outputSegments.Length;
+        int start = _cursors[lane];
+        for (int k = 0; k < n; k++)
+        {
+            int i = (start + k) % n;
+            if (!Accepts(_outputs[i].Facing, item.Kind)) continue;
+            if (!_outputSegments[i].TryInsert(lane, item.ItemId, 0f, item.Kind)) continue;
+            input.TryTakeHead(lane, out _);
+            _cursors[lane] = (i + 1) % n;
+            return;
+        }
+    }
+
+    private void TransferMerge(int lane)
+    {
+        if (_inputSegments.Length == 0 || _outputSegments.Length == 0) return;
+        var output = _outputSegments[0];
+        int n = _inputSegments.Length;
+        int start = _cursors[lane];
+        for (int k = 0; k < n; k++)
+        {
+            int i = (start + k) % n;
+            if (!_inputSegments[i].TryPeekHead(lane, out var item)) continue;
+            if (!output.TryInsert(lane, item.ItemId, 0f, item.Kind)) continue;
+            _inputSegments[i].TryTakeHead(lane, out _);
+            _cursors[lane] = (i + 1) % n;
+            return;
+        }
     }
 }
 
@@ -394,50 +438,8 @@ public sealed class BeltNetwork
     {
         for (int i = 0; i < _junctions.Count; i++)
         {
-            var junction = _junctions[i];
             for (int lane = 0; lane < LaneCount; lane++)
-            {
-                if (junction.IsSplitter)
-                    TransferSplit(junction, lane);
-                else
-                    TransferMerge(junction, lane);
-            }
-        }
-    }
-
-    private static void TransferSplit(BeltJunction junction, int lane)
-    {
-        if (junction.InputSegments.Length == 0 || junction.OutputSegments.Length == 0) return;
-        var input = junction.InputSegments[0];
-        if (!input.TryPeekHead(lane, out var item)) return;
-
-        int n = junction.OutputSegments.Length;
-        int start = junction.Cursors[lane];
-        for (int k = 0; k < n; k++)
-        {
-            int i = (start + k) % n;
-            if (!junction.Accepts(junction.Outputs[i].Facing, item.Kind)) continue;
-            if (!junction.OutputSegments[i].TryInsert(lane, item.ItemId, 0f, item.Kind)) continue;
-            input.TryTakeHead(lane, out _);
-            junction.Cursors[lane] = (i + 1) % n;
-            return;
-        }
-    }
-
-    private static void TransferMerge(BeltJunction junction, int lane)
-    {
-        if (junction.InputSegments.Length == 0 || junction.OutputSegments.Length == 0) return;
-        var output = junction.OutputSegments[0];
-        int n = junction.InputSegments.Length;
-        int start = junction.Cursors[lane];
-        for (int k = 0; k < n; k++)
-        {
-            int i = (start + k) % n;
-            if (!junction.InputSegments[i].TryPeekHead(lane, out var item)) continue;
-            if (!output.TryInsert(lane, item.ItemId, 0f, item.Kind)) continue;
-            junction.InputSegments[i].TryTakeHead(lane, out _);
-            junction.Cursors[lane] = (i + 1) % n;
-            return;
+                _junctions[i].TransferLane(lane);
         }
     }
 
