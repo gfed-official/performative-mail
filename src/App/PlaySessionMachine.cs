@@ -20,6 +20,7 @@ public sealed class PlaySessionMachine : IDisposable
     private TickPacer _pacer = TickPacer.AtTickRate();
     private PlaySession _state = PlaySession.Menu.Instance;
     private Live _live = Live.None.Instance;
+    private ContentStackCatalog? _catalog;
 
     public PlaySessionMachine(INetworkStack stack, SessionOptions? options = null)
     {
@@ -59,7 +60,7 @@ public sealed class PlaySessionMachine : IDisposable
             var listen = _stack.Listen(_options.ListenPort, _options.MaxPlayers);
             var server = new ServerRuntime(listen.Link, boot);
             server.Start();
-            var client = new ClientRuntime(MailStackCatalog.Default);
+            var client = new ClientRuntime(Stacks());
             client.Connect(listen.HostSeat);
             var role = new SessionRole.Listening(HostAdvertisement.For(_options.ListenPort));
             _live = new Live.Hosting(server, listen.Link, client, role);
@@ -78,12 +79,19 @@ public sealed class PlaySessionMachine : IDisposable
     public void Join(JoinTarget target)
     {
         Leave();
-        var link = _stack.Connect(target);
-        var client = new ClientRuntime(MailStackCatalog.Default);
-        client.Connect(link);
-        var role = new SessionRole.Guest(target);
-        _live = new Live.Dialing(link, client, role);
-        _state = new PlaySession.Connecting(role, Deadline: null);
+        try
+        {
+            var link = _stack.Connect(target);
+            var client = new ClientRuntime(Stacks());
+            client.Connect(link);
+            var role = new SessionRole.Guest(target);
+            _live = new Live.Dialing(link, client, role);
+            _state = new PlaySession.Connecting(role, Deadline: null);
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or InvalidOperationException)
+        {
+            _state = new PlaySession.Failed(new FailReason.BootFailed(ex.Message));
+        }
     }
 
     public void Leave()
@@ -220,6 +228,14 @@ public sealed class PlaySessionMachine : IDisposable
             return false;
 
         return TrySpawnLetter(server, inventory, server.World.Intake, tables.Houses[0].Address);
+    }
+
+    private ContentStackCatalog Stacks()
+    {
+        if (_catalog is not null)
+            return _catalog;
+        ContentBoot.Load(out _, out _catalog);
+        return _catalog;
     }
 
     private bool TryHostPlaying(out ServerRuntime server, out EntityId local)
