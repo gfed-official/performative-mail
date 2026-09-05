@@ -14,4 +14,8 @@ ts	phase	decision	why	evidence	result
 2026-09-05T02:30:00Z	u1.1	BeltNetwork compiles from ConstructRegistry.All	Placement stays in ConstructRegistry; compile and step live under src/Sim/Automation	src/Sim/Automation/BeltNetwork.cs	accepted
 2026-09-05T02:30:00Z	u1.1	Run identity is facing plus ordered tiles	Recompile after place; no stable id until U3	docs/m2-frame.md	accepted
 2026-09-05T02:30:00Z	subtract	Letters only; head blocks at segment length	Cargo occupancy and sinks wait for U1.5	docs/m2-frame.md	accepted
+2026-09-05T02:50:00Z	u1.2	Skip arena; compare two compile sketches in-thread	docs/m2-frame.md says U1.2 composes a named spec table	docs/m2-frame.md	accepted
+2026-09-05T02:50:00Z	architect	Chose directed feed-graph walk over stitch-after-straight	byFacing partition is the U1.1 limit; stitching is a second pass over the same join rule	src/Sim/Automation/BeltNetwork.cs	accepted
+2026-09-05T02:50:00Z	subtract	Delete byFacing grouping; keep BeltSegment tiles plus start facing	Per-tile Facing[] on the segment is unused until U1.5 endpoints	src/Sim/Automation/BeltNetwork.cs	accepted
+2026-09-05T02:50:00Z	u1.2	Break opposed feeds and in-degree > 1	Opposed stays two segments; mergers wait for U1.4	spec/04-automation.md:2.1	accepted
 
