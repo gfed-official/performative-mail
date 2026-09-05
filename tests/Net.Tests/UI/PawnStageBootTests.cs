@@ -8,6 +8,9 @@ public sealed class PawnStageBootTests
         var source = ReadPawnStage();
         Assert.Contains("CameraName = \"Camera\"", source);
         Assert.Contains("FirstPersonLook.EyeHeightMeters", source);
+        Assert.Contains("PawnLabelPlacement.AbovePawn", source);
+        Assert.Contains("PawnPalette.Rgb", source);
+        Assert.Contains("ViewFrame.From", source);
         Assert.Contains("camera.Current = local", source);
         Assert.Contains("localPitchRadians", source);
         Assert.DoesNotContain("TryLocalEye", source);
