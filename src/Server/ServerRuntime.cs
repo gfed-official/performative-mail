@@ -235,6 +235,7 @@ public sealed class ServerRuntime
 
         Deaths ??= new DeathSession(inv, inv.CreateContainer(ContainerSpec.Intake), SpawnRing.CentreOf(World.Atlas));
         Deaths.Bind(body, hotbar, inventory, backpack, cursor);
+        _bags[body.Id.Value] = new PlayerBags(hotbar, inventory, 0);
     }
 
     private void Drain()
@@ -368,7 +369,6 @@ public sealed class ServerRuntime
         inv.Open(body.Id, inventory);
         if (World.Intake.Value != 0)
             inv.Open(body.Id, World.Intake);
-        _bags[body.Id.Value] = new PlayerBags(hotbar, inventory, 0);
     }
 
     private void BeginShiftIfLobby(EntityId player)

@@ -53,3 +53,5 @@ ts	phase	decision	why	evidence	result
 2026-09-05T04:40:00Z	subtract	No reject message, no JoinState construct list, no SchemaHash bump, no Godot ghost	Reject is silence; JoinState list is join-in-progress; InventoryEvent already added kinds without a hash bump	src/Sim/Net/Protocol.cs	accepted
 2026-09-05T04:40:00Z	architect	Chose TryApplyPlaced on ConstructRegistry over a second replica type	Occupancy and All already live there; replica must not call TryPlace	src/Sim/Building/ConstructRegistry.cs	accepted
 2026-09-05T04:40:00Z	u2.2	TryPlace consumeFrom is the requester bag	One registry owns occupancy; each player has a bag	src/Server/ServerRuntime.cs	accepted
+2026-09-05T04:50:00Z	fix	BindPlayerBags writes _bags	PlaceConstruct returned before TryPlace because only EquipPlayer filled the map	src/Server/ServerRuntime.cs	accepted
+2026-09-05T04:50:00Z	verify	U2.2 local suite on BindPlayerBags fix	Sim 490, Net 302, Bot 16, ContentValidator 0	tests/Net.Tests/ConstructEventTests.cs	VERIFIED
