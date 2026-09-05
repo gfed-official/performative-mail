@@ -43,3 +43,8 @@ ts	phase	decision	why	evidence	result
 2026-09-05T04:10:00Z	u1.6	Delivery refund floors each input count	3 logs become 1; 4 logs become 2; 1+1 belts become 0	src/Sim/Building/ConstructRegistry.cs	accepted
 2026-09-05T04:12:00Z	u1.6	Deposit refunds before Unregister and take back on NoRoom	Partial deposit plus restore duplicated materials on a 2-input recipe	src/Sim/Building/ConstructRegistry.cs	accepted
 2026-09-05T04:12:00Z	verify	U1.6 acceptance on 147394c then atomic refund fix	Sim 463 then new NoRoom and belt Prep facts; CI 8 of 8 on 147394c	https://github.com/gfed-official/performative-mail/pull/246	VERIFIED
+2026-09-05T04:25:00Z	u2.1	Skip arena for U2.1	Chapter 04 §1.1 and chapter 06 already name ≤1 m flatten as an event; FlattenedTile exists	docs/m2-frame.md	accepted
+2026-09-05T04:25:00Z	architect	Chose one pad height on PlacementField over a height overlay	U8.2 1x1 wall needs a height in the tan-15 neighbor band; overlay is a second height store	src/Sim/Building/PlacementField.cs	accepted
+2026-09-05T04:25:00Z	subtract	No new MessageKind, no WorldTables.Heights write, no PlaceConstruct	JoinState already carries FlattenedTiles; U2.2 owns place net requests	src/Sim/Net/JoinState.cs	accepted
+2026-09-05T04:25:00Z	u2.1	Apply flatten only after recipe consume	A MissingInput must not change heights	src/Sim/Building/ConstructRegistry.cs	accepted
+2026-09-05T04:28:00Z	verify	U2.1 acceptance on 1eaab76	Sim 487, Net 295, Bot 16, ContentValidator 0	https://github.com/gfed-official/performative-mail/pull/247	open

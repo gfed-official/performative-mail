@@ -95,7 +95,7 @@ public sealed class PlacementField
         return _heights[Idx(tile, Width)];
     }
 
-    public int MaxLegalSlopeCm() => TileCm * Tan15Num / Tan15Den;
+    private int MaxLegalSlopeCm() => TileCm * Tan15Num / Tan15Den;
 
     public bool TryPlanFlatten(IReadOnlyList<TileCoord> tiles, out FlattenedTile[] planned)
     {
