@@ -11,6 +11,11 @@ public sealed class WorldStageBootTests
         Assert.Contains("MailboxPrefix", source);
         Assert.Contains("AddressText.Format", source);
         Assert.Contains("AddLabeledBox", source);
+        Assert.Contains("ArtMesh.TryInstantiate", source);
+        Assert.Contains("ArtMesh.PostOffice", source);
+        Assert.Contains("ArtMesh.Intake", source);
+        Assert.Contains("ArtMesh.Mailbox", source);
+        Assert.Contains("ArtMesh.HouseVariant", source);
         Assert.Contains("Sync(WorldTables", source);
         Assert.Contains("WorldLabelPlacement.AboveStreetFace", source);
         Assert.Contains("WorldTilePlacement.TileCenter", source);
