@@ -35,6 +35,37 @@ public sealed record Placed(ConstructRecord Construct) : PlaceResult;
 
 public sealed record PlaceRejected(PlaceReject Reason) : PlaceResult;
 
+public enum PlaceLineReject : byte
+{
+    UnknownBuilding,
+    NotDragLine,
+    NotStraight
+}
+
+public readonly record struct LineTile(TileCoord Tile, PlaceResult Result);
+
+public abstract record PlaceLineResult;
+
+public sealed record PlaceLineApplied(IReadOnlyList<LineTile> Tiles) : PlaceLineResult;
+
+public sealed record PlaceLineRejected(PlaceLineReject Reason) : PlaceLineResult;
+
+public enum DeconstructReject : byte
+{
+    UnknownConstruct,
+    UnknownBuilding,
+    UnknownRecipe,
+    UnknownItem,
+    MissingInventory,
+    NoRoom
+}
+
+public abstract record DeconstructResult;
+
+public sealed record Deconstructed(ConstructRecord Construct) : DeconstructResult;
+
+public sealed record DeconstructRejected(DeconstructReject Reason) : DeconstructResult;
+
 public sealed class ConstructRegistry
 {
     private readonly Dictionary<string, BuildingDef> _buildings;
@@ -121,6 +152,111 @@ public sealed class ConstructRegistry
             _at.Add(covered[i], id);
         _order.Add(row);
         return new Placed(row);
+    }
+
+    public PlaceLineResult TryPlaceLine(
+        string buildingId,
+        TileCoord from,
+        TileCoord to,
+        Facing rotation,
+        EntityId owner = default)
+    {
+        if (!_buildings.TryGetValue(buildingId, out var building))
+            return new PlaceLineRejected(PlaceLineReject.UnknownBuilding);
+        if (!building.DragLine)
+            return new PlaceLineRejected(PlaceLineReject.NotDragLine);
+        if (!TryLineTiles(from, to, out var tiles))
+            return new PlaceLineRejected(PlaceLineReject.NotStraight);
+
+        var results = new LineTile[tiles.Length];
+        for (int i = 0; i < tiles.Length; i++)
+            results[i] = new LineTile(tiles[i], TryPlace(buildingId, tiles[i], rotation, owner));
+        return new PlaceLineApplied(results);
+    }
+
+    public DeconstructResult TryDeconstruct(EntityId id, double salvageRatio)
+    {
+        if (double.IsNaN(salvageRatio) || salvageRatio < 0 || salvageRatio > 1)
+            throw new ArgumentOutOfRangeException(nameof(salvageRatio));
+        if (!_byId.TryGetValue(id.Value, out var row))
+            return new DeconstructRejected(DeconstructReject.UnknownConstruct);
+        if (!_buildings.TryGetValue(row.DefId, out var building))
+            return new DeconstructRejected(DeconstructReject.UnknownBuilding);
+        if (!_recipes.TryGetValue(building.Recipe, out var recipe))
+            return new DeconstructRejected(DeconstructReject.UnknownRecipe);
+        if (_inventory is null || !_inventory.TryGetContainer(_from, out _))
+            return new DeconstructRejected(DeconstructReject.MissingInventory);
+
+        var refunds = new List<ItemStack>();
+        for (int i = 0; i < recipe.Inputs.Length; i++)
+        {
+            var input = recipe.Inputs[i];
+            int give = RefundCount(input.Count, salvageRatio);
+            if (give < 1) continue;
+            if (!_itemIds.TryGetValue(input.Item, out var itemId))
+                return new DeconstructRejected(DeconstructReject.UnknownItem);
+            refunds.Add(new ItemStack(itemId, give));
+        }
+
+        Unregister(row, building);
+        for (int i = 0; i < refunds.Count; i++)
+        {
+            if (_inventory.Apply(Actor.System, new Deposit(_from, refunds[i])) is Accepted)
+                continue;
+            Register(row, building);
+            return new DeconstructRejected(DeconstructReject.NoRoom);
+        }
+
+        return new Deconstructed(row);
+    }
+
+    private void Register(ConstructRecord row, BuildingDef building)
+    {
+        var covered = Covered(building, row.Tile, row.Rotation);
+        _byId.Add(row.Id.Value, row);
+        for (int i = 0; i < covered.Length; i++)
+            _at.Add(covered[i], row.Id);
+        _order.Add(row);
+    }
+
+    private void Unregister(ConstructRecord row, BuildingDef building)
+    {
+        var covered = Covered(building, row.Tile, row.Rotation);
+        _byId.Remove(row.Id.Value);
+        for (int i = 0; i < covered.Length; i++)
+            _at.Remove(covered[i]);
+        _order.Remove(row);
+    }
+
+    private static int RefundCount(int count, double salvageRatio)
+    {
+        if (salvageRatio >= 1) return count;
+        if (salvageRatio <= 0) return 0;
+        return (int)(count * salvageRatio);
+    }
+
+    private static bool TryLineTiles(TileCoord from, TileCoord to, out TileCoord[] tiles)
+    {
+        if (from.X != to.X && from.Y != to.Y)
+        {
+            tiles = Array.Empty<TileCoord>();
+            return false;
+        }
+
+        int dx = Math.Sign(to.X - from.X);
+        int dy = Math.Sign(to.Y - from.Y);
+        int n = 1 + Math.Abs(to.X - from.X) + Math.Abs(to.Y - from.Y);
+        tiles = new TileCoord[n];
+        int x = from.X;
+        int y = from.Y;
+        for (int i = 0; i < n; i++)
+        {
+            tiles[i] = new TileCoord(x, y);
+            x += dx;
+            y += dy;
+        }
+
+        return true;
     }
 
     private bool TryConsume(RecipeDef recipe, out PlaceReject reject)

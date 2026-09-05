@@ -36,3 +36,8 @@ ts	phase	decision	why	evidence	result
 2026-09-05T03:51:00Z	u1.5	Chest is a belt sink	spec/04 §2.6 says inserter only; issue 212 / frame say chest is a sink	src/Sim/Automation/BeltEndpoints.cs	accepted
 2026-09-05T03:51:00Z	u1.5	Air-drop despawn is 300 s via TickClock	Closest existing despawn is death bag 30 s; chapter 04 says 5 min back to Intake	src/Sim/Automation/BeltEndpoints.cs	accepted
 2026-09-05T03:51:00Z	u1.5	Intake outfeed pops min MailId	Entries is a dictionary; MailStack.Take is LIFO tail; spawn order is smallest id	src/Sim/Automation/BeltEndpoints.cs	accepted
+2026-09-05T04:10:00Z	u1.6	Skip arena for U1.6	Frame already names U1.2–U1.6 tables; PlaceLine and salvage ratios are specified	docs/m2-frame.md	accepted
+2026-09-05T04:10:00Z	architect	Chose ConstructRegistry.TryPlaceLine over a LineBuilder type	TryPlace already consumes and rejects; DragLine is already on BuildingDef	src/Sim/Building/ConstructRegistry.cs	accepted
+2026-09-05T04:10:00Z	subtract	No PlaceLine net message, no Godot ghost, no pipes	U2.2 owns RemoveConstruct events; U9.1 owns ghost; U5 owns pipes	docs/m2-frame.md	accepted
+2026-09-05T04:10:00Z	architect	Pass salvageRatio instead of RunPhase	Building stays free of Run; Prep is 1.0 and Delivery is 0.5	src/Sim/Building/ConstructRegistry.cs	accepted
+2026-09-05T04:10:00Z	u1.6	Delivery refund floors each input count	3 logs become 1; 4 logs become 2; 1+1 belts become 0	src/Sim/Building/ConstructRegistry.cs	accepted
