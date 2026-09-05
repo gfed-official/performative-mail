@@ -249,6 +249,25 @@ public sealed class WireCodecTests
     }
 
     [Fact]
+    public void JoinState_FlattenedTile_RoundTripsAndKeepsWorldHash()
+    {
+        const ulong worldHash = 0x821670054873680EUL;
+        var tile = new FlattenedTile(1, 1, 101);
+        var join = new JoinState(
+            0x7F3A9C21,
+            worldHash,
+            new WorldDeltas(Array.Empty<uint>(), new[] { tile }, Array.Empty<uint>()),
+            new RunState(RunPhase.Prep, 3, 0),
+            Array.Empty<ContainerStamp>());
+
+        byte[] encoded = WireCodec.Encode(join);
+        Assert.True(WireCodec.TryDecode(encoded, out JoinState decoded));
+        Assert.Equal(worldHash, decoded.WorldHash);
+        Assert.Equal(tile, Assert.Single(decoded.Deltas.FlattenedTiles));
+        Assert.Equal(join, decoded);
+    }
+
+    [Fact]
     public void JoinState_OneStamp_RoundTripsHash()
     {
         var stamp = new ContainerStamp(new ContainerId(7), new ContainerVersion(3), 0xA1B2C3D4E5F60718UL);

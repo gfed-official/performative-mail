@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
+using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Sim.Building;
@@ -77,6 +78,7 @@ public sealed class ConstructRegistry
     private readonly Dictionary<uint, ConstructRecord> _byId = new Dictionary<uint, ConstructRecord>();
     private readonly Dictionary<TileCoord, EntityId> _at = new Dictionary<TileCoord, EntityId>();
     private readonly List<ConstructRecord> _order = new List<ConstructRecord>();
+    private readonly List<FlattenedTile> _flattened = new List<FlattenedTile>();
     private uint _nextCounter = 1;
 
     public ConstructRegistry(
@@ -116,6 +118,8 @@ public sealed class ConstructRegistry
 
     public IReadOnlyList<ConstructRecord> All => _order;
 
+    public IReadOnlyList<FlattenedTile> FlattenedTiles => _flattened;
+
     public bool TryGet(EntityId id, out ConstructRecord record) =>
         _byId.TryGetValue(id.Value, out record);
 
@@ -136,14 +140,19 @@ public sealed class ConstructRegistry
                 return new PlaceRejected(PlaceReject.Water);
             if (!building.OnStreet && _field.IsStreet(at))
                 return new PlaceRejected(PlaceReject.Street);
-            if (_field.SlopeExceeds(at))
-                return new PlaceRejected(PlaceReject.Slope);
             if (_at.ContainsKey(at))
                 return new PlaceRejected(PlaceReject.Occupied);
         }
 
+        if (!_field.TryPlanFlatten(covered, out var planned))
+            return new PlaceRejected(PlaceReject.Slope);
+
         if (!TryConsume(recipe, out var reject))
             return new PlaceRejected(reject);
+
+        _field.ApplyFlatten(planned);
+        for (int i = 0; i < planned.Length; i++)
+            _flattened.Add(planned[i]);
 
         var id = EntityId.FromClassAndCounter(EntityClass.Construct, _nextCounter++);
         var row = new ConstructRecord(id, building.Id, tile, rotation, owner, building.Hp, building.Hp);
