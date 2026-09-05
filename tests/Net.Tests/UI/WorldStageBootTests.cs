@@ -53,6 +53,7 @@ public sealed class WorldStageBootTests
         Assert.Contains("WorldPropPlacement.HouseRoofHeightMeters", source);
         Assert.Contains("WorldPropPlacement.RoofSize", source);
         Assert.Contains("AddMailboxFlag", source);
+        Assert.Contains("WorldPropPlacement.MailboxFlagSize", source);
         Assert.Contains("WorldPropPlacement.MailboxFlagOffset", source);
         Assert.Contains("Name = \"Roof\"", source);
         Assert.Contains("Name = \"Flag\"", source);
