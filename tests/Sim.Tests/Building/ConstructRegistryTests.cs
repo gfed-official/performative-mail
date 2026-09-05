@@ -206,6 +206,47 @@ public sealed class ConstructRegistryTests
         Assert.Equal(BuildingBehaviour.Belt, elevated.Behaviour);
     }
 
+    [Fact]
+    public void RepoDefs_SplitterAndMerger_MatchChapterCosts()
+    {
+        var buildings = Index(LoadBuildings());
+        var recipes = Index(LoadRecipes());
+
+        Assert.True(buildings.TryGetValue("splitter", out var splitter));
+        Assert.True(recipes.TryGetValue(splitter.Recipe, out var splitterRecipe));
+        Assert.Equal("recipe_splitter", splitter.Recipe);
+        Assert.Equal("splitter", splitterRecipe.ProducesBuilding);
+        Assert.Equal(150, splitter.Hp);
+        Assert.Equal(1, splitter.Footprint.W);
+        Assert.Equal(1, splitter.Footprint.H);
+        Assert.False(splitter.OnStreet);
+        Assert.Equal(WaterPlacement.None, splitter.OnWater);
+        Assert.Equal(15, splitter.MaxSlopeDeg);
+        Assert.Equal(BuildingBehaviour.Splitter, splitter.Behaviour);
+        Assert.Null(splitterRecipe.Blueprint);
+        Assert.Equal("iron_ingot", splitterRecipe.Inputs[0].Item);
+        Assert.Equal(2, splitterRecipe.Inputs[0].Count);
+        Assert.Equal("plank", splitterRecipe.Inputs[1].Item);
+        Assert.Equal(1, splitterRecipe.Inputs[1].Count);
+
+        Assert.True(buildings.TryGetValue("merger", out var merger));
+        Assert.True(recipes.TryGetValue(merger.Recipe, out var mergerRecipe));
+        Assert.Equal("recipe_merger", merger.Recipe);
+        Assert.Equal("merger", mergerRecipe.ProducesBuilding);
+        Assert.Equal(150, merger.Hp);
+        Assert.Equal(1, merger.Footprint.W);
+        Assert.Equal(1, merger.Footprint.H);
+        Assert.False(merger.OnStreet);
+        Assert.Equal(WaterPlacement.None, merger.OnWater);
+        Assert.Equal(15, merger.MaxSlopeDeg);
+        Assert.Equal(BuildingBehaviour.Merger, merger.Behaviour);
+        Assert.Null(mergerRecipe.Blueprint);
+        Assert.Equal("iron_ingot", mergerRecipe.Inputs[0].Item);
+        Assert.Equal(2, mergerRecipe.Inputs[0].Count);
+        Assert.Equal("plank", mergerRecipe.Inputs[1].Item);
+        Assert.Equal(1, mergerRecipe.Inputs[1].Count);
+    }
+
     private static Fixture Loaded(int logs, PlacementField? field = null)
     {
         var catalog = new MaterialCatalog();
