@@ -10,6 +10,7 @@ using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.Players;
 using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.Vehicles;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Server;
@@ -23,6 +24,8 @@ public sealed class ServerRuntime
     private readonly IServerLink _link;
     private readonly Dictionary<ConnectionId, Seat> _seats = new();
     private readonly Dictionary<uint, PlayerBags> _bags = new();
+    private readonly Dictionary<ConnectionId, HashSet<ulong>> _laneInterest = new();
+    private readonly HashSet<ulong> _knownSegments = new();
     private PlayerSnapshot[] _snapshotScratch = Array.Empty<PlayerSnapshot>();
     private uint _tick;
 
@@ -218,6 +221,7 @@ public sealed class ServerRuntime
         World.Tick(_tick, spawnMail);
         _tick++;
         FlushInventoryEvents();
+        RefreshLaneInterest();
         FlushLaneEvents();
         FlushLaneChecksums();
 
@@ -675,6 +679,7 @@ public sealed class ServerRuntime
             return;
 
         _seats.Remove(from);
+        _laneInterest.Remove(from);
         if (seat.Player is not EntityId player)
             return;
 
@@ -745,11 +750,113 @@ public sealed class ServerRuntime
         {
             var row = segments[i];
             if (!row.Id.Equals(segment)) continue;
-            BroadcastReliable(LaneCodec.Encode(row.CaptureState(lane)));
+            SendLane(row.Id, LaneCodec.Encode(row.CaptureState(lane)));
             return true;
         }
 
         return false;
+    }
+
+    private void RefreshLaneInterest()
+    {
+        var segments = World.Belts.Segments;
+        bool cadence = _tick == 1 || _tick % SegmentInterest.PeriodTicks == 0;
+        bool born = SegmentSetChanged(segments);
+        bool newcomers = false;
+        foreach (var seat in _seats.Values)
+        {
+            if (seat.Joined && !_laneInterest.ContainsKey(seat.Id))
+            {
+                newcomers = true;
+                break;
+            }
+        }
+
+        if (!cadence && !born && !newcomers)
+            return;
+
+        int tileCm = World.Atlas?.TileCm
+            ?? World.Constructs?.TileCm
+            ?? SegmentInterest.DefaultTileCm;
+        int radius = Balance?.InterestRadius ?? SegmentInterest.DefaultRadiusMetres;
+
+        foreach (var seat in _seats.Values)
+        {
+            if (!seat.Joined || seat.Player is not EntityId player)
+                continue;
+            if (!TryInterestOrigin(player, out int ox, out int oy))
+                continue;
+
+            if (!_laneInterest.TryGetValue(seat.Id, out var old))
+                old = new HashSet<ulong>();
+
+            var next = new HashSet<ulong>();
+            for (int i = 0; i < segments.Count; i++)
+            {
+                var segment = segments[i];
+                if (!SegmentInterest.Hits(ox, oy, segment.Tiles, tileCm, radius))
+                    continue;
+
+                next.Add(segment.Id.Value);
+                if (!old.Contains(segment.Id.Value) && _knownSegments.Contains(segment.Id.Value))
+                {
+                    _link.Send(seat.Id, NetChannels.Reliable, LaneCodec.Encode(segment.CaptureState(0)));
+                    _link.Send(seat.Id, NetChannels.Reliable, LaneCodec.Encode(segment.CaptureState(1)));
+                }
+            }
+
+            _laneInterest[seat.Id] = next;
+        }
+
+        _knownSegments.Clear();
+        for (int i = 0; i < segments.Count; i++)
+            _knownSegments.Add(segments[i].Id.Value);
+    }
+
+    private bool SegmentSetChanged(IReadOnlyList<BeltSegment> segments)
+    {
+        if (segments.Count != _knownSegments.Count)
+            return true;
+
+        for (int i = 0; i < segments.Count; i++)
+        {
+            if (!_knownSegments.Contains(segments[i].Id.Value))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool TryInterestOrigin(EntityId player, out int xcm, out int ycm)
+    {
+        xcm = 0;
+        ycm = 0;
+        if (!World.Players.TryGet(player, out var body))
+            return false;
+
+        if (body.VehicleId.Value != 0 && World.Vehicles.TryGet(body.VehicleId, out var vehicle))
+        {
+            xcm = vehicle.Pose.Xcm;
+            ycm = vehicle.Pose.Ycm;
+            return true;
+        }
+
+        xcm = body.Xcm;
+        ycm = body.Ycm;
+        return true;
+    }
+
+    private void SendLane(SegmentId segment, byte[] payload)
+    {
+        ulong key = segment.Value;
+        foreach (var seat in _seats.Values)
+        {
+            if (!seat.Joined)
+                continue;
+            if (!_laneInterest.TryGetValue(seat.Id, out var set) || !set.Contains(key))
+                continue;
+            _link.Send(seat.Id, NetChannels.Reliable, payload);
+        }
     }
 
     private void FlushLaneEvents()
@@ -760,10 +867,10 @@ public sealed class ServerRuntime
             switch (deltas[i])
             {
                 case LaneInsert insert:
-                    BroadcastReliable(LaneCodec.Encode(insert));
+                    SendLane(insert.Segment, LaneCodec.Encode(insert));
                     break;
                 case LaneRemove remove:
-                    BroadcastReliable(LaneCodec.Encode(remove));
+                    SendLane(remove.Segment, LaneCodec.Encode(remove));
                     break;
             }
         }
@@ -780,7 +887,7 @@ public sealed class ServerRuntime
         {
             var segment = segments[i];
             for (byte lane = 0; lane < BeltNetwork.LaneCount; lane++)
-                BroadcastReliable(LaneCodec.Encode(segment.Checksum(lane)));
+                SendLane(segment.Id, LaneCodec.Encode(segment.Checksum(lane)));
         }
     }
 

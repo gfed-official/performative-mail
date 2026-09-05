@@ -8,12 +8,61 @@ namespace PerformativeMail.Client;
 public sealed class LaneReplica
 {
     private readonly Dictionary<(ulong Segment, byte Lane), List<LaneStateItem>> _lanes = new();
+    private readonly HashSet<ulong> _live = new();
+
+    public bool HasSegment(SegmentId segment) => _live.Contains(segment.Value);
 
     public int Count(SegmentId segment, int lane)
     {
         if (!TryList(segment, lane, out var items))
             return 0;
         return items.Count;
+    }
+
+    public IReadOnlyList<int> Positions(SegmentId segment, int lane)
+    {
+        if (!TryList(segment, lane, out var items))
+            return Array.Empty<int>();
+
+        var rows = new int[items.Count];
+        for (int i = 0; i < items.Count; i++)
+            rows[i] = items[i].PositionCm;
+        return rows;
+    }
+
+    public IReadOnlyList<int> DrawPositions(SegmentId segment, int lane, int lengthCm)
+    {
+        if (!TryList(segment, lane, out var items))
+            return Array.Empty<int>();
+
+        var drawn = new List<int>(items.Count);
+        for (int i = 0; i < items.Count; i++)
+        {
+            int at = items[i].PositionCm;
+            if (at < lengthCm)
+                drawn.Add(at);
+        }
+
+        return drawn;
+    }
+
+    public bool Advance(SegmentId segment, float dt, float metresPerSecond, int lengthCm = int.MaxValue)
+    {
+        if (dt < 0f) throw new ArgumentOutOfRangeException(nameof(dt), dt, null);
+        if (metresPerSecond < 0f)
+            throw new ArgumentOutOfRangeException(nameof(metresPerSecond), metresPerSecond, null);
+
+        int delta = (int)MathF.Round(metresPerSecond * dt * BeltNetwork.MetresToCm);
+        bool lane0 = AdvanceLane(segment, 0, delta, lengthCm);
+        bool lane1 = AdvanceLane(segment, 1, delta, lengthCm);
+        return lane0 || lane1;
+    }
+
+    public void Drop(SegmentId segment)
+    {
+        _live.Remove(segment.Value);
+        _lanes.Remove((segment.Value, 0));
+        _lanes.Remove((segment.Value, 1));
     }
 
     public bool Matches(LaneChecksum checksum)
@@ -33,6 +82,7 @@ public sealed class LaneReplica
         var items = GetOrCreate(insert.Segment, insert.Lane);
         items.Add(new LaneStateItem(0, insert.PositionAtTickCm));
         items.Sort(HeadFirst);
+        Touch(insert.Segment);
     }
 
     public void Apply(LaneRemove remove)
@@ -51,6 +101,7 @@ public sealed class LaneReplica
     {
         if (state is null || state.Items is null) return;
         if (state.Lane > 1) return;
+        Touch(state.Segment);
         var key = (state.Segment.Value, state.Lane);
         if (state.Items.Length == 0)
         {
@@ -74,6 +125,26 @@ public sealed class LaneReplica
         items.Sort(HeadFirst);
         return true;
     }
+
+    private bool AdvanceLane(SegmentId segment, byte lane, int deltaCm, int lengthCm)
+    {
+        if (!TryList(segment, lane, out var items) || items.Count == 0)
+            return false;
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            var row = items[i];
+            int next = row.PositionCm + deltaCm;
+            if (next > lengthCm) next = lengthCm;
+            if (next < 0) next = 0;
+            items[i] = new LaneStateItem(row.MailId, next);
+        }
+
+        items.Sort(HeadFirst);
+        return true;
+    }
+
+    private void Touch(SegmentId segment) => _live.Add(segment.Value);
 
     private List<LaneStateItem> GetOrCreate(SegmentId segment, byte lane)
     {
