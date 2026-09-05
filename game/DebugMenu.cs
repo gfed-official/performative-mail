@@ -60,14 +60,18 @@ public partial class DebugMenu : Control
     public override void _Ready()
     {
         Name = RootPath;
-        SetAnchorsPreset(LayoutPreset.FullRect);
         MouseFilter = MouseFilterEnum.Ignore;
         Visible = false;
+        PlaceChrome();
         BuildPanel();
+        Viewport viewport = GetViewport();
+        if (viewport is not null)
+            viewport.SizeChanged += PlaceChrome;
     }
 
     public void Open()
     {
+        PlaceChrome();
         Visible = true;
         _open = true;
     }
@@ -89,6 +93,7 @@ public partial class DebugMenu : Control
     public void Bind(in DebugFrame frame)
     {
         BuildPanel();
+        PlaceChrome();
         _connection.Text = frame.ConnectionLabel;
         _role.Text = frame.RoleLabel;
         _tick.Text = frame.TickLabel;
@@ -134,9 +139,14 @@ public partial class DebugMenu : Control
     public string Dump(string caseName)
     {
         BuildPanel();
+        PlaceChrome();
+        var size = Size;
+        var global = GetGlobalRect();
         return
             $"DEBUG_DUMP case={caseName}\n" +
             $"visible={(IsOpen ? "true" : "false")}\n" +
+            $"panelRect={size.X:0}x{size.Y:0}\n" +
+            $"panelGlobal={global.Position.X:0},{global.Position.Y:0}\n" +
             $"ConnectionLabel={_connection.Text}\n" +
             $"RoleLabel={_role.Text}\n" +
             $"TickLabel={_tick.Text}\n" +
@@ -161,31 +171,42 @@ public partial class DebugMenu : Control
             $"ToggleKey={DebugFrame.ToggleKey}";
     }
 
+    private void PlaceChrome()
+    {
+        Vector2 vp = Vector2.Zero;
+        Window? window = GetWindow();
+        if (window is not null)
+            vp = window.Size;
+        if (vp.X < 640 || vp.Y < 360)
+            vp = GetViewport()?.GetVisibleRect().Size ?? Vector2.Zero;
+        if (vp.X < 640 || vp.Y < 360)
+            vp = new Vector2(1280, 720);
+        SetAnchorsPreset(LayoutPreset.TopLeft);
+        Position = new Vector2(vp.X - 320, 48);
+        Size = new Vector2(304, Mathf.Max(220, vp.Y - 64));
+    }
+
     private void BuildPanel()
     {
         if (_connection is not null)
             return;
-
-        var margin = new MarginContainer
-        {
-            MouseFilter = MouseFilterEnum.Ignore,
-        };
-        margin.SetAnchorsPreset(LayoutPreset.TopRight);
-        margin.GrowHorizontal = GrowDirection.Begin;
-        margin.OffsetLeft = -320;
-        margin.OffsetTop = 48;
-        margin.OffsetRight = -16;
-        margin.AddThemeConstantOverride("margin_left", 0);
-        margin.AddThemeConstantOverride("margin_top", 0);
-        margin.AddThemeConstantOverride("margin_right", 0);
-        AddChild(margin);
 
         var panel = new PanelContainer
         {
             MouseFilter = MouseFilterEnum.Stop,
             CustomMinimumSize = new Vector2(288, 0),
         };
-        margin.AddChild(panel);
+        var style = new StyleBoxFlat
+        {
+            BgColor = new Color(0.12f, 0.13f, 0.16f, 0.96f),
+            ContentMarginLeft = 12,
+            ContentMarginTop = 10,
+            ContentMarginRight = 12,
+            ContentMarginBottom = 10,
+        };
+        panel.AddThemeStyleboxOverride("panel", style);
+        panel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(panel);
 
         var inner = new MarginContainer();
         inner.AddThemeConstantOverride("margin_left", 12);

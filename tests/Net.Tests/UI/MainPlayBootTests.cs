@@ -106,6 +106,12 @@ public sealed class MainPlayBootTests
         Assert.Contains("Spawn.bike=", source);
         Assert.Contains("SetSpawns", source);
         Assert.Contains("SpawnPressed", source);
+        Assert.Contains("panelRect=", source);
+        Assert.Contains("panelGlobal=", source);
+        Assert.Contains("PlaceChrome", source);
+        Assert.Contains("GetVisibleRect()", source);
+        Assert.Contains("StyleBoxFlat", source);
+        Assert.DoesNotContain("LayoutPreset.TopRight", source);
     }
 
     [Fact]

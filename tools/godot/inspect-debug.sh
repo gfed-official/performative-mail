@@ -44,6 +44,13 @@ expect() {
 
 grep -q 'DEBUG_DUMP case=open' "$DUMP" || fail "missing open dump"
 expect "visible=true"
+open_rect="$(awk '/DEBUG_DUMP case=open/,/DEBUG_DUMP case=closed/' "$DUMP" | grep -m1 '^panelRect=' || true)"
+[[ "$open_rect" =~ ^panelRect=([0-9]+)x([0-9]+)$ ]] || fail "open dump missing panelRect: ${open_rect:-<none>}"
+test "${BASH_REMATCH[1]}" -gt 0 || fail "open panel width is not positive: $open_rect"
+test "${BASH_REMATCH[2]}" -gt 0 || fail "open panel height is not positive: $open_rect"
+open_global="$(awk '/DEBUG_DUMP case=open/,/DEBUG_DUMP case=closed/' "$DUMP" | grep -m1 '^panelGlobal=' || true)"
+[[ "$open_global" =~ ^panelGlobal=(-?[0-9]+),(-?[0-9]+)$ ]] || fail "open dump missing panelGlobal: ${open_global:-<none>}"
+test "${BASH_REMATCH[1]}" -ge 0 || fail "open panel is off-screen left: $open_global"
 expect "ConnectionLabel=PLAYING"
 expect "RoleLabel=host"
 expect "TickLabel=42"
