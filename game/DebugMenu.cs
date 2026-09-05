@@ -53,6 +53,7 @@ public partial class DebugMenu : Control
     private Button _openInventory = null!;
     private VBoxContainer _spawnColumn = null!;
     private readonly List<(DebugSpawnRow Row, Button Button)> _spawns = new();
+    private Control _chrome = null!;
     private bool _open;
 
     public bool IsOpen => _open && Visible;
@@ -134,9 +135,12 @@ public partial class DebugMenu : Control
     public string Dump(string caseName)
     {
         BuildPanel();
+        float width = _chrome.OffsetRight - _chrome.OffsetLeft;
+        float height = _chrome.OffsetBottom - _chrome.OffsetTop;
         return
             $"DEBUG_DUMP case={caseName}\n" +
             $"visible={(IsOpen ? "true" : "false")}\n" +
+            $"panelRect={width:0}x{height:0}\n" +
             $"ConnectionLabel={_connection.Text}\n" +
             $"RoleLabel={_role.Text}\n" +
             $"TickLabel={_tick.Text}\n" +
@@ -172,9 +176,12 @@ public partial class DebugMenu : Control
         };
         margin.SetAnchorsPreset(LayoutPreset.TopRight);
         margin.GrowHorizontal = GrowDirection.Begin;
+        margin.GrowVertical = GrowDirection.End;
         margin.OffsetLeft = -320;
         margin.OffsetTop = 48;
         margin.OffsetRight = -16;
+        margin.OffsetBottom = 900;
+        _chrome = margin;
         margin.AddThemeConstantOverride("margin_left", 0);
         margin.AddThemeConstantOverride("margin_top", 0);
         margin.AddThemeConstantOverride("margin_right", 0);
