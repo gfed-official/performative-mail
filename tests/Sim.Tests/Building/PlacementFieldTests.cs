@@ -7,7 +7,7 @@ namespace PerformativeMail.Sim.Tests.Building;
 public sealed class PlacementFieldTests
 {
     [Fact]
-    public void TryPlanFlatten_U82Slope_RaisesFootprintBy1cm()
+    public void TryPlanFlatten_SteepNeighbor_RaisesFootprintBy1cm()
     {
         var field = PlacementField.Flat(3, 3, 200, 100).WithHeight(new TileCoord(2, 1), 154);
         var tiles = new[] { new TileCoord(1, 1) };

@@ -10,6 +10,8 @@ public sealed class PlacementField
     public const int Tan15Num = 2679;
     public const int Tan15Den = 10000;
     public const int MaxFlattenCm = 100;
+    private const int FlattenBoundLo = int.MinValue / 4;
+    private const int FlattenBoundHi = int.MaxValue / 4;
 
     private readonly short[] _heights;
     private readonly bool[] _street;
@@ -87,7 +89,8 @@ public sealed class PlacementField
 
     public bool IsStreet(TileCoord tile) => InBounds(tile) && _street[Idx(tile, Width)];
 
-    public bool IsWater(TileCoord tile) => InBounds(tile) && _heights[Idx(tile, Width)] <= 0;
+    public bool IsWater(TileCoord tile) =>
+        InBounds(tile) && _heights[Idx(tile, Width)] <= HeightmapStage.SeaLevelCm;
 
     public short HeightAt(TileCoord tile)
     {
@@ -104,8 +107,8 @@ public sealed class PlacementField
         if (tiles.Count == 0) return true;
 
         int maxLegalDh = MaxLegalSlopeCm();
-        int lo = int.MinValue / 4;
-        int hi = int.MaxValue / 4;
+        int lo = FlattenBoundLo;
+        int hi = FlattenBoundHi;
         long sum = 0;
         for (int i = 0; i < tiles.Count; i++)
         {
@@ -117,7 +120,7 @@ public sealed class PlacementField
             hi = Math.Min(hi, h + MaxFlattenCm);
         }
 
-        lo = Math.Max(lo, 1);
+        lo = Math.Max(lo, HeightmapStage.SeaLevelCm + 1);
         for (int i = 0; i < tiles.Count; i++)
         {
             var tile = tiles[i];
