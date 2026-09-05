@@ -1,0 +1,9 @@
+{
+  "id": "recipe_merger",
+  "produces": { "building": "merger" },
+  "inputs": [
+    { "item": "iron_ingot", "count": 2 },
+    { "item": "plank", "count": 1 }
+  ],
+  "unlockShift": 1
+}

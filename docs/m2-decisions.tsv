@@ -21,3 +21,6 @@ ts	phase	decision	why	evidence	result
 2026-09-05T03:10:00Z	u1.3	Skip arena; frame named the U1.3 table	docs/m2-frame.md already names 2-tile ramps and elevated street crossing	docs/m2-frame.md	accepted
 2026-09-05T03:10:00Z	architect	Chose facing-walk occupancy plus family compile over placement-only AABB	East AABB [2,1] occupies Y not X; ramps would not carry mail	src/Sim/Building/ConstructRegistry.cs	accepted
 2026-09-05T03:10:00Z	subtract	No height graph, no BuildingDef.params parse, no same-tile belt stack	U1.3 join rules stay U1.2; catalog already ignores params	src/Sim/Automation/BeltNetwork.cs	accepted
+2026-09-05T03:30:00Z	u1.4	Skip arena; frame named the U1.4 table	docs/m2-frame.md says U1.2-U1.6 compose named spec tables	docs/m2-frame.md	accepted
+2026-09-05T03:30:00Z	architect	Chose junction nodes plus transfer pass over 0-length segments	A splitter is not part of a belt segment; keep IsFamily belt-only	src/Sim/Automation/BeltNetwork.cs	accepted
+2026-09-05T03:30:00Z	subtract	Do not parse BuildingDef.params; ways=3 is a constant	Catalog already ignores params; filterable is Splitter vs Merger	src/Sim/Content/BuildingCatalog.cs	accepted
