@@ -1,5 +1,6 @@
 using Godot;
 using PerformativeMail.Client.UI;
+using PerformativeMail.Sim.Content;
 
 namespace PerformativeMail.Game;
 
@@ -31,6 +32,7 @@ public partial class DebugMenu : Control
     public event Action? TeleportMailboxPressed;
     public event Action? GiveMailPressed;
     public event Action? OpenInventoryPressed;
+    public event Action<DebugSpawnId>? SpawnPressed;
 
     private Label _connection = null!;
     private Label _role = null!;
@@ -49,6 +51,8 @@ public partial class DebugMenu : Control
     private Button _teleportMailbox = null!;
     private Button _giveMail = null!;
     private Button _openInventory = null!;
+    private VBoxContainer _spawnColumn = null!;
+    private readonly List<(DebugSpawnRow Row, Button Button)> _spawns = new();
     private bool _open;
 
     public bool IsOpen => _open && Visible;
@@ -102,7 +106,29 @@ public partial class DebugMenu : Control
         _teleportMailbox.Disabled = !frame.CanCheat;
         _giveMail.Disabled = !frame.CanCheat;
         _openInventory.Disabled = !frame.CanCheat;
+        for (int i = 0; i < _spawns.Count; i++)
+            _spawns[i].Button.Disabled = !frame.CanCheat;
         Visible = _open;
+    }
+
+    public void SetSpawns(IReadOnlyList<DebugSpawnRow> rows)
+    {
+        BuildPanel();
+        foreach (var child in _spawnColumn.GetChildren())
+            child.QueueFree();
+        _spawns.Clear();
+        if (rows is null)
+            return;
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            var button = AddCheat(
+                _spawnColumn,
+                "Spawn_" + row.Id.ContentId,
+                "Spawn " + row.Label,
+                () => SpawnPressed?.Invoke(row.Id));
+            _spawns.Add((row, button));
+        }
     }
 
     public string Dump(string caseName)
@@ -128,6 +154,10 @@ public partial class DebugMenu : Control
             $"TeleportMailbox={Enabled(_teleportMailbox)}\n" +
             $"GiveMail={Enabled(_giveMail)}\n" +
             $"OpenInventory={Enabled(_openInventory)}\n" +
+            $"SpawnCount={_spawns.Count}\n" +
+            $"Spawn.axe={SpawnState("axe")}\n" +
+            $"Spawn.letter={SpawnState("letter")}\n" +
+            $"Spawn.bike={SpawnState("bike")}\n" +
             $"ToggleKey={DebugFrame.ToggleKey}";
     }
 
@@ -188,6 +218,17 @@ public partial class DebugMenu : Control
         _teleportMailbox = AddCheat(column, TeleportMailboxPath, "Teleport to mailbox", () => TeleportMailboxPressed?.Invoke());
         _giveMail = AddCheat(column, GiveMailPath, "Give mail", () => GiveMailPressed?.Invoke());
         _openInventory = AddCheat(column, OpenInventoryPath, "Open inventory", () => OpenInventoryPressed?.Invoke());
+
+        column.AddChild(new Label { Text = "SPAWN" });
+        var scroll = new ScrollContainer
+        {
+            CustomMinimumSize = new Vector2(0, 220),
+            MouseFilter = MouseFilterEnum.Stop,
+        };
+        column.AddChild(scroll);
+        _spawnColumn = new VBoxContainer();
+        _spawnColumn.AddThemeConstantOverride("separation", 4);
+        scroll.AddChild(_spawnColumn);
     }
 
     private static Label AddRow(VBoxContainer column, string prefix, string name)
@@ -210,4 +251,16 @@ public partial class DebugMenu : Control
     }
 
     private static string Enabled(Button button) => button.Disabled ? "disabled" : "enabled";
+
+    private string SpawnState(string contentId)
+    {
+        for (int i = 0; i < _spawns.Count; i++)
+        {
+            if (_spawns[i].Row.Id.ContentId != contentId)
+                continue;
+            return Enabled(_spawns[i].Button);
+        }
+
+        return "missing";
+    }
 }

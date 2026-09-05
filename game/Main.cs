@@ -473,6 +473,8 @@ public partial class Main : Node3D
             if (_session.State is PlaySession.Playing playing)
                 TryOpenLiveOverlay(playing);
         };
+        _debug.SetSpawns(_session.SpawnCatalog.Rows);
+        _debug.SpawnPressed += id => _session.TrySpawn(id);
     }
 
     private void BindDebug(in DebugSnapshot snapshot)

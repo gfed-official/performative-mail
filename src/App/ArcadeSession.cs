@@ -25,7 +25,8 @@ public static class ArcadeSession
     {
         ulong hash = WorldHash.Compute(tables);
         var atlas = WorldAtlas.FromTables(tables);
-        var world = new SimWorld(atlas, MailStackCatalog.Default, unchecked((int)settings.Seed));
+        var bundle = ContentBoot.Load(out _, out var catalog);
+        var world = new SimWorld(atlas, catalog, unchecked((int)settings.Seed));
         if (world.Mail is null)
             throw new InvalidOperationException("Arcade world has no mail registry.");
 
@@ -39,15 +40,13 @@ public static class ArcadeSession
                 house.Address));
         }
 
-        string root = ContentRoot.Find();
-        var balance = BalanceCatalog.LoadFile(Path.Combine(root, BalanceCatalog.RelativePath));
-        var clock = new ShiftClock(balance, RunState.InLobby());
+        var clock = new ShiftClock(bundle.Balance, RunState.InLobby());
         return new ArcadeBoot(
             world,
             new WorldOffer(settings.Seed, hash),
             settings,
             tables,
-            balance,
+            bundle.Balance,
             destinations,
             clock);
     }

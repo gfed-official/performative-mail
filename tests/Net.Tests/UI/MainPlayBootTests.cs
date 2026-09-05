@@ -97,6 +97,18 @@ public sealed class MainPlayBootTests
     }
 
     [Fact]
+    public void DebugMenu_Dump_EmitsSpawnSentinels()
+    {
+        string source = ReadGame("DebugMenu.cs");
+        Assert.Contains("SpawnCount=", source);
+        Assert.Contains("Spawn.axe=", source);
+        Assert.Contains("Spawn.letter=", source);
+        Assert.Contains("Spawn.bike=", source);
+        Assert.Contains("SetSpawns", source);
+        Assert.Contains("SpawnPressed", source);
+    }
+
+    [Fact]
     public void Ready_BuildsDebugMenuAfterArgs()
     {
         var ready = MethodBody(ReadMain(), "_Ready");
@@ -104,6 +116,10 @@ public sealed class MainPlayBootTests
         Assert.Contains("BuildDebugMenu", ready);
         Assert.Contains("PollDebugToggle", MethodBody(ReadMain(), "_PhysicsProcess"));
         Assert.Contains("Key.F3", MethodBody(ReadMain(), "PollDebugToggle"));
+        var build = MethodBody(ReadMain(), "BuildDebugMenu");
+        Assert.Contains("SetSpawns", build);
+        Assert.Contains("TrySpawn", build);
+        Assert.Contains("SpawnCatalog", build);
     }
 
     [Fact]
@@ -246,21 +262,23 @@ public sealed class MainPlayBootTests
         Assert.DoesNotContain("_session.Leave()", leave);
     }
 
-    private static string ReadMain()
+    private static string ReadMain() => ReadGame("Main.cs");
+
+    private static string ReadGame(string fileName)
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
         {
             var dir = new DirectoryInfo(Path.GetFullPath(start));
             while (dir != null)
             {
-                var candidate = Path.Combine(dir.FullName, "game", "Main.cs");
+                var candidate = Path.Combine(dir.FullName, "game", fileName);
                 if (File.Exists(candidate))
                     return File.ReadAllText(candidate);
                 dir = dir.Parent;
             }
         }
 
-        throw new FileNotFoundException("game/Main.cs");
+        throw new FileNotFoundException("game/" + fileName);
     }
 
     private static int IndexOfMethod(string source, string name)

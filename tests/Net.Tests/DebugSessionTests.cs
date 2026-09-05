@@ -2,6 +2,7 @@ using PerformativeMail.App;
 using PerformativeMail.Client;
 using PerformativeMail.Client.UI;
 using PerformativeMail.Server;
+using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
@@ -31,6 +32,7 @@ public sealed class DebugSessionTests
         Assert.False(machine.TryTeleportToMailbox());
         Assert.False(machine.TryGiveMail());
         Assert.False(machine.TryStockIntake());
+        Assert.False(machine.TrySpawn(new DebugSpawnId(DebugSpawnKind.Item, "axe")));
     }
 
     [Fact]
@@ -131,6 +133,9 @@ public sealed class DebugSessionTests
         Assert.False(guest.TryTeleportToMailbox());
         Assert.False(guest.TryGiveMail());
         Assert.False(guest.TryStockIntake());
+        Assert.False(guest.TrySpawn(new DebugSpawnId(DebugSpawnKind.Item, "axe")));
+        Assert.False(guest.TrySpawn(new DebugSpawnId(DebugSpawnKind.Mail, "letter")));
+        Assert.False(guest.TrySpawn(new DebugSpawnId(DebugSpawnKind.Bike, "bike")));
         Assert.Equal(new Cents(0), host.Inspect().Wallet);
         Assert.Equal(RunPhase.Prep, host.Inspect().Phase);
     }

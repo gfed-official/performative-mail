@@ -1,6 +1,8 @@
 using PerformativeMail.Client;
 using PerformativeMail.Client.UI;
 using PerformativeMail.Server;
+using PerformativeMail.Sim;
+using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
@@ -20,6 +22,9 @@ public sealed class PlaySessionMachine : IDisposable
     private TickPacer _pacer = TickPacer.AtTickRate();
     private PlaySession _state = PlaySession.Menu.Instance;
     private Live _live = Live.None.Instance;
+    private ContentIdMap? _ids;
+    private ContentStackCatalog? _catalog;
+    private DebugSpawnCatalog? _spawns;
 
     public PlaySessionMachine(INetworkStack stack, SessionOptions? options = null)
     {
@@ -28,6 +33,15 @@ public sealed class PlaySessionMachine : IDisposable
     }
 
     public PlaySession State => _state;
+
+    public DebugSpawnCatalog SpawnCatalog
+    {
+        get
+        {
+            EnsureContent();
+            return _spawns!;
+        }
+    }
 
     public bool ClockPaused { get; private set; }
 
@@ -59,7 +73,7 @@ public sealed class PlaySessionMachine : IDisposable
             var listen = _stack.Listen(_options.ListenPort, _options.MaxPlayers);
             var server = new ServerRuntime(listen.Link, boot);
             server.Start();
-            var client = new ClientRuntime(MailStackCatalog.Default);
+            var client = new ClientRuntime(Stacks());
             client.Connect(listen.HostSeat);
             var role = new SessionRole.Listening(HostAdvertisement.For(_options.ListenPort));
             _live = new Live.Hosting(server, listen.Link, client, role);
@@ -78,12 +92,19 @@ public sealed class PlaySessionMachine : IDisposable
     public void Join(JoinTarget target)
     {
         Leave();
-        var link = _stack.Connect(target);
-        var client = new ClientRuntime(MailStackCatalog.Default);
-        client.Connect(link);
-        var role = new SessionRole.Guest(target);
-        _live = new Live.Dialing(link, client, role);
-        _state = new PlaySession.Connecting(role, Deadline: null);
+        try
+        {
+            var link = _stack.Connect(target);
+            var client = new ClientRuntime(Stacks());
+            client.Connect(link);
+            var role = new SessionRole.Guest(target);
+            _live = new Live.Dialing(link, client, role);
+            _state = new PlaySession.Connecting(role, Deadline: null);
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or InvalidOperationException)
+        {
+            _state = new PlaySession.Failed(new FailReason.BootFailed(ex.Message));
+        }
     }
 
     public void Leave()
@@ -222,6 +243,83 @@ public sealed class PlaySessionMachine : IDisposable
         return TrySpawnLetter(server, inventory, server.World.Intake, tables.Houses[0].Address);
     }
 
+    public bool TrySpawn(DebugSpawnId id)
+    {
+        if (!TryHostPlaying(out var server, out var local))
+            return false;
+        if (server.World.Inventory is not InventorySystem inventory)
+            return false;
+
+        EnsureContent();
+        switch (id.Kind)
+        {
+            case DebugSpawnKind.Item:
+                return TrySpawnItem(inventory, id.ContentId);
+            case DebugSpawnKind.Mail:
+                return TrySpawnMail(server, inventory, id.ContentId);
+            case DebugSpawnKind.Bike:
+                return TrySpawnBike(server, local);
+            default:
+                throw new ArgumentOutOfRangeException(nameof(id), id.Kind, null);
+        }
+    }
+
+    internal bool TryHostWorld(out SimWorld world, out EntityId local)
+    {
+        world = null!;
+        if (!TryHostPlaying(out var server, out local))
+            return false;
+        world = server.World;
+        return true;
+    }
+
+    private void EnsureContent()
+    {
+        if (_catalog is not null && _ids is not null && _spawns is not null)
+            return;
+        var bundle = ContentBoot.Load(out _ids, out _catalog);
+        _spawns = DebugSpawnCatalog.From(bundle, _ids);
+    }
+
+    private ContentStackCatalog Stacks()
+    {
+        EnsureContent();
+        return _catalog!;
+    }
+
+    private bool TrySpawnItem(InventorySystem inventory, string contentId)
+    {
+        if (_ids is null || !_ids.TryItem(contentId, out var item))
+            return false;
+        if (!TryBag(inventory, out var dest) && !TryHotbar(inventory, out dest))
+            return false;
+        return inventory.Apply(Actor.System, new Deposit(dest, new ItemStack(item, 1))) is Accepted;
+    }
+
+    private bool TrySpawnMail(ServerRuntime server, InventorySystem inventory, string contentId)
+    {
+        if (_ids is null || !_ids.TryMail(contentId, out var kind))
+            return false;
+
+        if (TryHotbar(inventory, out var hotbar) &&
+            TrySpawnMailKind(server, inventory, hotbar, kind))
+            return true;
+        if (server.World.Intake.Value != 0)
+            return TrySpawnMailKind(server, inventory, server.World.Intake, kind);
+        return false;
+    }
+
+    private bool TrySpawnBike(ServerRuntime server, EntityId local)
+    {
+        if (!server.World.Players.TryGet(local, out var body))
+            return false;
+
+        var bike = server.World.Vehicles.SpawnBike(body.Pose);
+        if (server.World.TryMount(local, bike.Id))
+            _live.Client.Prediction.Mount(bike.Id);
+        return true;
+    }
+
     private bool TryHostPlaying(out ServerRuntime server, out EntityId local)
     {
         server = null!;
@@ -265,6 +363,27 @@ public sealed class PlaySessionMachine : IDisposable
         InventorySystem inventory,
         ContainerId dest,
         AddressId address)
+        => TrySpawnMailKind(server, inventory, dest, MailKinds.Letter, address);
+
+    private static bool TrySpawnMailKind(
+        ServerRuntime server,
+        InventorySystem inventory,
+        ContainerId dest,
+        MailKindId kind)
+    {
+        if (server.World.Atlas is not WorldAtlas atlas)
+            return false;
+        if (atlas.DeliverableAddresses.Count == 0)
+            return false;
+        return TrySpawnMailKind(server, inventory, dest, kind, atlas.DeliverableAddresses[0]);
+    }
+
+    private static bool TrySpawnMailKind(
+        ServerRuntime server,
+        InventorySystem inventory,
+        ContainerId dest,
+        MailKindId kind,
+        AddressId address)
     {
         if (server.World.Mail is not MailRegistry mail)
             return false;
@@ -274,15 +393,30 @@ public sealed class PlaySessionMachine : IDisposable
         var id = mail.Allocate();
         var item = new MailItem(
             id,
-            MailKinds.Letter,
+            kind,
             address,
-            MailKinds.ValueAtSpawn(MailKinds.Letter, atlas.DistrictId, MailSpawnConstants.Shift1),
+            MailKinds.ValueAtSpawn(kind, atlas.DistrictId, MailSpawnConstants.Shift1),
             MailSpawnConstants.Shift1,
             MailSpawnConstants.Shift1);
         if (!mail.Register(item))
             return false;
-        return inventory.Apply(Actor.System, new Deposit(dest, MailStack.Single(MailKinds.Letter, address, id)))
+        return inventory.Apply(Actor.System, new Deposit(dest, MailStack.Single(kind, address, id)))
             is Accepted;
+    }
+
+    private static bool TryBag(InventorySystem inventory, out ContainerId bag)
+    {
+        foreach (var container in inventory.Containers)
+        {
+            var shape = container.Spec.Shape;
+            if (shape.Cols != 8 || shape.Rows != 2)
+                continue;
+            bag = container.Id;
+            return true;
+        }
+
+        bag = default;
+        return false;
     }
 
     private static bool TryHotbar(InventorySystem inventory, out ContainerId hotbar)

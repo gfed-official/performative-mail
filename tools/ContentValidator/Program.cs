@@ -1,4 +1,6 @@
-﻿using PerformativeMail.Sim.World;
+﻿using PerformativeMail.Sim.Content;
+using PerformativeMail.Sim.Inventory;
+using PerformativeMail.Sim.World;
 
 var contentRoot = args.Length > 0 ? args[0] : "content";
 
@@ -47,7 +49,11 @@ catch (Exception ex)
 
 try
 {
-    ContentFiles.Load(contentRoot);
+    var bundle = ContentFiles.Load(contentRoot);
+    var ids = ContentIdMap.Build(bundle);
+    ContentStackCatalog.From(bundle, ids);
+    var spawns = DebugSpawnCatalog.From(bundle, ids);
+    DebugSpawnCoverage.RequireComplete(bundle, spawns);
 }
 catch (Exception ex)
 {
