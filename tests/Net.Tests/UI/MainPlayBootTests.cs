@@ -107,10 +107,11 @@ public sealed class MainPlayBootTests
         Assert.Contains("SetSpawns", source);
         Assert.Contains("SpawnPressed", source);
         Assert.Contains("panelRect=", source);
-        Assert.Contains("SetAnchorsPreset(LayoutPreset.TopRight)", source);
-        Assert.True(
-            MarginOffset(source, "OffsetBottom") > MarginOffset(source, "OffsetTop"),
-            "TopRight chrome height is offset_bottom - offset_top");
+        Assert.Contains("panelGlobal=", source);
+        Assert.Contains("PlaceChrome", source);
+        Assert.Contains("GetVisibleRect()", source);
+        Assert.Contains("StyleBoxFlat", source);
+        Assert.DoesNotContain("LayoutPreset.TopRight", source);
     }
 
     [Fact]
@@ -265,18 +266,6 @@ public sealed class MainPlayBootTests
         Assert.Contains("PauseFrame.ConfirmLeaveId", leave);
         Assert.Contains("OnPauseChoice", leave);
         Assert.DoesNotContain("_session.Leave()", leave);
-    }
-
-    private static int MarginOffset(string source, string name)
-    {
-        string needle = "margin." + name + " = ";
-        int start = source.IndexOf(needle, StringComparison.Ordinal);
-        Assert.True(start >= 0, "missing " + needle);
-        int valueStart = start + needle.Length;
-        int end = source.IndexOf(';', valueStart);
-        Assert.True(end > valueStart, "missing value for " + name);
-        Assert.True(int.TryParse(source.AsSpan(valueStart, end - valueStart).Trim(), out int value), "unreadable " + name);
-        return value;
     }
 
     private static string ReadMain() => ReadGame("Main.cs");
