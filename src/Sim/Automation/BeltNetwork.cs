@@ -7,7 +7,7 @@ using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Sim.Automation;
 
-public readonly record struct BeltItem(int ItemId, float MetresFromStart, MailKindId Kind);
+public readonly record struct BeltItem(int ItemId, float MetresFromStart, MailKindId Kind, AddressId Address);
 
 public readonly record struct BeltJunctionPort(TileCoord Tile, Facing Facing);
 
@@ -84,7 +84,7 @@ public sealed class BeltJunction
         {
             int i = (start + k) % n;
             if (!Accepts(_outputs[i].Facing, item.Kind)) continue;
-            if (!_outputSegments[i].TryInsert(lane, item.ItemId, 0f, item.Kind)) continue;
+            if (!_outputSegments[i].TryInsert(lane, item.ItemId, 0f, item.Kind, item.Address)) continue;
             input.TryTakeHead(lane, out _);
             _cursors[lane] = (i + 1) % n;
             return;
@@ -101,7 +101,7 @@ public sealed class BeltJunction
         {
             int i = (start + k) % n;
             if (!_inputSegments[i].TryPeekHead(lane, out var item)) continue;
-            if (!output.TryInsert(lane, item.ItemId, 0f, item.Kind)) continue;
+            if (!output.TryInsert(lane, item.ItemId, 0f, item.Kind, item.Address)) continue;
             _inputSegments[i].TryTakeHead(lane, out _);
             _cursors[lane] = (i + 1) % n;
             return;
@@ -111,18 +111,28 @@ public sealed class BeltJunction
 
 public sealed class BeltSegment
 {
+    private readonly BeltNetwork _network;
     private readonly TileCoord[] _tiles;
     private readonly List<BeltItem> _lane0 = new List<BeltItem>();
     private readonly List<BeltItem> _lane1 = new List<BeltItem>();
 
-    internal BeltSegment(Facing facing, Facing exitFacing, TileCoord[] tiles, ulong runHash)
+    internal BeltSegment(
+        BeltNetwork network,
+        Facing facing,
+        Facing exitFacing,
+        TileCoord[] tiles,
+        ulong runHash)
     {
+        _network = network ?? throw new ArgumentNullException(nameof(network));
         Facing = facing;
         ExitFacing = exitFacing;
         _tiles = tiles;
+        Id = new SegmentId(runHash);
         RunHash = runHash;
         AheadTile = BeltNetwork.Next(tiles[tiles.Length - 1], exitFacing);
     }
+
+    public SegmentId Id { get; }
 
     public Facing Facing { get; }
 
@@ -148,16 +158,19 @@ public sealed class BeltSegment
     }
 
     public bool TryInsert(int lane, int itemId, float metresFromStart)
-        => TryInsert(lane, itemId, metresFromStart, MailKinds.Letter);
+        => TryInsert(lane, itemId, metresFromStart, MailKinds.Letter, default);
 
     public bool TryInsert(int lane, int itemId, float metresFromStart, MailKindId kind)
+        => TryInsert(lane, itemId, metresFromStart, kind, default);
+
+    public bool TryInsert(int lane, int itemId, float metresFromStart, MailKindId kind, AddressId address)
     {
         if (lane != 0 && lane != 1) return false;
         if (metresFromStart < 0f || metresFromStart > LengthMetres) return false;
         bool cargo = kind.Equals(MailKinds.Cargo);
         if (cargo && lane != 0) return false;
 
-        var incoming = new BeltItem(itemId, metresFromStart, kind);
+        var incoming = new BeltItem(itemId, metresFromStart, kind, address);
         if (cargo)
         {
             if (ConflictsWith(_lane0, incoming, sameLane: true)
@@ -165,6 +178,7 @@ public sealed class BeltSegment
                 return false;
             _lane0.Add(incoming);
             _lane0.Sort(CompareHeadFirst);
+            RecordInsert(0, incoming);
             return true;
         }
 
@@ -176,6 +190,7 @@ public sealed class BeltSegment
 
         items.Add(incoming);
         items.Sort(CompareHeadFirst);
+        RecordInsert(lane, incoming);
         return true;
     }
 
@@ -190,10 +205,11 @@ public sealed class BeltSegment
         return true;
     }
 
-    internal bool TryTakeHead(int lane, out BeltItem item)
+    public bool TryTakeHead(int lane, out BeltItem item)
     {
         if (!TryPeekHead(lane, out item)) return false;
         LaneList(lane).RemoveAt(0);
+        _network.Record(new LaneRemove(Id, (byte)lane));
         return true;
     }
 
@@ -204,6 +220,14 @@ public sealed class BeltSegment
         StepLane(_lane0, dt, across0);
         StepLane(_lane1, dt, across1);
     }
+
+    private void RecordInsert(int lane, in BeltItem item) =>
+        _network.Record(new LaneInsert(
+            Id,
+            (byte)lane,
+            item.Kind,
+            AddressColour.From(item.Address),
+            BeltNetwork.PositionAtTickCm(item.MetresFromStart)));
 
     private List<BeltItem> LaneList(int lane) => lane == 0 ? _lane0 : _lane1;
 
@@ -218,7 +242,7 @@ public sealed class BeltSegment
             float desired = item.MetresFromStart + travel;
             float next = desired < ceiling ? desired : ceiling;
             next = CapAgainst(self, next, otherLane);
-            items[i] = new BeltItem(item.ItemId, next, item.Kind);
+            items[i] = new BeltItem(item.ItemId, next, item.Kind, item.Address);
             ceiling = next - self.Behind;
         }
     }
@@ -319,12 +343,34 @@ public sealed class BeltNetwork
     public const float CargoLengthMetres = 2f;
     public const int LaneCount = 2;
 
+    public const int MetresToCm = 100;
+
     private readonly List<BeltSegment> _segments = new List<BeltSegment>();
     private readonly List<BeltJunction> _junctions = new List<BeltJunction>();
+    private readonly List<LaneDelta> _deltas = new List<LaneDelta>();
 
     public IReadOnlyList<BeltSegment> Segments => _segments;
 
     public IReadOnlyList<BeltJunction> Junctions => _junctions;
+
+    public static int PositionAtTickCm(float metresFromStart) =>
+        (int)MathF.Round(metresFromStart * MetresToCm);
+
+    public IReadOnlyList<LaneDelta> DrainLaneDeltas()
+    {
+        if (_deltas.Count == 0)
+            return Array.Empty<LaneDelta>();
+
+        var copy = _deltas.ToArray();
+        _deltas.Clear();
+        return copy;
+    }
+
+    internal void Record(LaneDelta delta)
+    {
+        if (delta is null) throw new ArgumentNullException(nameof(delta));
+        _deltas.Add(delta);
+    }
 
     public void Compile(IReadOnlyList<ConstructRecord> constructs)
     {
@@ -429,7 +475,7 @@ public sealed class BeltNetwork
         }
 
         var tiles = run.ToArray();
-        _segments.Add(new BeltSegment(facings[0], facings[facings.Count - 1], tiles, HashRun(tiles, facings)));
+        _segments.Add(new BeltSegment(this, facings[0], facings[facings.Count - 1], tiles, HashRun(tiles, facings)));
     }
 
     private void CompileJunctions(

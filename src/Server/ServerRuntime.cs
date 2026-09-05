@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using PerformativeMail.Sim;
+using PerformativeMail.Sim.Automation;
 using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
@@ -217,6 +218,7 @@ public sealed class ServerRuntime
         World.Tick(_tick, spawnMail);
         _tick++;
         FlushInventoryEvents();
+        FlushLaneEvents();
 
         if (SnapshotCadence.ShouldSend(World.CurrentTick))
             Broadcast();
@@ -731,6 +733,23 @@ public sealed class ServerRuntime
                 seat.Id,
                 NetChannels.Unreliable,
                 WireCodec.Encode(new SnapshotPacket(World.CurrentTick, _snapshotScratch)));
+        }
+    }
+
+    private void FlushLaneEvents()
+    {
+        var deltas = World.Belts.DrainLaneDeltas();
+        for (int i = 0; i < deltas.Count; i++)
+        {
+            switch (deltas[i])
+            {
+                case LaneInsert insert:
+                    BroadcastReliable(LaneCodec.Encode(insert));
+                    break;
+                case LaneRemove remove:
+                    BroadcastReliable(LaneCodec.Encode(remove));
+                    break;
+            }
         }
     }
 
