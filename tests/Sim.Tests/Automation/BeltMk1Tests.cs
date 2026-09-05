@@ -702,6 +702,40 @@ public sealed class BeltMk1Tests
     }
 
     [Fact]
+    public void Splitter_KindFilter_PostcardTakesEast()
+    {
+        var belts = CompileSplitterStar();
+        Assert.True(belts.SetOutputFilter(JunctionOrigin, Facing.East, MailKinds.Postcard));
+        var input = SegmentOn(belts, new TileCoord(2, 2));
+        Assert.True(input.TryInsert(0, 8, 2.0f, MailKinds.Postcard));
+
+        belts.StepTicks(1);
+
+        Assert.Empty(input.Lane(0));
+        Assert.Equal(8, Assert.Single(SegmentOn(belts, new TileCoord(4, 2)).Lane(0)).ItemId);
+        Assert.Empty(SegmentOn(belts, new TileCoord(3, 3)).Lane(0));
+        Assert.Empty(SegmentOn(belts, new TileCoord(3, 1)).Lane(0));
+    }
+
+    [Fact]
+    public void Splitter_RoundRobin_Lane1_ForwardLeftRight()
+    {
+        var belts = CompileSplitterStar();
+        var input = SegmentOn(belts, new TileCoord(2, 2));
+        Assert.True(input.TryInsert(1, 4, 2.0f));
+        Assert.True(input.TryInsert(1, 5, 1.5f));
+        Assert.True(input.TryInsert(1, 6, 1.0f));
+
+        belts.StepTicks(TickClock.TickHz);
+
+        Assert.Empty(input.Lane(1));
+        Assert.Equal(4, Assert.Single(SegmentOn(belts, new TileCoord(4, 2)).Lane(1)).ItemId);
+        Assert.Equal(5, Assert.Single(SegmentOn(belts, new TileCoord(3, 3)).Lane(1)).ItemId);
+        Assert.Equal(6, Assert.Single(SegmentOn(belts, new TileCoord(3, 1)).Lane(1)).ItemId);
+        Assert.Empty(SegmentOn(belts, new TileCoord(4, 2)).Lane(0));
+    }
+
+    [Fact]
     public void Merger_RoundRobin_DoesNotStarve()
     {
         var belts = CompileMergerStar();
