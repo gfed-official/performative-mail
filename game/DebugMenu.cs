@@ -93,27 +93,27 @@ public partial class DebugMenu : Control
     public void Bind(in DebugFrame frame)
     {
         BuildPanel();
-        PlaceChrome();
-        _connection.Text = frame.ConnectionLabel;
-        _role.Text = frame.RoleLabel;
-        _tick.Text = frame.TickLabel;
-        _phase.Text = frame.PhaseLabel;
-        _shift.Text = frame.ShiftLabel;
-        _seed.Text = frame.SeedLabel;
-        _worldHash.Text = frame.WorldHashLabel;
-        _player.Text = frame.PlayerLabel;
-        _wallet.Text = frame.WalletLabel;
-        _authority.Text = frame.AuthorityLabel;
-        _giveWallet.Disabled = !frame.CanCheat;
-        _advancePhase.Disabled = !frame.CanCheat;
-        _resetPawn.Disabled = !frame.CanCheat;
-        _teleportIntake.Disabled = !frame.CanCheat;
-        _teleportMailbox.Disabled = !frame.CanCheat;
-        _giveMail.Disabled = !frame.CanCheat;
-        _openInventory.Disabled = !frame.CanCheat;
+        SetText(_connection, frame.ConnectionLabel);
+        SetText(_role, frame.RoleLabel);
+        SetText(_tick, frame.TickLabel);
+        SetText(_phase, frame.PhaseLabel);
+        SetText(_shift, frame.ShiftLabel);
+        SetText(_seed, frame.SeedLabel);
+        SetText(_worldHash, frame.WorldHashLabel);
+        SetText(_player, frame.PlayerLabel);
+        SetText(_wallet, frame.WalletLabel);
+        SetText(_authority, frame.AuthorityLabel);
+        SetDisabled(_giveWallet, !frame.CanCheat);
+        SetDisabled(_advancePhase, !frame.CanCheat);
+        SetDisabled(_resetPawn, !frame.CanCheat);
+        SetDisabled(_teleportIntake, !frame.CanCheat);
+        SetDisabled(_teleportMailbox, !frame.CanCheat);
+        SetDisabled(_giveMail, !frame.CanCheat);
+        SetDisabled(_openInventory, !frame.CanCheat);
         for (int i = 0; i < _spawns.Count; i++)
-            _spawns[i].Button.Disabled = !frame.CanCheat;
-        Visible = _open;
+            SetDisabled(_spawns[i].Button, !frame.CanCheat);
+        if (Visible != _open)
+            Visible = _open;
     }
 
     public void SetSpawns(IReadOnlyList<DebugSpawnRow> rows)
@@ -269,6 +269,18 @@ public partial class DebugMenu : Control
         button.Pressed += pressed;
         column.AddChild(button);
         return button;
+    }
+
+    private static void SetText(Label label, string text)
+    {
+        if (label.Text != text)
+            label.Text = text;
+    }
+
+    private static void SetDisabled(Button button, bool disabled)
+    {
+        if (button.Disabled != disabled)
+            button.Disabled = disabled;
     }
 
     private static string Enabled(Button button) => button.Disabled ? "disabled" : "enabled";

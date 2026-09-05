@@ -26,68 +26,74 @@ public partial class PawnStage : Node3D
     public const int LabelOutlineSize = 8;
     public const float LabelPixelSize = 0.01f;
 
-    private readonly Dictionary<uint, Node3D> _nodes = new();
+    private readonly Dictionary<uint, PawnVisual> _nodes = new();
+    private readonly HashSet<uint> _seen = new();
+    private readonly List<uint> _stale = new();
 
     public void Sync(IReadOnlyList<PawnView> pawns, float localPitchRadians, MailKindId? heldMail = null)
     {
-        var seen = new HashSet<uint>();
+        _seen.Clear();
         for (int i = 0; i < pawns.Count; i++)
         {
             var pawn = pawns[i];
-            seen.Add(pawn.Id.Value);
-            if (!_nodes.TryGetValue(pawn.Id.Value, out var node))
+            _seen.Add(pawn.Id.Value);
+            if (!_nodes.TryGetValue(pawn.Id.Value, out var visual))
             {
-                node = Spawn(pawn);
-                AddChild(node);
-                _nodes.Add(pawn.Id.Value, node);
+                visual = Spawn(pawn);
+                AddChild(visual.Root);
+                _nodes.Add(pawn.Id.Value, visual);
             }
 
             var pose = pawn.Pose;
-            node.Transform = PawnTransform.Of(in pose);
-            bool local = pawn.Role == PawnRole.Local;
-            if (node.GetNodeOrNull<Node3D>(BodyName) is Node3D body)
-                body.Visible = !local;
-            if (node.GetNodeOrNull<Label3D>(LabelName) is Label3D label)
+            if (!visual.Pose.Equals(pose))
             {
-                label.Text = pawn.DisplayName;
-                label.Visible = !local;
+                visual.Root.Transform = PawnTransform.Of(in pose);
+                visual.Pose = pose;
             }
 
-            if (node.GetNodeOrNull<Camera3D>(CameraName) is Camera3D camera)
-            {
-                camera.Current = local;
-                camera.Rotation = local
-                    ? new Vector3(localPitchRadians, 0f, 0f)
-                    : Vector3.Zero;
-                SyncHeldMail(camera, local ? heldMail : null);
-            }
+            bool local = pawn.Role == PawnRole.Local;
+            if (visual.Body.Visible == local)
+                visual.Body.Visible = !local;
+            if (visual.Label.Text != pawn.DisplayName)
+                visual.Label.Text = pawn.DisplayName;
+            if (visual.Label.Visible == local)
+                visual.Label.Visible = !local;
+
+            if (visual.Camera.Current != local)
+                visual.Camera.Current = local;
+            var pitch = local ? new Vector3(localPitchRadians, 0f, 0f) : Vector3.Zero;
+            if (visual.Camera.Rotation != pitch)
+                visual.Camera.Rotation = pitch;
+            SyncHeldMail(visual, local ? heldMail : null);
         }
 
-        if (_nodes.Count == seen.Count)
+        if (_nodes.Count == _seen.Count)
             return;
 
-        var stale = new List<uint>();
+        _stale.Clear();
         foreach (var id in _nodes.Keys)
         {
-            if (!seen.Contains(id))
-                stale.Add(id);
+            if (!_seen.Contains(id))
+                _stale.Add(id);
         }
 
-        for (int i = 0; i < stale.Count; i++)
+        for (int i = 0; i < _stale.Count; i++)
         {
-            _nodes[stale[i]].QueueFree();
-            _nodes.Remove(stale[i]);
+            _nodes[_stale[i]].Root.QueueFree();
+            _nodes.Remove(_stale[i]);
         }
     }
 
     public void DespawnAll()
     {
-        foreach (var node in _nodes.Values)
-            node.QueueFree();
+        if (_nodes.Count == 0)
+            return;
+        foreach (var visual in _nodes.Values)
+            visual.Root.QueueFree();
         _nodes.Clear();
     }
 
-    private static Node3D Spawn(PawnView pawn)
+    private static PawnVisual Spawn(PawnView pawn)
     {
         var (r, g, b) = PawnPalette.Rgb(pawn.Palette);
         var color = new Color(r / 255f, g / 255f, b / 255f);
@@ -139,12 +145,12 @@ public partial class PawnStage : Node3D
             Current = local,
         };
         root.AddChild(camera);
-        return root;
+        return new PawnVisual(root, body, label, camera, pawn.Pose);
     }
 
-    private static void SyncHeldMail(Camera3D camera, MailKindId? kind)
+    private static void SyncHeldMail(PawnVisual visual, MailKindId? kind)
     {
-        var held = camera.GetNodeOrNull<Node3D>(HeldMailName);
+        var held = visual.HeldMail;
         if (kind is null)
         {
             if (held is not null)
@@ -160,7 +166,8 @@ public partial class PawnStage : Node3D
                 Name = HeldMailName,
                 Position = new Vector3(0.22f, -0.2f, -0.38f),
             };
-            camera.AddChild(held);
+            visual.Camera.AddChild(held);
+            visual.HeldMail = held;
         }
 
         held.Visible = true;
@@ -172,5 +179,24 @@ public partial class PawnStage : Node3D
         if (ArtMesh.TryInstantiate(path) is { } mesh)
             held.AddChild(mesh);
         held.SetMeta("art", path);
+    }
+
+    private sealed class PawnVisual
+    {
+        public PawnVisual(Node3D root, Node3D body, Label3D label, Camera3D camera, PlayerPose pose)
+        {
+            Root = root;
+            Body = body;
+            Label = label;
+            Camera = camera;
+            Pose = pose;
+        }
+
+        public Node3D Root { get; }
+        public Node3D Body { get; }
+        public Label3D Label { get; }
+        public Camera3D Camera { get; }
+        public PlayerPose Pose { get; set; }
+        public Node3D? HeldMail { get; set; }
     }
 }

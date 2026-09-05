@@ -145,6 +145,40 @@ public sealed class HudFrameTests
     }
 
     [Fact]
+    public void SameDisplay_IgnoresNowInsideTheSameSecond()
+    {
+        var a = Snapshot(InteractPrompt.None.Instance, now: 0, deadline: 2700);
+        var b = Snapshot(InteractPrompt.None.Instance, now: 29, deadline: 2700);
+
+        Assert.True(HudFrame.SameDisplay(in a, in b));
+        Assert.Equal(HudFrame.From(in a).TimerLabel, HudFrame.From(in b).TimerLabel);
+    }
+
+    [Fact]
+    public void SameDisplay_FalseWhenTimerSecondChanges()
+    {
+        var a = Snapshot(InteractPrompt.None.Instance, now: 0, deadline: 2700);
+        var b = Snapshot(InteractPrompt.None.Instance, now: 30, deadline: 2700);
+
+        Assert.False(HudFrame.SameDisplay(in a, in b));
+        Assert.NotEqual(HudFrame.From(in a).TimerLabel, HudFrame.From(in b).TimerLabel);
+    }
+
+    [Fact]
+    public void SameDisplay_FalseWhenWalletOrInteractChanges()
+    {
+        var none = Snapshot(InteractPrompt.None.Instance);
+        var pickup = Snapshot(new InteractPrompt.Pickup(Held));
+        var wallet = new HudSnapshot(
+            RunPhase.Delivery, 1, 0, 2700, new Cents(1),
+            InteractPrompt.None.Instance, new Cents(640), new Cents(2214), 23);
+
+        Assert.True(HudFrame.SameDisplay(in none, Snapshot(InteractPrompt.None.Instance)));
+        Assert.False(HudFrame.SameDisplay(in none, in pickup));
+        Assert.False(HudFrame.SameDisplay(in none, in wallet));
+    }
+
+    [Fact]
     public void From_Shift_FormatsNOver5()
     {
         var frame = HudFrame.From(Snapshot(InteractPrompt.None.Instance, shift: 3));

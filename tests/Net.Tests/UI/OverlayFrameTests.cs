@@ -62,6 +62,32 @@ public sealed class OverlayFrameTests
     }
 
     [Fact]
+    public void Stamp_SameLiveReplica_IsEqualUntilInventoryChanges()
+    {
+        var catalog = new LetterOnlyCatalog();
+        var auth = new InventorySystem(catalog);
+        var player = new EntityId(1);
+        var hotbar = auth.CreateContainer(ContainerSpec.Hotbar, player);
+        var inventory = auth.CreateContainer(ContainerSpec.BaseInventory, player);
+        var replica = new InventorySystem(catalog);
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(hotbar)));
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(inventory)));
+        Assert.True(LiveOverlay.TryFrom(replica, out var live));
+
+        var first = live.Stamp();
+        Assert.Equal(first, OverlayStamp.From(in live));
+        Assert.Same(OverlayReplica.NoPending, live.Pending);
+
+        Assert.IsType<Accepted>(auth.Apply(
+            Actor.System,
+            new Deposit(hotbar, MailStack.Single(MailKinds.Letter, new AddressId(1, 1, 1, 0), new MailId(1)))));
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(hotbar)));
+        Assert.True(LiveOverlay.TryFrom(replica, out var after));
+        Assert.NotEqual(first, after.Stamp());
+        Assert.Same(OverlayReplica.NoPending, after.Pending);
+    }
+
+    [Fact]
     public void MiniAddress_DropsUnitWhenZero()
     {
         Assert.Equal("13", OverlayCell.MiniAddress(new AddressId(1, 1, 13, 0)));
