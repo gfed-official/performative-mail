@@ -83,7 +83,7 @@ public sealed class LaneEventTests
         fx.World.Belts.Compile(new[] { EastBelt(new TileCoord(1, 1)) });
         var segment = Assert.Single(fx.World.Belts.Segments);
 
-        Assert.True(segment.TryInsert(0, 11, 0f, MailKinds.Letter, new AddressId(2, 3, 1, 0)));
+        Assert.True(segment.TryInsert(0, 11, segment.LengthMetres, MailKinds.Letter, new AddressId(2, 3, 1, 0)));
         fx.Server.TickOnce();
         fx.First.Receive();
         fx.Second.Receive();

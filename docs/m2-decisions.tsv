@@ -63,3 +63,4 @@ ts	phase	decision	why	evidence	result
 2026-09-05T05:50:00Z	subtract	Kinds 70/71, count-only replica, no checksum batch or reset	Family tens; U3.1 verify is counts; LaneReset and itemId wait	docs/m2-frame.md	accepted
 2026-09-05T05:50:00Z	architect	addressColour is district plus street; position is i32 cm	Chapter 09 wants both swatches; BitWriter has no float	src/Sim/Core/Ids.cs	accepted
 2026-09-05T05:50:00Z	subtract	LaneRemove is segment plus lane; Compile emits nothing	Head take is the only remove; compile wipe is later	src/Sim/Automation/LaneEvents.cs	accepted
+2026-09-05T06:00:00Z	verify	U3.1 local suite after head-at-end insert	Sim 490, Net 308, Bot 16, ContentValidator 0	tests/Net.Tests/LaneEventTests.cs	VERIFIED
