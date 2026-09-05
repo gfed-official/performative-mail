@@ -41,6 +41,53 @@ public sealed class BeltMk1Tests
     }
 
     [Fact]
+    public void RepoDefs_RampAndElevated_MatchChapterCosts()
+    {
+        var buildings = Index(LoadBuildings());
+        var recipes = Index(LoadRecipes());
+
+        Assert.True(buildings.TryGetValue(BeltNetwork.BuildingId, out var flat));
+        Assert.False(flat.OnStreet);
+
+        Assert.True(buildings.TryGetValue(BeltNetwork.RampId, out var ramp));
+        Assert.True(recipes.TryGetValue(ramp.Recipe, out var rampRecipe));
+        Assert.Equal("recipe_belt_mk1_ramp", ramp.Recipe);
+        Assert.Equal(BeltNetwork.RampId, rampRecipe.ProducesBuilding);
+        Assert.Equal(120, ramp.Hp);
+        Assert.Equal(2, ramp.Footprint.W);
+        Assert.Equal(1, ramp.Footprint.H);
+        Assert.Equal(4, ramp.Rotations);
+        Assert.False(ramp.OnStreet);
+        Assert.Equal(WaterPlacement.None, ramp.OnWater);
+        Assert.Equal(15, ramp.MaxSlopeDeg);
+        Assert.Equal(BuildingBehaviour.Belt, ramp.Behaviour);
+        Assert.Null(ramp.Container);
+        Assert.Null(rampRecipe.Blueprint);
+        Assert.Equal("plank", rampRecipe.Inputs[0].Item);
+        Assert.Equal(3, rampRecipe.Inputs[0].Count);
+        Assert.Equal("iron_ingot", rampRecipe.Inputs[1].Item);
+        Assert.Equal(2, rampRecipe.Inputs[1].Count);
+
+        Assert.True(buildings.TryGetValue(BeltNetwork.ElevatedId, out var elevated));
+        Assert.True(recipes.TryGetValue(elevated.Recipe, out var elevatedRecipe));
+        Assert.Equal("recipe_belt_mk1_elevated", elevated.Recipe);
+        Assert.Equal(BeltNetwork.ElevatedId, elevatedRecipe.ProducesBuilding);
+        Assert.Equal(80, elevated.Hp);
+        Assert.Equal(1, elevated.Footprint.W);
+        Assert.Equal(1, elevated.Footprint.H);
+        Assert.True(elevated.OnStreet);
+        Assert.Equal(WaterPlacement.None, elevated.OnWater);
+        Assert.Equal(15, elevated.MaxSlopeDeg);
+        Assert.Equal(BuildingBehaviour.Belt, elevated.Behaviour);
+        Assert.Null(elevated.Container);
+        Assert.Null(elevatedRecipe.Blueprint);
+        Assert.Equal("plank", elevatedRecipe.Inputs[0].Item);
+        Assert.Equal(2, elevatedRecipe.Inputs[0].Count);
+        Assert.Equal("iron_ingot", elevatedRecipe.Inputs[1].Item);
+        Assert.Equal(1, elevatedRecipe.Inputs[1].Count);
+    }
+
+    [Fact]
     public void Place_FourTiles_ConsumesOnePlankAndOneIngotEach()
     {
         var fx = Loaded(planks: 4, iron: 4);
@@ -65,6 +112,83 @@ public sealed class BeltMk1Tests
         Assert.Equal(0, fx.Registry.Count);
         Assert.Equal(1, CountItem(fx, PlankId));
         Assert.Equal(1, CountItem(fx, IronId));
+    }
+
+    [Fact]
+    public void Street_ElevatedPlacesAndConsumes_FlatRejectedDoesNotConsume()
+    {
+        var field = PlacementField.Flat(8, 6, 200).WithStreet(Origin);
+        var fx = Loaded(planks: 2, iron: 1, field);
+
+        var flat = Assert.IsType<PlaceRejected>(fx.Registry.TryPlace(BeltNetwork.BuildingId, Origin, Facing.East));
+        Assert.Equal(PlaceReject.Street, flat.Reason);
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.Equal(2, CountItem(fx, PlankId));
+        Assert.Equal(1, CountItem(fx, IronId));
+
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.ElevatedId, Origin, Facing.East));
+        Assert.Equal(1, fx.Registry.Count);
+        Assert.Equal(0, CountItem(fx, PlankId));
+        Assert.Equal(0, CountItem(fx, IronId));
+    }
+
+    [Fact]
+    public void Ramp_East_OccupiesOriginAndNext_SecondPlaceOccupied()
+    {
+        var fx = Loaded(planks: 6, iron: 4);
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.RampId, Origin, Facing.East));
+
+        Assert.Equal(1, fx.Registry.Count);
+        Assert.Equal(3, CountItem(fx, PlankId));
+        Assert.Equal(2, CountItem(fx, IronId));
+
+        var rejected = Assert.IsType<PlaceRejected>(fx.Registry.TryPlace(BeltNetwork.RampId, new TileCoord(2, 1), Facing.East));
+        Assert.Equal(PlaceReject.Occupied, rejected.Reason);
+        Assert.Equal(1, fx.Registry.Count);
+        Assert.Equal(3, CountItem(fx, PlankId));
+        Assert.Equal(2, CountItem(fx, IronId));
+    }
+
+    [Fact]
+    public void Ramp_WestAndSouth_OccupyAlongFacing()
+    {
+        var west = Loaded(planks: 6, iron: 4);
+        Assert.IsType<Placed>(west.Registry.TryPlace(BeltNetwork.RampId, new TileCoord(3, 2), Facing.West));
+        var westHit = Assert.IsType<PlaceRejected>(
+            west.Registry.TryPlace(BeltNetwork.BuildingId, new TileCoord(2, 2), Facing.West));
+        Assert.Equal(PlaceReject.Occupied, westHit.Reason);
+        Assert.Equal(1, west.Registry.Count);
+        Assert.Equal(3, CountItem(west, PlankId));
+        Assert.Equal(2, CountItem(west, IronId));
+
+        var south = Loaded(planks: 6, iron: 4);
+        Assert.IsType<Placed>(south.Registry.TryPlace(BeltNetwork.RampId, new TileCoord(2, 3), Facing.South));
+        var southHit = Assert.IsType<PlaceRejected>(
+            south.Registry.TryPlace(BeltNetwork.BuildingId, new TileCoord(2, 2), Facing.South));
+        Assert.Equal(PlaceReject.Occupied, southHit.Reason);
+        Assert.Equal(1, south.Registry.Count);
+        Assert.Equal(3, CountItem(south, PlankId));
+        Assert.Equal(2, CountItem(south, IronId));
+    }
+
+    [Fact]
+    public void Ramp_StreetOnAnyCoveredTile_Rejected()
+    {
+        var onOrigin = Loaded(planks: 3, iron: 2, PlacementField.Flat(8, 6, 200).WithStreet(Origin));
+        var originHit = Assert.IsType<PlaceRejected>(
+            onOrigin.Registry.TryPlace(BeltNetwork.RampId, Origin, Facing.East));
+        Assert.Equal(PlaceReject.Street, originHit.Reason);
+        Assert.Equal(0, onOrigin.Registry.Count);
+        Assert.Equal(3, CountItem(onOrigin, PlankId));
+        Assert.Equal(2, CountItem(onOrigin, IronId));
+
+        var onNext = Loaded(planks: 3, iron: 2, PlacementField.Flat(8, 6, 200).WithStreet(new TileCoord(2, 1)));
+        var nextHit = Assert.IsType<PlaceRejected>(
+            onNext.Registry.TryPlace(BeltNetwork.RampId, Origin, Facing.East));
+        Assert.Equal(PlaceReject.Street, nextHit.Reason);
+        Assert.Equal(0, onNext.Registry.Count);
+        Assert.Equal(3, CountItem(onNext, PlankId));
+        Assert.Equal(2, CountItem(onNext, IronId));
     }
 
     [Fact]
@@ -267,6 +391,70 @@ public sealed class BeltMk1Tests
     }
 
     [Fact]
+    public void Compile_LoneEastRamp_OneFourMetreTwoTileSegment()
+    {
+        var fx = Loaded(planks: 3, iron: 2);
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.RampId, Origin, Facing.East));
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+
+        var segment = Assert.Single(belts.Segments);
+        Assert.Equal(Facing.East, segment.Facing);
+        Assert.Equal(4f, segment.LengthMetres);
+        Assert.Equal(2, segment.Tiles.Count);
+        Assert.Equal(new TileCoord(1, 1), segment.Tiles[0]);
+        Assert.Equal(new TileCoord(2, 1), segment.Tiles[1]);
+    }
+
+    [Fact]
+    public void Compile_FlatThenRampThenElevated_OnePath()
+    {
+        var fx = Loaded(planks: 6, iron: 4);
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.BuildingId, new TileCoord(1, 1), Facing.East));
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.RampId, new TileCoord(2, 1), Facing.East));
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.ElevatedId, new TileCoord(4, 1), Facing.East));
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+
+        var segment = Assert.Single(belts.Segments);
+        Assert.Equal(Facing.East, segment.Facing);
+        Assert.Equal(8f, segment.LengthMetres);
+        Assert.Equal(4, segment.Tiles.Count);
+        Assert.Equal(new TileCoord(1, 1), segment.Tiles[0]);
+        Assert.Equal(new TileCoord(2, 1), segment.Tiles[1]);
+        Assert.Equal(new TileCoord(3, 1), segment.Tiles[2]);
+        Assert.Equal(new TileCoord(4, 1), segment.Tiles[3]);
+    }
+
+    [Fact]
+    public void Occupancy_CompiledRampTiles_AreOccupied()
+    {
+        AssertRampOccupancyMatchesCompile(new TileCoord(1, 1), Facing.East, new TileCoord(2, 1));
+        AssertRampOccupancyMatchesCompile(new TileCoord(3, 2), Facing.West, new TileCoord(2, 2));
+        AssertRampOccupancyMatchesCompile(new TileCoord(2, 3), Facing.South, new TileCoord(2, 2));
+    }
+
+    [Fact]
+    public void Step_FlatRampElevated_ThirtyTicks_AtTwoMetres()
+    {
+        var fx = Loaded(planks: 6, iron: 4);
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.BuildingId, new TileCoord(1, 1), Facing.East));
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.RampId, new TileCoord(2, 1), Facing.East));
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.ElevatedId, new TileCoord(4, 1), Facing.East));
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+        var segment = Assert.Single(belts.Segments);
+        Assert.True(segment.TryInsert(0, 11, 0f));
+
+        belts.StepTicks(TickClock.TickHz);
+
+        var item = Assert.Single(segment.Lane(0));
+        Assert.Equal(11, item.ItemId);
+        Assert.Equal(2f, item.MetresFromStart, 3);
+        Assert.Empty(segment.Lane(1));
+    }
+
+    [Fact]
     public void Step_LCorner_Lane0_ThirtyTicks_AtTwoMetres()
     {
         var fx = Place(
@@ -388,6 +576,28 @@ public sealed class BeltMk1Tests
 
     private static BeltSegment CompileEast(int tiles) =>
         Assert.Single(CompileEastNetwork(tiles).Segments);
+
+    private static void AssertRampOccupancyMatchesCompile(TileCoord origin, Facing facing, TileCoord next)
+    {
+        var fx = Loaded(planks: 4, iron: 3);
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.RampId, origin, facing));
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+
+        var segment = Assert.Single(belts.Segments);
+        Assert.Equal(2, segment.Tiles.Count);
+        Assert.Equal(origin, segment.Tiles[0]);
+        Assert.Equal(next, segment.Tiles[1]);
+        for (int i = 0; i < segment.Tiles.Count; i++)
+        {
+            var rejected = Assert.IsType<PlaceRejected>(
+                fx.Registry.TryPlace(BeltNetwork.BuildingId, segment.Tiles[i], facing));
+            Assert.Equal(PlaceReject.Occupied, rejected.Reason);
+        }
+
+        Assert.Equal(1, CountItem(fx, PlankId));
+        Assert.Equal(1, CountItem(fx, IronId));
+    }
 
     private static Fixture PlaceEastRun(int tiles)
     {

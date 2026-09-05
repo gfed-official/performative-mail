@@ -83,6 +83,8 @@ public sealed class BeltSegment
 public sealed class BeltNetwork
 {
     public const string BuildingId = "belt_mk1";
+    public const string RampId = "belt_mk1_ramp";
+    public const string ElevatedId = "belt_mk1_elevated";
     public const float TileMetres = 2f;
     public const float Mk1MetresPerSecond = 2f;
     public const float MinSpacingMetres = 0.5f;
@@ -101,9 +103,13 @@ public sealed class BeltNetwork
         for (int i = 0; i < constructs.Count; i++)
         {
             var row = constructs[i];
-            if (!string.Equals(row.DefId, BuildingId, StringComparison.Ordinal))
+            if (!IsFamily(row.DefId))
                 continue;
             facingAt[row.Tile] = row.Rotation;
+            if (!string.Equals(row.DefId, RampId, StringComparison.Ordinal))
+                continue;
+            NextTile(row.Tile, row.Rotation, out var extra);
+            facingAt[extra] = row.Rotation;
         }
 
         var incoming = new Dictionary<TileCoord, int>();
@@ -191,6 +197,11 @@ public sealed class BeltNetwork
 
         return hash;
     }
+
+    private static bool IsFamily(string defId) =>
+        string.Equals(defId, BuildingId, StringComparison.Ordinal)
+        || string.Equals(defId, RampId, StringComparison.Ordinal)
+        || string.Equals(defId, ElevatedId, StringComparison.Ordinal);
 
     private static void NextTile(TileCoord tile, Facing facing, out TileCoord next)
     {

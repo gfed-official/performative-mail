@@ -178,6 +178,32 @@ public sealed class ConstructRegistryTests
         Assert.Equal(80, belt.Hp);
         Assert.False(belt.OnStreet);
         Assert.Equal(BuildingBehaviour.Belt, belt.Behaviour);
+
+        Assert.True(buildings.TryGetValue("belt_mk1_ramp", out var ramp));
+        Assert.True(recipes.TryGetValue(ramp.Recipe, out var rampRecipe));
+        Assert.Equal("belt_mk1_ramp", rampRecipe.ProducesBuilding);
+        Assert.Equal("plank", rampRecipe.Inputs[0].Item);
+        Assert.Equal(3, rampRecipe.Inputs[0].Count);
+        Assert.Equal("iron_ingot", rampRecipe.Inputs[1].Item);
+        Assert.Equal(2, rampRecipe.Inputs[1].Count);
+        Assert.Equal(120, ramp.Hp);
+        Assert.Equal(2, ramp.Footprint.W);
+        Assert.Equal(1, ramp.Footprint.H);
+        Assert.False(ramp.OnStreet);
+        Assert.Equal(BuildingBehaviour.Belt, ramp.Behaviour);
+
+        Assert.True(buildings.TryGetValue("belt_mk1_elevated", out var elevated));
+        Assert.True(recipes.TryGetValue(elevated.Recipe, out var elevatedRecipe));
+        Assert.Equal("belt_mk1_elevated", elevatedRecipe.ProducesBuilding);
+        Assert.Equal("plank", elevatedRecipe.Inputs[0].Item);
+        Assert.Equal(2, elevatedRecipe.Inputs[0].Count);
+        Assert.Equal("iron_ingot", elevatedRecipe.Inputs[1].Item);
+        Assert.Equal(1, elevatedRecipe.Inputs[1].Count);
+        Assert.Equal(80, elevated.Hp);
+        Assert.Equal(1, elevated.Footprint.W);
+        Assert.Equal(1, elevated.Footprint.H);
+        Assert.True(elevated.OnStreet);
+        Assert.Equal(BuildingBehaviour.Belt, elevated.Behaviour);
     }
 
     private static Fixture Loaded(int logs, PlacementField? field = null)
