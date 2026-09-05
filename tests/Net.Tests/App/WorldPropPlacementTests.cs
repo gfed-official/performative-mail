@@ -8,9 +8,9 @@ public sealed class WorldPropPlacementTests
     public void RoofSize_IsNinetyPercentFootprintAndFixedHeight()
     {
         var (x, y, z) = WorldPropPlacement.RoofSize(8f, 6f);
-        Assert.Equal(7.2f, x);
+        Assert.Equal(8f * WorldPropPlacement.HouseRoofScale, x);
         Assert.Equal(WorldPropPlacement.HouseRoofHeightMeters, y);
-        Assert.Equal(5.4f, z);
+        Assert.Equal(6f * WorldPropPlacement.HouseRoofScale, z);
         Assert.Equal(0.55f, WorldPropPlacement.HouseRoofHeightMeters);
         Assert.Equal(0.9f, WorldPropPlacement.HouseRoofScale);
     }
