@@ -258,16 +258,17 @@ public partial class Main : Node3D
 
     private void AddGrassGround()
     {
+        var slab = WorldTilePlacement.SmallIslandGround();
         AddChild(new MeshInstance3D
         {
             Name = "Grass",
-            Mesh = new BoxMesh { Size = new Vector3(640f, 0.04f, 640f) },
+            Mesh = new BoxMesh { Size = new Vector3(slab.SizeX, slab.SizeY, slab.SizeZ) },
             MaterialOverride = new StandardMaterial3D
             {
                 AlbedoColor = new Color(0.44f, 0.66f, 0.42f), // #6FA86A
                 Roughness = 0.85f,
             },
-            Position = new Vector3(320f, -0.02f, 320f),
+            Position = new Vector3(slab.X, slab.Y, slab.Z),
             CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
         });
     }

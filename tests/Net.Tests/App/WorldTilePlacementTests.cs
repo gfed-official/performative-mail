@@ -1,4 +1,5 @@
 using PerformativeMail.App;
+using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Net.Tests.App;
@@ -50,5 +51,54 @@ public sealed class WorldTilePlacementTests
         var toward = WorldTilePlacement.TowardNearestStreet(4f, -2f, Array.Empty<StreetRecord>(), 2f);
         Assert.Equal(0f, toward.X);
         Assert.Equal(0f, toward.Z);
+    }
+
+    [Fact]
+    public void SmallIslandGround_CoversViewFrameTownInNegativeZ()
+    {
+        var slab = WorldTilePlacement.SmallIslandGround();
+        Assert.True(slab.Z < 0f);
+        Assert.Equal(-WorldTilePlacement.GroundThicknessM * 0.5f, slab.Y);
+        Assert.Equal(WorldTilePlacement.GroundThicknessM, slab.SizeY);
+
+        float tileM = WorldGen.SmallIslandTileCm / 100f;
+        AssertCovered(slab, WorldTilePlacement.TileCenter(new TileCoord(0, 0), tileM));
+        AssertCovered(
+            slab,
+            WorldTilePlacement.TileCenter(
+                new TileCoord(WorldGen.SmallIslandTiles - 1, WorldGen.SmallIslandTiles - 1),
+                tileM));
+        AssertCovered(slab, WorldTilePlacement.TileCenter(DebugWorld.PostOfficeTile, tileM));
+        AssertCovered(slab, WorldTilePlacement.TileCenter(DebugWorld.IntakeTile, tileM));
+        AssertCovered(
+            slab,
+            WorldTilePlacement.FootprintOrigin(DebugWorld.House1Lot, DebugWorld.LotSize, tileM));
+        AssertCovered(
+            slab,
+            WorldTilePlacement.FootprintOrigin(DebugWorld.House2Lot, DebugWorld.LotSize, tileM));
+        var mailbox = ViewFrame.From(new PlayerPose(
+            DebugWorld.House1Mailbox.XCm,
+            DebugWorld.House1Mailbox.YCm,
+            DebugWorld.House1Mailbox.ZCm,
+            0));
+        AssertCovered(slab, (mailbox.X, 0f, mailbox.Z));
+    }
+
+    [Fact]
+    public void SmallIslandGround_DoesNotSitInPositiveZOnly()
+    {
+        var slab = WorldTilePlacement.SmallIslandGround();
+        float halfZ = slab.SizeZ * 0.5f;
+        Assert.True(slab.Z - halfZ < 0f);
+        Assert.True(slab.Z + halfZ <= 0f);
+        Assert.InRange(slab.X, 0f, slab.SizeX);
+    }
+
+    private static void AssertCovered(GroundSlab slab, (float X, float Y, float Z) at)
+    {
+        float hx = slab.SizeX * 0.5f;
+        float hz = slab.SizeZ * 0.5f;
+        Assert.InRange(at.X, slab.X - hx, slab.X + hx);
+        Assert.InRange(at.Z, slab.Z - hz, slab.Z + hz);
     }
 }

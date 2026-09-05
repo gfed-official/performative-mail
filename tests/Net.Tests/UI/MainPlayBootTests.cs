@@ -59,14 +59,15 @@ public sealed class MainPlayBootTests
         var grass = MethodBody(ReadMain(), "AddGrassGround");
         Assert.Contains("Name = \"Grass\"", grass);
         Assert.Contains("BoxMesh", grass);
-        Assert.Contains("640f, 0.04f, 640f", grass);
-        Assert.Contains("320f, -0.02f, 320f", grass);
+        Assert.Contains("WorldTilePlacement.SmallIslandGround", grass);
+        Assert.Contains("slab.X, slab.Y, slab.Z", grass);
         Assert.Contains("0.44f, 0.66f, 0.42f", grass);
         Assert.Contains("#6FA86A", grass);
         Assert.Contains("ShadowCastingSetting.Off", grass);
         Assert.DoesNotContain("PlaneMesh", grass);
         Assert.DoesNotContain("WorldStage", grass);
         Assert.DoesNotContain("AddLabeledBox", grass);
+        Assert.DoesNotContain("320f, -0.02f, 320f", grass);
     }
 
     [Fact]
