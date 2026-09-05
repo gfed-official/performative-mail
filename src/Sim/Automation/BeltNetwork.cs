@@ -97,48 +97,38 @@ public sealed class BeltNetwork
         if (constructs is null) throw new ArgumentNullException(nameof(constructs));
         _segments.Clear();
 
-        var byFacing = new Dictionary<Facing, HashSet<TileCoord>>();
+        var facingAt = new Dictionary<TileCoord, Facing>();
         for (int i = 0; i < constructs.Count; i++)
         {
             var row = constructs[i];
             if (!string.Equals(row.DefId, BuildingId, StringComparison.Ordinal))
                 continue;
-            if (!byFacing.TryGetValue(row.Rotation, out var tiles))
-            {
-                tiles = new HashSet<TileCoord>();
-                byFacing.Add(row.Rotation, tiles);
-            }
-
-            tiles.Add(row.Tile);
+            facingAt[row.Tile] = row.Rotation;
         }
 
-        foreach (var pair in byFacing)
+        var incoming = new Dictionary<TileCoord, int>();
+        foreach (var pair in facingAt)
         {
-            Facing facing = pair.Key;
-            var remaining = pair.Value;
-            Delta(facing, out int dx, out int dy);
-            while (remaining.Count > 0)
-            {
-                TileCoord start = First(remaining);
-                TileCoord prev = new TileCoord(start.X - dx, start.Y - dy);
-                while (remaining.Contains(prev))
-                {
-                    start = prev;
-                    prev = new TileCoord(start.X - dx, start.Y - dy);
-                }
-
-                var run = new List<TileCoord>();
-                TileCoord at = start;
-                while (remaining.Remove(at))
-                {
-                    run.Add(at);
-                    at = new TileCoord(at.X + dx, at.Y + dy);
-                }
-
-                var tiles = run.ToArray();
-                _segments.Add(new BeltSegment(facing, tiles, HashRun(facing, tiles)));
-            }
+            NextTile(pair.Key, pair.Value, out var next);
+            if (!facingAt.ContainsKey(next)) continue;
+            incoming.TryGetValue(next, out int n);
+            incoming[next] = n + 1;
         }
+
+        var remaining = new HashSet<TileCoord>(facingAt.Keys);
+        var sources = new List<TileCoord>();
+        foreach (var tile in remaining)
+        {
+            incoming.TryGetValue(tile, out int n);
+            if (n == 0) sources.Add(tile);
+        }
+
+        sources.Sort(CompareTiles);
+        for (int i = 0; i < sources.Count; i++)
+            EmitRun(sources[i], facingAt, incoming, remaining);
+
+        while (remaining.Count > 0)
+            EmitRun(First(remaining), facingAt, incoming, remaining);
 
         _segments.Sort(CompareRuns);
     }
@@ -158,18 +148,74 @@ public sealed class BeltNetwork
             Step(dt);
     }
 
-    private static ulong HashRun(Facing facing, TileCoord[] tiles)
+    private void EmitRun(
+        TileCoord start,
+        Dictionary<TileCoord, Facing> facingAt,
+        Dictionary<TileCoord, int> incoming,
+        HashSet<TileCoord> remaining)
+    {
+        if (!remaining.Contains(start)) return;
+
+        var run = new List<TileCoord>();
+        var facings = new List<Facing>();
+        TileCoord at = start;
+        while (true)
+        {
+            remaining.Remove(at);
+            Facing facing = facingAt[at];
+            run.Add(at);
+            facings.Add(facing);
+            NextTile(at, facing, out var next);
+            if (!remaining.Contains(next)) break;
+            Facing nextFacing = facingAt[next];
+            if (Opposite(facing, nextFacing)) break;
+            incoming.TryGetValue(next, out int n);
+            if (n > 1) break;
+            at = next;
+        }
+
+        var tiles = run.ToArray();
+        _segments.Add(new BeltSegment(facings[0], tiles, HashRun(tiles, facings)));
+    }
+
+    private static ulong HashRun(TileCoord[] tiles, List<Facing> facings)
     {
         ulong hash = Fnv.Offset64;
-        hash = Fnv.Mix8(hash, (byte)facing);
         hash = Fnv.MixUInt32(hash, (uint)tiles.Length);
         for (int i = 0; i < tiles.Length; i++)
         {
+            hash = Fnv.Mix8(hash, (byte)facings[i]);
             hash = Fnv.MixUInt32(hash, unchecked((uint)tiles[i].X));
             hash = Fnv.MixUInt32(hash, unchecked((uint)tiles[i].Y));
         }
 
         return hash;
+    }
+
+    private static void NextTile(TileCoord tile, Facing facing, out TileCoord next)
+    {
+        Delta(facing, out int dx, out int dy);
+        next = new TileCoord(tile.X + dx, tile.Y + dy);
+    }
+
+    private static bool Opposite(Facing a, Facing b)
+    {
+        switch (a)
+        {
+            case Facing.North: return b == Facing.South;
+            case Facing.East: return b == Facing.West;
+            case Facing.South: return b == Facing.North;
+            case Facing.West: return b == Facing.East;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(a), a, null);
+        }
+    }
+
+    private static int CompareTiles(TileCoord a, TileCoord b)
+    {
+        int byX = a.X.CompareTo(b.X);
+        if (byX != 0) return byX;
+        return a.Y.CompareTo(b.Y);
     }
 
     private static void Delta(Facing facing, out int dx, out int dy)

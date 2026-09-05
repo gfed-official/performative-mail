@@ -181,6 +181,112 @@ public sealed class BeltMk1Tests
     }
 
     [Fact]
+    public void Compile_LCornerEastThenNorth_OneSixMetreSegment()
+    {
+        var fx = Place(
+            (new TileCoord(1, 1), Facing.East),
+            (new TileCoord(2, 1), Facing.North),
+            (new TileCoord(2, 2), Facing.North));
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+
+        var segment = Assert.Single(belts.Segments);
+        Assert.Equal(Facing.East, segment.Facing);
+        Assert.Equal(6f, segment.LengthMetres);
+        Assert.Equal(3, segment.Tiles.Count);
+        Assert.Equal(new TileCoord(1, 1), segment.Tiles[0]);
+        Assert.Equal(new TileCoord(2, 1), segment.Tiles[1]);
+        Assert.Equal(new TileCoord(2, 2), segment.Tiles[2]);
+    }
+
+    [Fact]
+    public void Compile_FacingChange_IsNotOneNodePerTile()
+    {
+        var fx = Place(
+            (new TileCoord(1, 1), Facing.East),
+            (new TileCoord(2, 1), Facing.South));
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+
+        var segment = Assert.Single(belts.Segments);
+        Assert.Equal(2, segment.Tiles.Count);
+        Assert.Equal(4f, segment.LengthMetres);
+        Assert.Equal(new TileCoord(1, 1), segment.Tiles[0]);
+        Assert.Equal(new TileCoord(2, 1), segment.Tiles[1]);
+    }
+
+    [Fact]
+    public void Compile_AdjacentSameTierJoinAtFacingChange_OnePath()
+    {
+        var fx = Place(
+            (new TileCoord(1, 1), Facing.East),
+            (new TileCoord(2, 1), Facing.East),
+            (new TileCoord(3, 1), Facing.North),
+            (new TileCoord(3, 2), Facing.North));
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+
+        var segment = Assert.Single(belts.Segments);
+        Assert.Equal(Facing.East, segment.Facing);
+        Assert.Equal(8f, segment.LengthMetres);
+        Assert.Equal(4, segment.Tiles.Count);
+        Assert.Equal(new TileCoord(1, 1), segment.Tiles[0]);
+        Assert.Equal(new TileCoord(3, 1), segment.Tiles[2]);
+        Assert.Equal(new TileCoord(3, 2), segment.Tiles[3]);
+    }
+
+    [Fact]
+    public void Compile_AdjacentButNotFeeding_IsTwoSegments()
+    {
+        var fx = Place(
+            (new TileCoord(1, 1), Facing.North),
+            (new TileCoord(2, 1), Facing.East));
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+
+        Assert.Equal(2, belts.Segments.Count);
+    }
+
+    [Fact]
+    public void Compile_BentRunTwice_HashesMatch()
+    {
+        var fx = Place(
+            (new TileCoord(1, 1), Facing.East),
+            (new TileCoord(2, 1), Facing.North),
+            (new TileCoord(2, 2), Facing.West));
+        var first = new BeltNetwork();
+        first.Compile(fx.Registry.All);
+        var second = new BeltNetwork();
+        second.Compile(fx.Registry.All);
+
+        var a = Assert.Single(first.Segments);
+        var b = Assert.Single(second.Segments);
+        Assert.Equal(a.RunHash, b.RunHash);
+        Assert.Equal(a.LengthMetres, b.LengthMetres);
+        Assert.Equal(a.Tiles, b.Tiles);
+    }
+
+    [Fact]
+    public void Step_LCorner_Lane0_ThirtyTicks_AtTwoMetres()
+    {
+        var fx = Place(
+            (new TileCoord(1, 1), Facing.East),
+            (new TileCoord(2, 1), Facing.North),
+            (new TileCoord(2, 2), Facing.North));
+        var belts = new BeltNetwork();
+        belts.Compile(fx.Registry.All);
+        var segment = Assert.Single(belts.Segments);
+        Assert.True(segment.TryInsert(0, 11, 0f));
+
+        belts.StepTicks(TickClock.TickHz);
+
+        var item = Assert.Single(segment.Lane(0));
+        Assert.Equal(11, item.ItemId);
+        Assert.Equal(2f, item.MetresFromStart, 3);
+        Assert.Empty(segment.Lane(1));
+    }
+
+    [Fact]
     public void Step_Lane0_ThirtyTicks_AtTwoMetres_Lane1Empty()
     {
         var belts = CompileEastNetwork(4);
@@ -288,6 +394,14 @@ public sealed class BeltMk1Tests
         var fx = Loaded(planks: tiles, iron: tiles);
         for (int i = 0; i < tiles; i++)
             Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.BuildingId, new TileCoord(1 + i, 1), Facing.East, Owner));
+        return fx;
+    }
+
+    private static Fixture Place(params (TileCoord Tile, Facing Facing)[] belts)
+    {
+        var fx = Loaded(planks: belts.Length, iron: belts.Length);
+        for (int i = 0; i < belts.Length; i++)
+            Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.BuildingId, belts[i].Tile, belts[i].Facing, Owner));
         return fx;
     }
 
