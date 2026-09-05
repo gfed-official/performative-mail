@@ -54,6 +54,8 @@ public partial class PauseMenu : Control
         if (_title is not null)
             return;
 
+        PlayTheme.Apply(this);
+
         var dim = new ColorRect
         {
             Color = new Color(0.04f, 0.04f, 0.06f, 0.62f),
@@ -67,15 +69,6 @@ public partial class PauseMenu : Control
         AddChild(center);
 
         var card = new PanelContainer { CustomMinimumSize = new Vector2(440, 0) };
-        var style = new StyleBoxFlat
-        {
-            BgColor = new Color(0.12f, 0.13f, 0.16f, 0.96f),
-            ContentMarginLeft = 24,
-            ContentMarginTop = 20,
-            ContentMarginRight = 24,
-            ContentMarginBottom = 20,
-        };
-        card.AddThemeStyleboxOverride("panel", style);
         center.AddChild(card);
 
         var column = new VBoxContainer();
@@ -94,6 +87,7 @@ public partial class PauseMenu : Control
             Name = StatusPath,
             HorizontalAlignment = HorizontalAlignment.Center,
         };
+        PlayTheme.ApplyMuted(_status);
         column.AddChild(_status);
 
         _body = new Label
@@ -141,8 +135,8 @@ public partial class PauseMenu : Control
                 Text = bind.Action,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             });
-            row.AddChild(new Label { Text = bind.Keyboard });
-            row.AddChild(new Label { Text = bind.Gamepad });
+            row.AddChild(MutedLabel(bind.Keyboard));
+            row.AddChild(MutedLabel(bind.Gamepad));
             _binds.AddChild(row);
         }
     }
@@ -160,7 +154,7 @@ public partial class PauseMenu : Control
                 Text = option.Label,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
             });
-            row.AddChild(new Label { Text = option.Value });
+            row.AddChild(MutedLabel(option.Value));
             AddChoiceButton(row, PauseFrame.OptionDownId(option.Id), "-");
             AddChoiceButton(row, PauseFrame.OptionUpId(option.Id), "+");
             _options.AddChild(row);
@@ -199,10 +193,19 @@ public partial class PauseMenu : Control
             Text = label,
             Name = id,
         };
+        if (id == PauseFrame.ConfirmLeaveId)
+            PlayTheme.ApplyDanger(button);
         string picked = id;
         button.Pressed += () => Callable.From(() => ChoicePicked?.Invoke(picked)).CallDeferred();
         parent.AddChild(button);
         return button;
+    }
+
+    private static Label MutedLabel(string text)
+    {
+        var label = new Label { Text = text };
+        PlayTheme.ApplyMuted(label);
+        return label;
     }
 
     private static void ClearColumn(VBoxContainer column)

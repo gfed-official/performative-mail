@@ -33,7 +33,11 @@ public partial class Hud : Control
     private Label _target = null!;
     private Label _match = null!;
 
-    public override void _Ready() => CacheLabels();
+    public override void _Ready()
+    {
+        PlayTheme.Apply(this);
+        CacheLabels();
+    }
 
     public void Bind(in HudFrame frame)
     {
@@ -86,6 +90,7 @@ public partial class Hud : Control
 
     private void CacheLabels()
     {
+        PlayTheme.Apply(this);
         if (_shift is not null)
             return;
         _shift = GetNode<Label>("%" + ShiftPath);
