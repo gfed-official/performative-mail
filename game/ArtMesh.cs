@@ -1,4 +1,5 @@
 using Godot;
+using PerformativeMail.App;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
 
@@ -17,12 +18,19 @@ public static class ArtMesh
     public const string MailPkgS = "res://art/props/mail_pkg_s.glb";
     public const string MailPkgM = "res://art/props/mail_pkg_m.glb";
     public const string MailPkgL = "res://art/props/mail_pkg_l.glb";
+    public const string StreetTile = "res://art/world/street_tile_01.glb";
+    public const string StreetCurb = "res://art/world/street_curb_01.glb";
+    public const string SpawnPad = "res://art/world/spawn_pad_01.glb";
+    public const string GrassTile = "res://art/world/grass_tile_01.glb";
+    public const string Crate = "res://art/props/crate_01.glb";
+    public const string Cart = "res://art/props/cart_01.glb";
 
     public const string PawnVestMaterial = "mat_pawn_vest";
     public const string PawnHatMaterial = "mat_pawn_hat";
     public const float PostOfficeHeightMeters = 4.5f;
 
     private static readonly Dictionary<string, PackedScene> Packed = new();
+    private static readonly Dictionary<string, Mesh> Meshes = new();
     private static readonly HashSet<string> Missing = new();
 
     public static string HouseVariant(int index) =>
@@ -69,6 +77,37 @@ public static class ArtMesh
         var wrap = new Node3D();
         wrap.AddChild(node);
         return wrap;
+    }
+
+    public static Mesh? TryMesh(string path)
+    {
+        if (Meshes.TryGetValue(path, out var cached))
+            return cached;
+
+        var node = TryInstantiate(path);
+        if (node is null)
+            return null;
+
+        var mesh = BakeMesh(FindMeshInstance(node));
+        node.Free();
+        if (mesh is null)
+            return null;
+
+        Meshes[path] = mesh;
+        return mesh;
+    }
+
+    public static string PathForProp(EnvPropKind kind)
+    {
+        switch (kind)
+        {
+            case EnvPropKind.Crate:
+                return Crate;
+            case EnvPropKind.Cart:
+                return Cart;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+        }
     }
 
     public static void Orient(Node3D node, float towardX, float towardZ, bool modelFrontIsPlusZ)
@@ -136,6 +175,39 @@ public static class ArtMesh
         Tint(root, color, requireName: true, ref named);
         if (named == 0)
             Tint(root, color, requireName: false, ref named);
+    }
+
+    private static MeshInstance3D? FindMeshInstance(Node node)
+    {
+        if (node is MeshInstance3D inst && inst.Mesh is not null)
+            return inst;
+        foreach (var child in node.GetChildren())
+        {
+            if (FindMeshInstance(child) is { } found)
+                return found;
+        }
+
+        return null;
+    }
+
+    private static Mesh? BakeMesh(MeshInstance3D? inst)
+    {
+        if (inst?.Mesh is not { } mesh)
+            return null;
+
+        int surfaces = mesh.GetSurfaceCount();
+        Mesh? baked = null;
+        for (int i = 0; i < surfaces; i++)
+        {
+            var active = inst.GetActiveMaterial(i);
+            var onMesh = mesh.SurfaceGetMaterial(i);
+            if (active is null || ReferenceEquals(active, onMesh))
+                continue;
+            baked ??= (Mesh)mesh.Duplicate();
+            baked.SurfaceSetMaterial(i, active);
+        }
+
+        return baked ?? mesh;
     }
 
     private static PackedScene? LoadPacked(string path)

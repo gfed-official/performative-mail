@@ -20,6 +20,7 @@ public partial class WorldStage : Node3D
     private static readonly Color SpawnPadGold = new(0.77f, 0.66f, 0.29f); // #C4A84A
     private static readonly Color MailIntakeYellow = new(0.95f, 0.82f, 0.29f); // #F2D24A
     private static readonly Color StreetAsphalt = new(0.35f, 0.36f, 0.40f); // #5A5C66
+    private static readonly Color StreetCurb = new(0.54f, 0.56f, 0.60f); // #8A8E9A
     private static readonly Color HouseStucco = new(0.88f, 0.81f, 0.66f); // #E0CFA8
     private static readonly Color HouseRoof = new(0.42f, 0.31f, 0.43f); // #6B4E6E
     private static readonly Color MailboxBlue = new(0.18f, 0.23f, 0.55f); // #2F3A8C
@@ -39,11 +40,13 @@ public partial class WorldStage : Node3D
             return;
 
         float tileM = tables.TileCm / 100f;
+        SpawnGrassLots(tables.Lots, tables.PostOffice, tables.Streets, tileM);
         SpawnPostOffice(tables.PostOffice, tables.Streets, tileM);
         SpawnStreets(tables.Streets, tileM);
         SpawnHouses(tables.Houses, tables.Streets, tileM);
         SpawnMailboxes(tables.Houses, tables.Streets, tileM);
         SpawnIntake(tables.PostOffice, tables.Streets, tileM);
+        SpawnPostalClutter(tables.PostOffice, tables.Streets, tileM);
     }
 
     public void Clear()
@@ -105,11 +108,25 @@ public partial class WorldStage : Node3D
                 toward.Z);
         }
 
-        AddBox(
-            Vec(WorldTilePlacement.TileCenter(po.SpawnPadTile, tileM)),
-            new Vector3(tileM * 0.9f, 0.12f, tileM * 0.9f),
-            SpawnPadGold,
-            0.06f);
+        var padAt = Vec(WorldTilePlacement.TileCenter(po.SpawnPadTile, tileM));
+        var pad = ArtMesh.TryInstantiate(ArtMesh.SpawnPad);
+        if (pad is not null)
+        {
+            float padScale = tileM / WorldEnvPlacement.ArtTileMeters;
+            pad.Position = padAt;
+            if (MathF.Abs(padScale - 1f) > 1e-4f)
+                pad.Scale = new Vector3(padScale, 1f, padScale);
+            AddChild(pad);
+            _spawned.Add(pad);
+        }
+        else
+        {
+            AddBox(
+                padAt,
+                new Vector3(tileM * WorldEnvPlacement.SpawnPadScale, WorldEnvPlacement.SpawnPadHeightMeters, tileM * WorldEnvPlacement.SpawnPadScale),
+                SpawnPadGold,
+                WorldEnvPlacement.SpawnPadHeightMeters * 0.5f);
+        }
     }
 
     private void SpawnIntake(PostOfficeRecord po, StreetRecord[] streets, float tileM)
@@ -146,41 +163,54 @@ public partial class WorldStage : Node3D
 
     private void SpawnStreets(StreetRecord[] streets, float tileM)
     {
-        int count = 0;
-        for (int s = 0; s < streets.Length; s++)
-            count += streets[s].Tiles?.Length ?? 0;
-        if (count == 0)
+        var tiles = WorldEnvPlacement.StreetTiles(streets, tileM);
+        AddArtTiles(
+            "StreetTiles",
+            ArtMesh.StreetTile,
+            tiles,
+            new Vector3(tileM, WorldEnvPlacement.StreetHeightMeters, tileM),
+            StreetAsphalt,
+            scaleX: tileM / WorldEnvPlacement.ArtTileMeters,
+            scaleZ: tileM / WorldEnvPlacement.ArtTileMeters);
+        AddArtTiles(
+            "StreetCurbs",
+            ArtMesh.StreetCurb,
+            WorldEnvPlacement.StreetCurbs(streets, tileM),
+            new Vector3(tileM, WorldEnvPlacement.CurbHeightMeters, WorldEnvPlacement.CurbThicknessMeters),
+            StreetCurb,
+            scaleX: tileM / WorldEnvPlacement.ArtTileMeters,
+            scaleZ: 1f);
+    }
+
+    private void SpawnGrassLots(LotRecord[] lots, PostOfficeRecord po, StreetRecord[] streets, float tileM)
+    {
+        var mesh = ArtMesh.TryMesh(ArtMesh.GrassTile);
+        if (mesh is null)
             return;
+        AddMultiMesh(
+            "GrassTiles",
+            mesh,
+            WorldEnvPlacement.LotGrass(lots, po, streets, tileM),
+            overlay: null,
+            yLift: 0f,
+            scaleX: tileM / WorldEnvPlacement.ArtTileMeters,
+            scaleZ: tileM / WorldEnvPlacement.ArtTileMeters);
+    }
 
-        var mesh = new BoxMesh { Size = new Vector3(tileM, 0.08f, tileM) };
-        var multi = new MultiMesh
+    private void SpawnPostalClutter(PostOfficeRecord po, StreetRecord[] streets, float tileM)
+    {
+        var props = WorldEnvPlacement.PostalClutter(po, streets, tileM);
+        for (int i = 0; i < props.Length; i++)
         {
-            TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
-            Mesh = mesh,
-            InstanceCount = count,
-        };
-
-        int i = 0;
-        for (int s = 0; s < streets.Length; s++)
-        {
-            var tiles = streets[s].Tiles;
-            if (tiles is null)
+            var prop = props[i];
+            var visual = ArtMesh.TryInstantiate(ArtMesh.PathForProp(prop.Kind));
+            if (visual is null)
                 continue;
-            for (int t = 0; t < tiles.Length; t++)
-            {
-                var at = Vec(WorldTilePlacement.TileCenter(tiles[t], tileM));
-                multi.SetInstanceTransform(i, new Transform3D(Basis.Identity, new Vector3(at.X, 0.04f, at.Z)));
-                i++;
-            }
+            visual.Position = new Vector3(prop.X, prop.Y, prop.Z);
+            visual.Rotation = new Vector3(0f, prop.YawRadians, 0f);
+            AddChild(visual);
+            _spawned.Add(visual);
         }
-
-        var node = new MultiMeshInstance3D
-        {
-            Multimesh = multi,
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = StreetAsphalt },
-        };
-        AddChild(node);
-        _spawned.Add(node);
     }
 
     private void SpawnHouses(HouseRecord[] houses, StreetRecord[] streets, float tileM)
@@ -351,6 +381,73 @@ public partial class WorldStage : Node3D
             MaterialOverride = new StandardMaterial3D { AlbedoColor = MailboxFlag },
             Position = new Vector3(at.X, at.Y, at.Z),
         });
+    }
+
+    private void AddArtTiles(
+        string name,
+        string artPath,
+        EnvInstancePose[] poses,
+        Vector3 boxSize,
+        Color boxColor,
+        float scaleX,
+        float scaleZ)
+    {
+        if (poses.Length == 0)
+            return;
+
+        var mesh = ArtMesh.TryMesh(artPath);
+        float yLift = 0f;
+        StandardMaterial3D? overlay = null;
+        float artScaleX = scaleX;
+        float artScaleZ = scaleZ;
+        if (mesh is null)
+        {
+            mesh = new BoxMesh { Size = boxSize };
+            yLift = boxSize.Y * 0.5f;
+            overlay = new StandardMaterial3D { AlbedoColor = boxColor };
+            artScaleX = 1f;
+            artScaleZ = 1f;
+        }
+
+        AddMultiMesh(name, mesh, poses, overlay, yLift, artScaleX, artScaleZ);
+    }
+
+    private void AddMultiMesh(
+        string name,
+        Mesh mesh,
+        EnvInstancePose[] poses,
+        Material? overlay,
+        float yLift,
+        float scaleX,
+        float scaleZ)
+    {
+        if (poses.Length == 0)
+            return;
+
+        var multi = new MultiMesh
+        {
+            TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
+            Mesh = mesh,
+            InstanceCount = poses.Length,
+        };
+        for (int i = 0; i < poses.Length; i++)
+        {
+            var pose = poses[i];
+            var basis = Basis.FromEuler(new Vector3(0f, pose.YawRadians, 0f));
+            if (MathF.Abs(scaleX - 1f) > 1e-4f || MathF.Abs(scaleZ - 1f) > 1e-4f)
+                basis = basis.Scaled(new Vector3(scaleX, 1f, scaleZ));
+            multi.SetInstanceTransform(i, new Transform3D(basis, new Vector3(pose.X, pose.Y + yLift, pose.Z)));
+        }
+
+        var node = new MultiMeshInstance3D
+        {
+            Name = name,
+            Multimesh = multi,
+        };
+        if (overlay is not null)
+            node.MaterialOverride = overlay;
+        AddChild(node);
+        _spawned.Add(node);
     }
 
     private void AddBox(Vector3 origin, Vector3 size, Color color, float heightCenter)

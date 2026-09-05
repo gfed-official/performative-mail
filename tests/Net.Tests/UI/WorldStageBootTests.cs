@@ -16,6 +16,15 @@ public sealed class WorldStageBootTests
         Assert.Contains("ArtMesh.Intake", source);
         Assert.Contains("ArtMesh.Mailbox", source);
         Assert.Contains("ArtMesh.HouseVariant", source);
+        Assert.Contains("ArtMesh.StreetTile", source);
+        Assert.Contains("ArtMesh.StreetCurb", source);
+        Assert.Contains("ArtMesh.SpawnPad", source);
+        Assert.Contains("ArtMesh.GrassTile", source);
+        Assert.Contains("ArtMesh.PathForProp", source);
+        Assert.Contains("WorldEnvPlacement.StreetTiles", source);
+        Assert.Contains("WorldEnvPlacement.StreetCurbs", source);
+        Assert.Contains("WorldEnvPlacement.LotGrass", source);
+        Assert.Contains("WorldEnvPlacement.PostalClutter", source);
         Assert.Contains("Sync(WorldTables", source);
         Assert.Contains("WorldLabelPlacement.AboveStreetFace", source);
         Assert.Contains("WorldTilePlacement.TileCenter", source);
@@ -46,6 +55,8 @@ public sealed class WorldStageBootTests
         Assert.Contains("0.95f, 0.82f, 0.29f", source);
         Assert.Contains("#5A5C66", source);
         Assert.Contains("0.35f, 0.36f, 0.40f", source);
+        Assert.Contains("#8A8E9A", source);
+        Assert.Contains("0.54f, 0.56f, 0.60f", source);
         Assert.Contains("#E0CFA8", source);
         Assert.Contains("0.88f, 0.81f, 0.66f", source);
         Assert.Contains("#6B4E6E", source);
