@@ -163,6 +163,7 @@ public sealed class PipeTests
         var pipes = RoutedFork();
         Assert.True(pipes.TryAccept(Inlet, 31, MailKinds.Letter, Address(street: 4)));
         Assert.False(pipes.TryAccept(Inlet, 32, MailKinds.Letter, Address(street: 4)));
+        Assert.False(pipes.TryAccept(Inlet, 33, MailKinds.Letter, Address(street: 9)));
 
         while (Assert.Single(pipes.Capsules).MetresAlongPath < PipeNetwork.MinSpacingMetres)
             pipes.StepTicks(1);

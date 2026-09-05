@@ -135,12 +135,12 @@ public sealed class PipeNetwork
         var item = new BeltItem(itemId, 0f, kind, address);
         if (!TryRoute(inlet, item, out var outlet))
             return false;
-        if (!TryPathLength(inlet, outlet, out float pathLength))
+        if (!TryPathHops(inlet, outlet, out int hops))
             return false;
-        if (BlockedAtStart(inlet, outlet))
+        if (BlockedAtStart(inlet))
             return false;
 
-        _moving.Add(new InFlight(new Capsule(itemId, kind, address, outlet, 0f), inlet, pathLength));
+        _moving.Add(new InFlight(new Capsule(itemId, kind, address, outlet, 0f), inlet, hops));
         return true;
     }
 
@@ -154,14 +154,42 @@ public sealed class PipeNetwork
     public void Step(float dt)
     {
         if (dt < 0f) throw new ArgumentOutOfRangeException(nameof(dt), dt, null);
+        if (dt == 0f) return;
+        int ticks = (int)Math.Round(dt * TickClock.TickHz);
+        if (ticks > 0)
+            AdvanceTicks(ticks);
+    }
+
+    public void StepTicks(int ticks)
+    {
+        if (ticks < 0) throw new ArgumentOutOfRangeException(nameof(ticks), ticks, null);
+        AdvanceTicks(ticks);
+    }
+
+    private bool BlockedAtStart(TileCoord inlet)
+    {
+        for (int i = 0; i < _moving.Count; i++)
+        {
+            var row = _moving[i];
+            if (!row.Inlet.Equals(inlet))
+                continue;
+            if (row.Ticks * (int)MetresPerSecond < (int)MinSpacingMetres * TickClock.TickHz)
+                return true;
+        }
+
+        return false;
+    }
+
+    private void AdvanceTicks(int ticks)
+    {
+        if (ticks == 0) return;
         for (int i = _moving.Count - 1; i >= 0; i--)
         {
             var row = _moving[i];
-            row.ElapsedSeconds += dt;
-            // speed * elapsed, not metres += speed * dt: 36 float adds undershoot 6 m.
-            float next = (float)(MetresPerSecond * row.ElapsedSeconds);
-            var updated = row.Capsule with { MetresAlongPath = next };
-            if (next >= row.PathLength)
+            row.Ticks += ticks;
+            float metres = row.Ticks * MetresPerSecond / TickClock.TickHz;
+            var updated = row.Capsule with { MetresAlongPath = metres };
+            if (row.Ticks * (int)MetresPerSecond >= row.Hops * (int)TileMetres * TickClock.TickHz)
             {
                 _emitted[updated.TargetOutlet].Add(updated);
                 _moving.RemoveAt(i);
@@ -172,31 +200,9 @@ public sealed class PipeNetwork
         }
     }
 
-    public void StepTicks(int ticks)
+    private bool TryPathHops(TileCoord start, TileCoord goal, out int hops)
     {
-        if (ticks < 0) throw new ArgumentOutOfRangeException(nameof(ticks), ticks, null);
-        float dt = (float)TickClock.TickDurationSeconds;
-        for (int n = 0; n < ticks; n++)
-            Step(dt);
-    }
-
-    private bool BlockedAtStart(TileCoord inlet, TileCoord outlet)
-    {
-        for (int i = 0; i < _moving.Count; i++)
-        {
-            var row = _moving[i];
-            if (!row.Inlet.Equals(inlet) || !row.Capsule.TargetOutlet.Equals(outlet))
-                continue;
-            if (row.Capsule.MetresAlongPath < MinSpacingMetres)
-                return true;
-        }
-
-        return false;
-    }
-
-    private bool TryPathLength(TileCoord start, TileCoord goal, out float length)
-    {
-        length = 0f;
+        hops = 0;
         if (!_nodes.Contains(start) || !_nodes.Contains(goal))
             return false;
         if (start.Equals(goal))
@@ -212,7 +218,6 @@ public sealed class PipeNetwork
             var at = queue.Dequeue();
             if (at.Equals(goal))
             {
-                int hops = 0;
                 var walk = at;
                 while (!walk.Equals(start))
                 {
@@ -220,7 +225,6 @@ public sealed class PipeNetwork
                     walk = parent[walk];
                 }
 
-                length = hops * TileMetres;
                 return true;
             }
 
@@ -251,17 +255,16 @@ public sealed class PipeNetwork
 
     private sealed class InFlight
     {
-        public InFlight(Capsule capsule, TileCoord inlet, float pathLength)
+        public InFlight(Capsule capsule, TileCoord inlet, int hops)
         {
             Capsule = capsule;
             Inlet = inlet;
-            PathLength = pathLength;
-            ElapsedSeconds = 0d;
+            Hops = hops;
         }
 
         public Capsule Capsule;
         public TileCoord Inlet;
-        public float PathLength;
-        public double ElapsedSeconds;
+        public int Hops;
+        public int Ticks;
     }
 }

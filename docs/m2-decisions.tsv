@@ -87,4 +87,5 @@ ts	phase	decision	why	evidence	result
 2026-09-05T07:10:00Z	architect	Skip 4-model arena; two in-thread sketches; chose graph plus inlet table over a BeltNetwork clone	Belts are directed two-lane runs; pipes are an undirected 1-item capsule graph	src/Sim/Automation/Pipes.cs	accepted
 2026-09-05T07:10:00Z	subtract	No junction, underground, or vertical; no ConstructRegistry blueprint gate; no MessageKind	U5.2 owns those pieces; U4.1 left TryPlace ungated; lock is recipe.Blueprint plus the shop row	src/Sim/Building/ConstructRegistry.cs	accepted
 2026-09-05T07:10:00Z	u5.1	Capsule is its own type; AddressFilter reused; path edge is 2 m; speed 5 m/s; spacing 1 m	spec/04 §2.2; AddressFilter.Matches already takes BeltItem	src/Sim/Automation/Pipes.cs	accepted
-2026-09-05T07:20:00Z	verify	U5.1 local suite after elapsed-time step	36 float metre adds undershoot 6 m; speed times elapsed seconds hits the exit	tests/Sim.Tests/Automation/PipeTests.cs	VERIFIED
+2026-09-05T07:20:00Z	u5.1	Step in integer ticks; exit when ticks * 5 >= hops * 2 * 30	Float metre adds miss the 6 m exit; tick compare is exact	src/Sim/Automation/Pipes.cs	accepted
+2026-09-05T07:20:00Z	u5.1	1 m spacing is per inlet, not per outlet	Shared first tile; two destinations still occupy the inlet	src/Sim/Automation/Pipes.cs	accepted
