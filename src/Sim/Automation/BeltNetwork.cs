@@ -115,20 +115,30 @@ public sealed class BeltSegment
     private readonly List<BeltItem> _lane0 = new List<BeltItem>();
     private readonly List<BeltItem> _lane1 = new List<BeltItem>();
 
-    internal BeltSegment(Facing facing, TileCoord[] tiles, ulong runHash)
+    internal BeltSegment(Facing facing, Facing exitFacing, TileCoord[] tiles, ulong runHash)
     {
         Facing = facing;
+        ExitFacing = exitFacing;
         _tiles = tiles;
         RunHash = runHash;
+        AheadTile = BeltNetwork.Next(tiles[tiles.Length - 1], exitFacing);
     }
 
     public Facing Facing { get; }
+
+    public Facing ExitFacing { get; }
+
+    public TileCoord AheadTile { get; }
+
+    public bool FeedsJunction { get; private set; }
 
     public IReadOnlyList<TileCoord> Tiles => _tiles;
 
     public ulong RunHash { get; }
 
     public float LengthMetres => _tiles.Length * BeltNetwork.TileMetres;
+
+    internal void MarkJunctionInput() => FeedsJunction = true;
 
     public IReadOnlyList<BeltItem> Lane(int index)
     {
@@ -144,16 +154,27 @@ public sealed class BeltSegment
     {
         if (lane != 0 && lane != 1) return false;
         if (metresFromStart < 0f || metresFromStart > LengthMetres) return false;
+        bool cargo = kind.Equals(MailKinds.Cargo);
+        if (cargo && lane != 0) return false;
 
-        var items = LaneList(lane);
-        for (int i = 0; i < items.Count; i++)
+        var incoming = new BeltItem(itemId, metresFromStart, kind);
+        if (cargo)
         {
-            float gap = items[i].MetresFromStart - metresFromStart;
-            if (gap < 0f) gap = -gap;
-            if (gap < BeltNetwork.MinSpacingMetres) return false;
+            if (ConflictsWith(_lane0, incoming, sameLane: true)
+                || ConflictsWith(_lane1, incoming, sameLane: false))
+                return false;
+            _lane0.Add(incoming);
+            _lane0.Sort(CompareHeadFirst);
+            return true;
         }
 
-        items.Add(new BeltItem(itemId, metresFromStart, kind));
+        var items = LaneList(lane);
+        if (ConflictsWith(items, incoming, sameLane: true))
+            return false;
+        if (lane == 1 && ConflictsWith(_lane0, incoming, sameLane: false))
+            return false;
+
+        items.Add(incoming);
         items.Sort(CompareHeadFirst);
         return true;
     }
@@ -178,28 +199,110 @@ public sealed class BeltSegment
 
     internal void Step(float dt)
     {
-        StepLane(_lane0, dt);
-        StepLane(_lane1, dt);
+        var across0 = Snapshot(_lane1);
+        var across1 = Snapshot(_lane0);
+        StepLane(_lane0, dt, across0);
+        StepLane(_lane1, dt, across1);
     }
 
     private List<BeltItem> LaneList(int lane) => lane == 0 ? _lane0 : _lane1;
 
-    private void StepLane(List<BeltItem> items, float dt)
+    private void StepLane(List<BeltItem> items, float dt, Occupancy[] otherLane)
     {
         float ceiling = LengthMetres;
         float travel = BeltNetwork.Mk1MetresPerSecond * dt;
         for (int i = 0; i < items.Count; i++)
         {
             var item = items[i];
+            var self = Occupancy.Of(item);
             float desired = item.MetresFromStart + travel;
             float next = desired < ceiling ? desired : ceiling;
+            next = CapAgainst(self, next, otherLane);
             items[i] = new BeltItem(item.ItemId, next, item.Kind);
-            ceiling = next - BeltNetwork.MinSpacingMetres;
+            ceiling = next - self.Behind;
         }
+    }
+
+    private static Occupancy[] Snapshot(List<BeltItem> items)
+    {
+        var rows = new Occupancy[items.Count];
+        for (int i = 0; i < items.Count; i++)
+            rows[i] = Occupancy.Of(items[i]);
+        return rows;
+    }
+
+    private static float CapAgainst(in Occupancy self, float next, Occupancy[] otherLane)
+    {
+        for (int i = 0; i < otherLane.Length; i++)
+        {
+            var other = otherLane[i];
+            if (self.Cargo && !other.Cargo && other.Front >= self.Front)
+            {
+                float cap = other.Front - BeltNetwork.MinSpacingMetres;
+                if (next > cap) next = cap;
+            }
+            else if (!self.Cargo && other.Cargo && self.Front < other.Front)
+            {
+                float cap = other.Front - BeltNetwork.CargoLengthMetres;
+                if (next > cap) next = cap;
+            }
+        }
+
+        return next;
+    }
+
+    private static bool ConflictsWith(List<BeltItem> items, BeltItem incoming, bool sameLane)
+    {
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (Conflicts(incoming, items[i], sameLane))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool Conflicts(in BeltItem a, in BeltItem b, bool sameLane)
+    {
+        bool aCargo = a.Kind.Equals(MailKinds.Cargo);
+        bool bCargo = b.Kind.Equals(MailKinds.Cargo);
+        if (aCargo && bCargo)
+        {
+            float gap = a.MetresFromStart - b.MetresFromStart;
+            if (gap < 0f) gap = -gap;
+            return gap < BeltNetwork.CargoLengthMetres;
+        }
+
+        if (!aCargo && !bCargo)
+        {
+            if (!sameLane) return false;
+            float gap = a.MetresFromStart - b.MetresFromStart;
+            if (gap < 0f) gap = -gap;
+            return gap < BeltNetwork.MinSpacingMetres;
+        }
+
+        var letter = aCargo ? b : a;
+        var cargo = aCargo ? a : b;
+        float p = letter.MetresFromStart;
+        float c = cargo.MetresFromStart;
+        return (p < c && c - p < BeltNetwork.CargoLengthMetres)
+            || (p >= c && p - c < BeltNetwork.MinSpacingMetres);
     }
 
     private static int CompareHeadFirst(BeltItem a, BeltItem b) =>
         b.MetresFromStart.CompareTo(a.MetresFromStart);
+
+    private readonly record struct Occupancy(float Front, float Behind, bool Cargo)
+    {
+        public static Occupancy Of(in BeltItem item)
+        {
+            bool cargo = item.Kind.Equals(MailKinds.Cargo);
+            return new Occupancy(
+                item.MetresFromStart,
+                cargo ? BeltNetwork.CargoLengthMetres : BeltNetwork.MinSpacingMetres,
+                cargo);
+        }
+    }
 }
 
 public sealed class BeltNetwork
@@ -213,6 +316,7 @@ public sealed class BeltNetwork
     public const float TileMetres = 2f;
     public const float Mk1MetresPerSecond = 2f;
     public const float MinSpacingMetres = 0.5f;
+    public const float CargoLengthMetres = 2f;
     public const int LaneCount = 2;
 
     private readonly List<BeltSegment> _segments = new List<BeltSegment>();
@@ -325,7 +429,7 @@ public sealed class BeltNetwork
         }
 
         var tiles = run.ToArray();
-        _segments.Add(new BeltSegment(facings[0], tiles, HashRun(tiles, facings)));
+        _segments.Add(new BeltSegment(facings[0], facings[facings.Count - 1], tiles, HashRun(tiles, facings)));
     }
 
     private void CompileJunctions(
@@ -391,6 +495,7 @@ public sealed class BeltNetwork
         if (!facingAt.TryGetValue(neighbor, out Facing at) || at != travel) return;
         var segment = FindEnd(neighbor);
         if (segment is null) return;
+        segment.MarkJunctionInput();
         ports.Add(new BeltJunctionPort(neighbor, travel));
         segments.Add(segment);
     }
@@ -472,11 +577,14 @@ public sealed class BeltNetwork
         || string.Equals(defId, RampId, StringComparison.Ordinal)
         || string.Equals(defId, ElevatedId, StringComparison.Ordinal);
 
-    private static void NextTile(TileCoord tile, Facing facing, out TileCoord next)
+    public static TileCoord Next(TileCoord tile, Facing facing)
     {
         Delta(facing, out int dx, out int dy);
-        next = new TileCoord(tile.X + dx, tile.Y + dy);
+        return new TileCoord(tile.X + dx, tile.Y + dy);
     }
+
+    private static void NextTile(TileCoord tile, Facing facing, out TileCoord next)
+        => next = Next(tile, facing);
 
     private static bool Opposite(Facing a, Facing b)
     {

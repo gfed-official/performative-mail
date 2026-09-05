@@ -18,6 +18,10 @@ public sealed class MailStackCatalog : IStackCatalog
                 return new Footprint(1, 2);
             if (key.Def == MailKinds.MediumPackage.Value)
                 return new Footprint(2, 2);
+            if (key.Def == MailKinds.LargePackage.Value)
+                return new Footprint(2, 4);
+            if (key.Def == MailKinds.Cargo.Value)
+                return new Footprint(5, 8);
         }
 
         throw new ArgumentException("Unknown stack key.", nameof(key));
@@ -31,6 +35,8 @@ public sealed class MailStackCatalog : IStackCatalog
             if (key.Def == MailKinds.Postcard.Value) return 40;
             if (key.Def == MailKinds.SmallPackage.Value) return 1;
             if (key.Def == MailKinds.MediumPackage.Value) return 1;
+            if (key.Def == MailKinds.LargePackage.Value) return 1;
+            if (key.Def == MailKinds.Cargo.Value) return 1;
         }
 
         throw new ArgumentException("Unknown stack key.", nameof(key));
@@ -40,7 +46,10 @@ public sealed class MailStackCatalog : IStackCatalog
     {
         if (!key.IsMail)
             throw new ArgumentException("Unknown stack key.", nameof(key));
-        return key.Def == MailKinds.MediumPackage.Value ? WeightClass.Medium : WeightClass.Light;
+        if (key.Def == MailKinds.Cargo.Value) return WeightClass.Bulk;
+        if (key.Def == MailKinds.LargePackage.Value) return WeightClass.Heavy;
+        if (key.Def == MailKinds.MediumPackage.Value) return WeightClass.Medium;
+        return WeightClass.Light;
     }
 
     public StackCategory CategoryOf(StackKey key)
