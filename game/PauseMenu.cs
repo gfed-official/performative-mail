@@ -207,7 +207,7 @@ public partial class PauseMenu : Control
 
     private static void ClearColumn(VBoxContainer column)
     {
-        foreach (var child in column.GetChildren())
-            child.Free();
+        while (column.GetChildCount() > 0)
+            column.GetChild(0).Free();
     }
 }

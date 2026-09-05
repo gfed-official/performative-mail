@@ -82,6 +82,8 @@ public partial class InventoryOverlay : Control
             WriteGrid(dump, ext);
         foreach (var pair in _cells)
         {
+            if (!GodotObject.IsInstanceValid(pair.Value))
+                continue;
             dump.Append(pair.Key);
             dump.Append(" text=");
             dump.Append(pair.Value.Text);
@@ -143,12 +145,17 @@ public partial class InventoryOverlay : Control
         cells.AddThemeConstantOverride("h_separation", 4);
         cells.AddThemeConstantOverride("v_separation", 4);
         block.AddChild(cells);
+        if (grid.Cells is null || grid.Cells.Count == 0)
+            return;
 
         for (byte y = 0; y < grid.Rows; y++)
         {
             for (byte x = 0; x < grid.Cols; x++)
             {
-                var cell = grid[x, y];
+                int i = y * grid.Cols + x;
+                if (i >= grid.Cells.Count)
+                    return;
+                var cell = grid.Cells[i];
                 var label = new Label
                 {
                     Name = CellName(grid.Name, x, y),
@@ -179,11 +186,16 @@ public partial class InventoryOverlay : Control
         dump.Append(" rows=");
         dump.Append(grid.Rows);
         dump.Append('\n');
+        if (grid.Cells is null || grid.Cells.Count == 0)
+            return;
         for (byte y = 0; y < grid.Rows; y++)
         {
             for (byte x = 0; x < grid.Cols; x++)
             {
-                var cell = grid[x, y];
+                int i = y * grid.Cols + x;
+                if (i >= grid.Cells.Count)
+                    return;
+                var cell = grid.Cells[i];
                 if (cell.Text.Length == 0 && !cell.Pending)
                     continue;
                 dump.Append(grid.Name);
@@ -208,7 +220,7 @@ public partial class InventoryOverlay : Control
 
     private static void ClearColumn(VBoxContainer column)
     {
-        foreach (var child in column.GetChildren())
-            child.Free();
+        while (column.GetChildCount() > 0)
+            column.GetChild(0).Free();
     }
 }
