@@ -1,0 +1,10 @@
+{
+  "id": "recipe_pipe",
+  "produces": { "building": "pipe" },
+  "inputs": [
+    { "item": "iron_ingot", "count": 1 },
+    { "item": "glass", "count": 1 }
+  ],
+  "blueprint": "bp_pipes",
+  "unlockShift": 3
+}

@@ -1,0 +1,18 @@
+{
+  "id": "pipe",
+  "name": "Pneumatic Pipe",
+  "footprint": [1, 1],
+  "rotations": 4,
+  "hp": 100,
+  "placement": {
+    "onStreet": false,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": true
+  },
+  "behaviour": "pipe",
+  "params": { "speed": 5, "underground": false },
+  "recipe": "recipe_pipe",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["automation"]
+}
