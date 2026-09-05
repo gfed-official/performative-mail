@@ -1,111 +1,156 @@
-# Performative Mail — Asset Change List
+# Performative Mail — Prioritized art / UI change list
 
-Locked against `docs/art/style-guide.md`. Visual / scene only. No Sim, net, or content-table redesign.
+Audience: **PM Engineer** (`20cf5c72-1c33-4b64-be97-82a82b67c25d`).  
+Source of truth: [`style-guide.md`](style-guide.md).  
+Constraint: visual / scene / Theme work only — no Sim/net redesign. Game Art Director does not ship PRs or model meshes; engineer implements with primitives → glTF as assets arrive.
 
-One job per PR. Do not bundle later P-tiers into an earlier slice.
-
----
-
-## Non-goals
-
-- Photoreal skin, wood grain, filmic dirt, PBR chrome
-- Neon cyber / vaporwave unless a Postage Stamp asks for it
-- Magenta / checker placeholders on any Playing path
-- Replacing the local first-person hide-mesh rule
-- New pawn hues (must update `PawnPalette` + tests)
-- DebugMenu restyle (utilitarian is fine)
-- LOD pipeline, `.glb` import tree, or `game/art/` until a mesh actually lands
-- WorldStage dump / Control inspect path changes
-- P0.2 / P0.3 / P0.4 / P1 work inside the P0.1 PR
+Current baseline (facts from code):
+- `game/WorldStage.cs` — all world = `BoxMesh` + flat `StandardMaterial3D`
+- `game/PawnStage.cs` — remote pawn = `CapsuleMesh`
+- `game/Main.cs` `BuildWorld` — DirectionalLight **shadows off**, flat sky `#73B8EB`, white ambient 0.5
+- `assets/` empty; no Theme resources for play UI
+- Pause / Debug = dark `StyleBoxFlat` (~`#1F2129`)
 
 ---
 
-## P0 — playable town reads as a town
+## P0 — Stop looking like a prototype (1–2 days of engineer time)
 
-Acceptance for the P0 set: sprint through spawn town and name PO, intake, a house number, and a mailbox without opening debug.
+Concrete enough to land without new meshes.
 
-### P0.1 Lighting + sky + ground
-
-**Where:** `game/Main.cs` `BuildWorld` (tiny helper OK).
-
+### P0.1 Lighting + sky
+**Where:** `Main.cs` `BuildWorld`  
 **Do:**
+1. Enable `ShadowEnabled = true` on the DirectionalLight; keep rotation (−50, −30, 0).
+2. Set ambient to sky-tinted colour `#A8C8E0` at energy **0.4** (not pure white).
+3. Replace flat `BackgroundColor` with a simple `Sky` + `ProceduralSkyMaterial` (top `#7EB8E8`, horizon `#C5DCF0`, ground `#6FA86A`) **or** keep colour BG but add a large ground plane mesh under the world at y=0, colour grass `#6FA86A`, size covering spawn town.
+4. Optional: fog colour `#A8C8E0`, begin 40, end 120.
 
-1. `ShadowEnabled = true` on the DirectionalLight. Keep rotation (−50, −30, 0). Soft shadow blur. One sun, no second key.
-2. Ambient sky-tinted `#A8C8E0` at energy **0.4** (not white @ 0.5).
-3. `Sky` + `ProceduralSkyMaterial` (top `#7EB8E8`, horizon `#C5DCF0`, ground `#6FA86A`) **and** a large grass slab at walking y=0, colour `#6FA86A`, covering Small Island / spawn town. Prefer both if cheap. Do not bring back the retired 40 m `PlaneMesh` placeholder — use a box slab parented to Main, not `WorldStage`.
-4. Depth fog `#A8C8E0`, begin 40 m, end 120 m.
+**Done when:** Playing shot has soft shadows under boxes and a ground that is not void.
 
-**Accept:** soft contact shadows under PO / houses / boxes; ground is grass, not void. World dumps and Control inspect paths unchanged.
+### P0.2 World colour pass (still boxes)
+**Where:** `WorldStage.cs` colour literals  
+**Replace with locked hex (convert to 0–1 floats):**
 
-**Out:** street / PO / house / mailbox mesh or colour retunes (those are P0.2–P0.4).
+| Prop | From | To |
+| :- | :- | :- |
+| Post Office | (0.55,0.28,0.22) | `#A04B3A` |
+| Spawn pad | (0.72,0.62,0.28) | `#C4A84A` |
+| Mail intake | (0.95,0.82,0.2) | `#F2D24A` |
+| Streets | (0.38,0.38,0.4) | `#5A5C66` |
+| Houses | (0.78,0.7,0.55) | `#E0CFA8` |
+| Mailboxes | (0.18,0.2,0.55) | `#2F3A8C` |
 
-### P0.2 Post Office silhouette
+**Also:** add a second box on each house as roof: size ~90% of footprint XZ, height 0.55 m, colour `#6B4E6E`, stacked on body. Breaks “Minecraft dirt block” read.
 
-**Where:** `game/WorldStage.cs` PO + spawn pad only.
+**Also:** mailbox — add thin flag BoxMesh (0.02 × 0.12 × 0.22) in `#E85D3A` on the +street side.
 
+**Done when:** PO / house / mailbox / intake read as different roles at a glance in a screenshot.
+
+### P0.3 Label3D readability
+**Where:** `WorldStage` / `PawnStage` Label3D  
+**Do:** keep billboard; set `OutlineSize` ≥ 8; modulate white; consider `PixelSize` so house numbers stay ~readable at 15 m. Prefer a dark plate Quad behind the number later (P1).
+
+### P0.4 Play Theme seed (HUD + pause, not debug)
+**Where:** new `game/art/ui/theme_play.tres` (or build StyleBoxes in code once) + `PauseMenu.cs`, HUD scene if present  
 **Do:**
+- Panel BG `#1A2433` @ 92% opacity, corner radius 8, border `#3D5A80` 2 px
+- Primary button fill `#3D7EFF`, hover `#5A93FF`, text white
+- Danger (Leave confirm) `#E85D3A`
+- Body text `#ECF0F1`, muted `#9AA4B2`
+- Keep **DebugMenu** on its own utilitarian style (allowed)
 
-- Body `#A04B3A` (from current `#8C4738`).
-- Trim / awning / badge `#F2D24A`.
-- Height ~4–5 m. Distinct roof + porch. Biggest silhouette in start town.
-- Spawn pad `#C4A84A` (keep the gold slab role).
-- Door / porch faces the street.
-
-**Accept:** PO reads as the landmark from 20 m, not a brick box the same height as houses.
-
-**Out:** intake hopper (P0.4), glass, authored `.glb`.
-
-### P0.3 Houses + roofs
-
-**Where:** `game/WorldStage.cs` house boxes only.
-
-**Do:**
-
-- Stucco `#E0CFA8` (from current `#C7B28C` → lighter).
-- Roof planes `#6B4E6E` that break the box silhouette.
-- Footprint stays lot × 0.7. Height 2.4–3.2 m.
-- Door faces street. Address label stays readable at eye height and 15–20 m.
-
-**Accept:** a row of houses is a street of roofs, not a crate pile.
-
-**Out:** district swatches / street stripes on the facade (P1).
-
-### P0.4 Mailbox + intake
-
-**Where:** `game/WorldStage.cs` mailbox + mail intake only.
-
-**Do:**
-
-- Mailbox body `#2F3A8C`, flag `#E85D3A` on the street-facing side.
-- Size ~0.35 × 1.2 × 0.4 m. High-contrast number plate; keep Label3D dump text.
-- Intake ~1.0 × 1.2 × 1.0 m, yellow accent band (`#F2D24A`), hopper mouth faces approach.
-
-**Accept:** mailbox and intake stay readable at a sprint; flag is the unread cue.
-
-**Out:** held letter / package meshes (P1).
+**Done when:** Esc pause no longer twins F3 debug chrome; HUD labels use theme font colour, not default gray-on-gray.
 
 ---
 
-## P1 — address language and play props (summary)
+## P1 — Silhouette upgrades (primitives or first glTFs)
 
-Do not start these in a P0 PR.
+### P1.1 Mailbox kit
+- Body, door, flag, number plate (Label3D or textured quad)
+- Export path: `game/art/world/mailbox_01.glb`
+- Spawn from `SpawnMailboxes` instead of single box
+- Poly budget: ≤ 400 tris LO0
 
-- Street asphalt `#5A5C66` (from `#616166` → cooler) plus curb / lane edge `#8A8E9A`.
-- District swatches + patterns (hue and stripe / dots / chevron together). Street trim at 70% brightness of the same set.
-- Held letter (`#F7F1DE`, address plate on face) and package S/M/L (cardboard + district sticker).
-- Remote pawn: hat / bag cue. Keep `PawnPalette`. Hide local mesh stays.
-- Play HUD / lobby / pause theme that is not DebugMenu `StyleBoxFlat`. Debug may stay utilitarian.
-- Soft clay materials (roughness bands from the style guide). No chrome spam.
-- Optional later: PO glass `#A8D4F0` @ 40%.
+### P1.2 Mail intake
+- Hopper + yellow band + “Mail” badge
+- Path: `game/art/world/intake_01.glb`
+- Poly ≤ 500 tris
+
+### P1.3 Post Office blockout → mesh
+- Porch, double door, flat roof with raised sign bar
+- Path: `game/art/world/po_01.glb`
+- Scale to `po.SizeTiles` × tileM; Y scale fixed ~4.5 m
+- Poly ≤ 2k tris LO0
+
+### P1.4 House variants (3)
+- `house_a/b/c.glb` — stucco + roof + door facing street (`toward` vector already computed)
+- Rotate instance to face street
+- Poly ≤ 800 tris each
+
+### P1.5 Remote pawn
+- Replace capsule with simple humanoid + bag + kit colour material slot
+- Path: `game/art/pawns/pawn_remote.glb`
+- Kit colour = existing `PawnPalette.Rgb` on vest/hat material
+- Poly ≤ 1.5k tris
+
+### P1.6 Held mail mesh
+- Letter + 3 package sizes; address colour plate uses district swatch
+- Attach to camera/local hand when hotbar has mail (engineer wires attachment; art supplies meshes)
+
+---
+
+## P2 — UI chrome to “shipped co-op”
+
+Align with `spec/09-ui-ux.md` without building every widget yet.
+
+| Surface | Priority work |
+| :- | :- |
+| Lobby | Card layout: dark panel + accent; Host/Join as primary buttons; seed/archetype as cards not raw labels |
+| HUD | Compact top bar (shift / phase / timer / quota / wallet); timer amber `#FFBF33` / red `#E53333` (already in `Hud.cs`); quota green `#40D959` when met |
+| Inventory overlay | Slot `#292E38`, selected `#3D7EFF` border, dim overlay keep ~0.35 alpha |
+| Payday / Draft / Results | Reuse `theme_play`; rarity frames later |
+| Debug | Untouched utilitarian |
+
+District colours on mail cells / compass: use style-guide district table + pattern, not pawn palette.
+
+---
+
+## P3 — Environment depth
+
+- Street curb strip (MultiMesh edge)
+- Simple prop scatter near PO (crate, cart) — optional
+- Night / raid lighting grade (cooler key, red compass already planned in UX spec)
+- LOD swaps once mesh count rises
+
+---
+
+## Explicit non-goals (this pass)
+
+- Photoreal materials
+- Slicing sprite sheets / 2D pixel audits
+- Rewriting Sim, netcode, or ContentValidator
+- Scoring playtest
+- Replacing debug UI with fancy chrome
 
 ---
 
 ## Suggested engineer order
 
-1. **P0.1** lighting + sky + grass — unblocks judging every other mesh.
-2. **P0.2** Post Office + spawn pad — biggest landmark.
-3. **P0.3** houses + roofs — town silhouette.
-4. **P0.4** mailbox + intake — readable at a sprint.
-5. **P1** streets, district language, held mail, remote pawn kit, play UI theme.
+1. P0.1 lighting + ground  
+2. P0.2 colour + roof + mailbox flag  
+3. P0.4 play theme on pause + HUD  
+4. P1.1 mailbox + P1.2 intake (highest interactable readability)  
+5. P1.3 PO + P1.4 houses  
+6. P1.5 pawn + P1.6 held mail  
+7. P2 lobby/HUD polish  
+8. P3 environment
 
-Warm postal town first; logistics hardware second. Ship small.
+## Acceptance screenshot checklist
+
+- [ ] Soft shadows visible under PO and pawn  
+- [ ] Grass or ground plane, not infinite void  
+- [ ] PO brick ≠ house stucco ≠ mailbox blue ≠ intake yellow  
+- [ ] House has a roof plane  
+- [ ] Mailbox has a red flag  
+- [ ] Pause menu theme ≠ DebugMenu theme  
+- [ ] Labels still dumpable for CI (`WORLD_DUMP` / Control paths unchanged)
