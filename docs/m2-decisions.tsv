@@ -30,3 +30,9 @@ ts	phase	decision	why	evidence	result
 2026-09-05T03:40:00Z	audit	No junction-to-junction hop without a belt tile	U1.4 wires through belt segments only; adjacent junctions wait	src/Sim/Automation/BeltNetwork.cs	accepted
 2026-09-05T03:40:00Z	audit	Cargo stays a single-lane insert	Two-lane cargo occupancy is U1.5	src/Sim/Automation/BeltNetwork.cs	accepted
 2026-09-05T03:40:00Z	u1.4	Add matching-kind and lane 1 splitter facts	Trail review: reject-only filter and lane 0 only left the accept path unproved	tests/Sim.Tests/Automation/BeltMk1Tests.cs	tests green
+2026-09-05T03:51:00Z	u1.5	Skip arena for U1.5	Frame already names U1.2–U1.6 tables; endpoints and occupancy are specified	docs/m2-frame.md	accepted
+2026-09-05T03:51:00Z	architect	Chose BeltEndpoints after Step over sinks inside BeltNetwork.Step	U1.1 pins heads at LengthMetres; air-drop must not run in Step; tests call Drain after Step	src/Sim/Automation/BeltEndpoints.cs	accepted
+2026-09-05T03:51:00Z	u1.5	Cargo is 2 m on both lanes in BeltSegment	kinds.json cargo beltLength is 0.5; frame wins and kinds.json stays	src/Sim/Automation/BeltNetwork.cs	accepted
+2026-09-05T03:51:00Z	u1.5	Chest is a belt sink	spec/04 §2.6 says inserter only; issue 212 / frame say chest is a sink	src/Sim/Automation/BeltEndpoints.cs	accepted
+2026-09-05T03:51:00Z	u1.5	Air-drop despawn is 300 s via TickClock	Closest existing despawn is death bag 30 s; chapter 04 says 5 min back to Intake	src/Sim/Automation/BeltEndpoints.cs	accepted
+2026-09-05T03:51:00Z	u1.5	Intake outfeed pops min MailId	Entries is a dictionary; MailStack.Take is LIFO tail; spawn order is smallest id	src/Sim/Automation/BeltEndpoints.cs	accepted
