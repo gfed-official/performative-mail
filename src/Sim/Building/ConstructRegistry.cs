@@ -116,6 +116,8 @@ public sealed class ConstructRegistry
 
     public int Count => _order.Count;
 
+    public int TileCm => _field.TileCm;
+
     public IReadOnlyList<ConstructRecord> All => _order;
 
     public IReadOnlyList<FlattenedTile> FlattenedTiles => _flattened;
@@ -123,7 +125,15 @@ public sealed class ConstructRegistry
     public bool TryGet(EntityId id, out ConstructRecord record) =>
         _byId.TryGetValue(id.Value, out record);
 
-    public PlaceResult TryPlace(string buildingId, TileCoord tile, Facing rotation, EntityId owner = default)
+    public bool TryGetBuilding(string id, out BuildingDef building) =>
+        _buildings.TryGetValue(id, out building);
+
+    public PlaceResult TryPlace(
+        string buildingId,
+        TileCoord tile,
+        Facing rotation,
+        EntityId owner = default,
+        ContainerId? consumeFrom = null)
     {
         if (!_buildings.TryGetValue(buildingId, out var building))
             return new PlaceRejected(PlaceReject.UnknownBuilding);
@@ -147,7 +157,7 @@ public sealed class ConstructRegistry
         if (!_field.TryPlanFlatten(covered, out var planned))
             return new PlaceRejected(PlaceReject.Slope);
 
-        if (!TryConsume(recipe, out var reject))
+        if (!TryConsume(recipe, consumeFrom ?? _from, out var reject))
             return new PlaceRejected(reject);
 
         _field.ApplyFlatten(planned);
@@ -183,7 +193,45 @@ public sealed class ConstructRegistry
         return new PlaceLineApplied(results);
     }
 
-    public DeconstructResult TryDeconstruct(EntityId id, double salvageRatio)
+    public bool TryApplyPlaced(ConstructRecord record)
+    {
+        if (!_buildings.TryGetValue(record.DefId, out var building))
+            return false;
+        if (_byId.ContainsKey(record.Id.Value))
+            return true;
+
+        var covered = Covered(building, record.Tile, record.Rotation);
+        for (int i = 0; i < covered.Length; i++)
+        {
+            if (_at.ContainsKey(covered[i]))
+                return false;
+        }
+
+        _byId.Add(record.Id.Value, record);
+        for (int i = 0; i < covered.Length; i++)
+            _at.Add(covered[i], record.Id);
+        _order.Add(record);
+        uint counter = record.Id.Counter;
+        if (counter >= _nextCounter)
+            _nextCounter = counter + 1;
+        return true;
+    }
+
+    public bool TryApplyRemoved(EntityId id)
+    {
+        if (!_byId.TryGetValue(id.Value, out var row))
+            return true;
+        if (!_buildings.TryGetValue(row.DefId, out var building))
+            return false;
+
+        Unregister(row, building);
+        return true;
+    }
+
+    public DeconstructResult TryDeconstruct(
+        EntityId id,
+        double salvageRatio,
+        ContainerId? refundTo = null)
     {
         if (double.IsNaN(salvageRatio) || salvageRatio < 0 || salvageRatio > 1)
             throw new ArgumentOutOfRangeException(nameof(salvageRatio));
@@ -193,7 +241,8 @@ public sealed class ConstructRegistry
             return new DeconstructRejected(DeconstructReject.UnknownBuilding);
         if (!_recipes.TryGetValue(building.Recipe, out var recipe))
             return new DeconstructRejected(DeconstructReject.UnknownRecipe);
-        if (_inventory is null || !_inventory.TryGetContainer(_from, out _))
+        var bag = refundTo ?? _from;
+        if (_inventory is null || !_inventory.TryGetContainer(bag, out _))
             return new DeconstructRejected(DeconstructReject.MissingInventory);
 
         var refunds = new List<ItemStack>();
@@ -210,14 +259,14 @@ public sealed class ConstructRegistry
         int accepted = 0;
         for (int i = 0; i < refunds.Count; i++)
         {
-            if (_inventory.Apply(Actor.System, new Deposit(_from, refunds[i])) is Accepted)
+            if (_inventory.Apply(Actor.System, new Deposit(bag, refunds[i])) is Accepted)
             {
                 accepted++;
                 continue;
             }
 
             for (int j = 0; j < accepted; j++)
-                TakeBack(refunds[j]);
+                TakeBack(bag, refunds[j]);
             return new DeconstructRejected(DeconstructReject.NoRoom);
         }
 
@@ -225,9 +274,9 @@ public sealed class ConstructRegistry
         return new Deconstructed(row);
     }
 
-    private void TakeBack(ItemStack stack)
+    private void TakeBack(ContainerId bag, ItemStack stack)
     {
-        if (_inventory is null || !_inventory.TryGetContainer(_from, out var grid))
+        if (_inventory is null || !_inventory.TryGetContainer(bag, out var grid))
             return;
 
         int need = stack.Count;
@@ -245,7 +294,7 @@ public sealed class ConstructRegistry
         for (int i = 0; i < takes.Count; i++)
         {
             var step = takes[i];
-            _inventory.Apply(Actor.System, new Withdraw(_from, step.Id, Amount.Of(step.Count)));
+            _inventory.Apply(Actor.System, new Withdraw(bag, step.Id, Amount.Of(step.Count)));
         }
     }
 
@@ -289,7 +338,7 @@ public sealed class ConstructRegistry
         return true;
     }
 
-    private bool TryConsume(RecipeDef recipe, out PlaceReject reject)
+    private bool TryConsume(RecipeDef recipe, ContainerId from, out PlaceReject reject)
     {
         if (_inventory is null)
         {
@@ -297,7 +346,7 @@ public sealed class ConstructRegistry
             return false;
         }
 
-        if (!_inventory.TryGetContainer(_from, out var grid))
+        if (!_inventory.TryGetContainer(from, out var grid))
         {
             reject = PlaceReject.MissingInput;
             return false;
@@ -334,7 +383,7 @@ public sealed class ConstructRegistry
         for (int i = 0; i < takes.Count; i++)
         {
             var step = takes[i];
-            var result = _inventory.Apply(Actor.System, new Withdraw(_from, step.Id, Amount.Of(step.Count)));
+            var result = _inventory.Apply(Actor.System, new Withdraw(from, step.Id, Amount.Of(step.Count)));
             if (result is not Accepted)
             {
                 reject = PlaceReject.MissingInput;

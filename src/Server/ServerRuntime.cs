@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using PerformativeMail.Sim;
+using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
@@ -15,6 +16,8 @@ namespace PerformativeMail.Server;
 public sealed class ServerRuntime
 {
     public const int InteractHoldTicks = 12;
+
+    public const int BuildRangeCm = 800;
 
     private readonly IServerLink _link;
     private readonly Dictionary<ConnectionId, Seat> _seats = new();
@@ -280,7 +283,21 @@ public sealed class ServerRuntime
         }
 
         if (WireCodec.TryDecode(payload, out InputPacket? packet) && packet is not null)
+        {
             ApplyInputPacket(from, packet);
+            return;
+        }
+
+        if (ConstructCodec.TryDecode(payload, out PlaceConstructRequest place))
+        {
+            OnPlaceConstruct(from, in place);
+            return;
+        }
+
+        if (ConstructCodec.TryDecode(payload, out RemoveConstructRequest remove))
+        {
+            OnRemoveConstruct(from, in remove);
+        }
     }
 
     private void OnAccountHello(ConnectionId from, in AccountHello hello)
@@ -395,6 +412,85 @@ public sealed class ServerRuntime
         foreach (var container in inventory.Containers)
             stamps.Add(new ContainerStamp(container.Id, container.Version, container.Hash));
         return stamps.ToArray();
+    }
+
+    private void OnPlaceConstruct(ConnectionId from, in PlaceConstructRequest request)
+    {
+        if (World.Constructs is not ConstructRegistry constructs)
+            return;
+        if (!_seats.TryGetValue(from, out var seat) || seat.Player is not EntityId player)
+            return;
+        if (!World.Players.TryGet(player, out var body))
+            return;
+        if (!_bags.TryGetValue(player.Value, out var bags))
+            return;
+
+        var tile = new TileCoord(request.TileX, request.TileY);
+        if (!InBuildRange(body, tile, constructs.TileCm))
+            return;
+
+        var result = constructs.TryPlace(
+            request.BuildingId,
+            tile,
+            request.Rotation,
+            player,
+            bags.Inventory);
+        if (result is not Placed placed)
+            return;
+
+        BroadcastReliable(ConstructCodec.Encode(new PlaceConstructConfirmed(
+            request.ReqId,
+            placed.Construct.Id,
+            placed.Construct.DefId,
+            placed.Construct.Tile.X,
+            placed.Construct.Tile.Y,
+            placed.Construct.Rotation,
+            placed.Construct.Owner)));
+    }
+
+    private void OnRemoveConstruct(ConnectionId from, in RemoveConstructRequest request)
+    {
+        if (World.Constructs is not ConstructRegistry constructs)
+            return;
+        if (!_seats.TryGetValue(from, out var seat) || seat.Player is not EntityId player)
+            return;
+        if (!World.Players.TryGet(player, out var body))
+            return;
+        if (!_bags.TryGetValue(player.Value, out var bags))
+            return;
+        if (!constructs.TryGet(request.ConstructId, out var row))
+            return;
+        if (!InBuildRange(body, row.Tile, constructs.TileCm))
+            return;
+
+        var result = constructs.TryDeconstruct(request.ConstructId, SalvageRatio(Session.Phase), bags.Inventory);
+        if (result is not Deconstructed)
+            return;
+
+        BroadcastReliable(ConstructCodec.Encode(new RemoveConstructConfirmed(
+            request.ReqId,
+            request.ConstructId)));
+    }
+
+    private void BroadcastReliable(byte[] payload)
+    {
+        foreach (var seat in _seats.Values)
+        {
+            if (!seat.Joined)
+                continue;
+            _link.Send(seat.Id, NetChannels.Reliable, payload);
+        }
+    }
+
+    private static double SalvageRatio(RunPhase phase) =>
+        phase == RunPhase.Delivery ? 0.5 : 1.0;
+
+    private static bool InBuildRange(PlayerBody body, TileCoord tile, int tileCm)
+    {
+        int half = tileCm / 2;
+        int x = tile.X * tileCm + half;
+        int y = tile.Y * tileCm + half;
+        return DistSq(body.Xcm, body.Ycm, x, y) <= (long)BuildRangeCm * BuildRangeCm;
     }
 
     private void ApplyInputPacket(ConnectionId from, InputPacket packet)

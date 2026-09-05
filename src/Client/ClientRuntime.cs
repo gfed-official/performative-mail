@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Movement;
@@ -52,6 +53,8 @@ public sealed class ClientRuntime
     public JoinState? AcceptedJoin { get; private set; }
 
     public InventorySystem? Inventory { get; }
+
+    public ConstructRegistry? Constructs { get; set; }
 
     public int InventoryEventCount { get; private set; }
 
@@ -139,6 +142,12 @@ public sealed class ClientRuntime
             case MessageKind.InventoryEvent:
                 ApplyInventoryEvent(payload);
                 break;
+            case MessageKind.PlaceConstructConfirmed:
+                ApplyPlaceConstruct(payload);
+                break;
+            case MessageKind.RemoveConstructConfirmed:
+                ApplyRemoveConstruct(payload);
+                break;
             case MessageKind.HelloReject:
                 ApplyHelloReject(payload);
                 break;
@@ -155,6 +164,8 @@ public sealed class ClientRuntime
             case MessageKind.AccountHello:
             case MessageKind.Input:
             case MessageKind.Ping:
+            case MessageKind.PlaceConstruct:
+            case MessageKind.RemoveConstruct:
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
@@ -243,6 +254,35 @@ public sealed class ClientRuntime
 
         if (Inventory.ApplyDelta(delta) == ReplicaResult.Applied)
             InventoryEventCount++;
+    }
+
+    private void ApplyPlaceConstruct(byte[] payload)
+    {
+        if (Constructs is null)
+            return;
+        if (!ConstructCodec.TryDecode(payload, out PlaceConstructConfirmed placed))
+            return;
+
+        int hp = Constructs.TryGetBuilding(placed.BuildingId, out var building) ? building.Hp : 0;
+        var record = new ConstructRecord(
+            placed.ConstructId,
+            placed.BuildingId,
+            new TileCoord(placed.TileX, placed.TileY),
+            placed.Rotation,
+            placed.Owner,
+            hp,
+            hp);
+        Constructs.TryApplyPlaced(record);
+    }
+
+    private void ApplyRemoveConstruct(byte[] payload)
+    {
+        if (Constructs is null)
+            return;
+        if (!ConstructCodec.TryDecode(payload, out RemoveConstructConfirmed removed))
+            return;
+
+        Constructs.TryApplyRemoved(removed.ConstructId);
     }
 
     private void ApplySnapshot(byte[] payload)
