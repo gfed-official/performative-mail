@@ -26,6 +26,51 @@ public sealed class MainPlayBootTests
     }
 
     [Fact]
+    public void BuildWorld_EnablesSoftSunAndSkyTint()
+    {
+        var build = MethodBody(ReadMain(), "BuildWorld");
+        Assert.Contains("ShadowEnabled = true", build);
+        Assert.Contains("ShadowBlur = 2f", build);
+        Assert.Contains("new Vector3(-50f, -30f, 0f)", build);
+        Assert.Contains("BGMode.Sky", build);
+        Assert.Contains("ProceduralSkyMaterial", build);
+        Assert.Contains("0.49f, 0.72f, 0.91f", build);
+        Assert.Contains("#7EB8E8", build);
+        Assert.Contains("0.773f, 0.863f, 0.941f", build);
+        Assert.Contains("#C5DCF0", build);
+        Assert.Contains("0.44f, 0.66f, 0.42f", build);
+        Assert.Contains("#6FA86A", build);
+        Assert.Contains("0.659f, 0.784f, 0.878f", build);
+        Assert.Contains("#A8C8E0", build);
+        Assert.Contains("AmbientLightEnergy = 0.4f", build);
+        Assert.Contains("FogEnabled = true", build);
+        Assert.Contains("FogModeEnum.Depth", build);
+        Assert.Contains("FogDepthBegin = 40f", build);
+        Assert.Contains("FogDepthEnd = 120f", build);
+        Assert.Contains("AddGrassGround", build);
+        Assert.DoesNotContain("Colors.White", build);
+        Assert.DoesNotContain("BGMode.Color", build);
+        Assert.DoesNotContain("ShadowEnabled = false", build);
+    }
+
+    [Fact]
+    public void AddGrassGround_CoversTownWithBoxSlab()
+    {
+        var grass = MethodBody(ReadMain(), "AddGrassGround");
+        Assert.Contains("Name = \"Grass\"", grass);
+        Assert.Contains("BoxMesh", grass);
+        Assert.Contains("WorldTilePlacement.SmallIslandGround", grass);
+        Assert.Contains("slab.X, slab.Y, slab.Z", grass);
+        Assert.Contains("0.44f, 0.66f, 0.42f", grass);
+        Assert.Contains("#6FA86A", grass);
+        Assert.Contains("ShadowCastingSetting.Off", grass);
+        Assert.DoesNotContain("PlaneMesh", grass);
+        Assert.DoesNotContain("WorldStage", grass);
+        Assert.DoesNotContain("AddLabeledBox", grass);
+        Assert.DoesNotContain("320f, -0.02f, 320f", grass);
+    }
+
+    [Fact]
     public void Ready_DoesNotBindHudOrLobby()
     {
         var ready = MethodBody(ReadMain(), "_Ready");

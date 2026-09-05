@@ -3,8 +3,40 @@ using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.App;
 
+public readonly record struct GroundSlab(float X, float Y, float Z, float SizeX, float SizeY, float SizeZ);
+
 public static class WorldTilePlacement
 {
+    public const float GroundThicknessM = 0.04f;
+
+    public static GroundSlab SmallIslandGround() =>
+        GroundForTiles(WorldGen.SmallIslandTiles, WorldGen.SmallIslandTiles, WorldGen.SmallIslandTileCm / 100f);
+
+    public static GroundSlab GroundForTiles(int widthTiles, int heightTiles, float tileMeters)
+    {
+        if (widthTiles <= 0) throw new ArgumentOutOfRangeException(nameof(widthTiles));
+        if (heightTiles <= 0) throw new ArgumentOutOfRangeException(nameof(heightTiles));
+        if (tileMeters <= 0f) throw new ArgumentOutOfRangeException(nameof(tileMeters));
+
+        var a = ViewFrame.From(new PlayerPose(0, 0, 0, 0));
+        var b = ViewFrame.From(new PlayerPose(
+            (int)(widthTiles * tileMeters * 100f),
+            (int)(heightTiles * tileMeters * 100f),
+            0,
+            0));
+        float minX = Math.Min(a.X, b.X);
+        float maxX = Math.Max(a.X, b.X);
+        float minZ = Math.Min(a.Z, b.Z);
+        float maxZ = Math.Max(a.Z, b.Z);
+        return new GroundSlab(
+            (minX + maxX) * 0.5f,
+            -GroundThicknessM * 0.5f,
+            (minZ + maxZ) * 0.5f,
+            maxX - minX,
+            GroundThicknessM,
+            maxZ - minZ);
+    }
+
     public static (float X, float Y, float Z) TileCenter(TileCoord tile, float tileMeters)
     {
         var view = ViewFrame.From(new PlayerPose(

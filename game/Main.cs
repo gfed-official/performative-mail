@@ -207,7 +207,8 @@ public partial class Main : Node3D
         var light = new DirectionalLight3D
         {
             RotationDegrees = new Vector3(-50f, -30f, 0f),
-            ShadowEnabled = false,
+            ShadowEnabled = true,
+            ShadowBlur = 2f,
         };
         AddChild(light);
 
@@ -215,14 +216,29 @@ public partial class Main : Node3D
         {
             Environment = new Godot.Environment
             {
-                BackgroundMode = Godot.Environment.BGMode.Color,
-                BackgroundColor = new Color(0.45f, 0.72f, 0.92f),
+                BackgroundMode = Godot.Environment.BGMode.Sky,
+                Sky = new Sky
+                {
+                    SkyMaterial = new ProceduralSkyMaterial
+                    {
+                        SkyTopColor = new Color(0.49f, 0.72f, 0.91f), // #7EB8E8
+                        SkyHorizonColor = new Color(0.773f, 0.863f, 0.941f), // #C5DCF0
+                        GroundHorizonColor = new Color(0.773f, 0.863f, 0.941f),
+                        GroundBottomColor = new Color(0.44f, 0.66f, 0.42f), // #6FA86A
+                    },
+                },
                 AmbientLightSource = Godot.Environment.AmbientSource.Color,
-                AmbientLightColor = Colors.White,
-                AmbientLightEnergy = 0.5f,
+                AmbientLightColor = new Color(0.659f, 0.784f, 0.878f), // #A8C8E0
+                AmbientLightEnergy = 0.4f,
+                FogEnabled = true,
+                FogMode = Godot.Environment.FogModeEnum.Depth,
+                FogLightColor = new Color(0.659f, 0.784f, 0.878f), // #A8C8E0
+                FogDepthBegin = 40f,
+                FogDepthEnd = 120f,
             },
         };
         AddChild(env);
+        AddGrassGround();
 
         _menuCamera = new Camera3D
         {
@@ -238,6 +254,23 @@ public partial class Main : Node3D
 
         _pawns = new PawnStage();
         AddChild(_pawns);
+    }
+
+    private void AddGrassGround()
+    {
+        var slab = WorldTilePlacement.SmallIslandGround();
+        AddChild(new MeshInstance3D
+        {
+            Name = "Grass",
+            Mesh = new BoxMesh { Size = new Vector3(slab.SizeX, slab.SizeY, slab.SizeZ) },
+            MaterialOverride = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0.44f, 0.66f, 0.42f), // #6FA86A
+                Roughness = 0.85f,
+            },
+            Position = new Vector3(slab.X, slab.Y, slab.Z),
+            CastShadow = GeometryInstance3D.ShadowCastingSetting.Off,
+        });
     }
 
     private void BuildMenu()
