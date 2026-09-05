@@ -89,6 +89,16 @@ Style: `docs/art/style-guide.md` (stylized low-poly). Units: metres. Origin: gro
 
 ---
 
+## Engine wiring (WorldStage)
+
+- Streets: `street_tile_01` MultiMesh (one instance per street tile). Stripe runs along local +Z; E/W runs yaw 90°. BoxMesh `#5A5C66` fallback if the glTF is missing.
+- Curbs: `street_curb_01` MultiMesh on street edges that do not neighbor another street tile. Long axis +X; yaw so local +Z (thickness) points into grass. BoxMesh `#8A8E9A` fallback.
+- Spawn: `spawn_pad_01` at `SpawnPadTile` (gold box fallback).
+- Grass: **keep** `Main.AddGrassGround` island plane (`#6FA86A`, void-killer). Overlay `grass_tile_01` MultiMesh on start-town lots + PO footprint, excluding street tiles, so yard/PO seams read as 2 m tiles above the plane.
+- Clutter: five instances near PO / intake — three `crate_01`, two `cart_01` (cart +Z toward intake or street). Skip if a glTF is missing.
+
+WORLD_DUMP still walks Label3D only (PO / Mail / houses / mailboxes). MultiMesh tiles and clutter are unlabeled.
+
 ## Build order for Blender
 
 1. `street_tile_01` + `street_curb_01` (MultiMesh pair)  
