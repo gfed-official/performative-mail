@@ -7,6 +7,7 @@ using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
+using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.Players;
 using PerformativeMail.Sim.World;
 
@@ -102,6 +103,7 @@ public sealed class LaneInterestTests
         Assert.Empty(fx.First.Lanes.DrawPositions(segment.Id, 0, lengthCm));
         Assert.Equal(lengthCm, Assert.Single(fx.First.Lanes.Positions(segment.Id, 0)));
 
+        fx.World.Belts.Step(segment.LengthMetres / BeltNetwork.Mk1MetresPerSecond);
         Assert.True(segment.TryTakeHead(0, out _));
         fx.Server.TickOnce();
         fx.First.Receive();
