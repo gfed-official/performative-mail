@@ -64,6 +64,8 @@ docker run --rm -e REQUIRE_DOTNET_8=0 -v "$PWD":/src -w /src \
 
 From the repo root, ContentValidator loads the M0 test map plus `streets.json`, `world/archetypes.json`, `balance.json`, `unlocks.json`, and the item, mail, building, recipe, shop, perk, and stamp defs. Unknown ids, unknown `Stat` keys, unknown `RuleFlag` values, and district-house sums outside the grown town band fail the process. A recipe whose `produces.building` does not name a loaded building also fails.
 
+A new `content/items/*.json` row appears in the host F3 spawn list with no menu code change. A new `ContentBundle` property needs a spawn projection or an explicit `Deferred` reason, or `DebugSpawnCoverage.RequireComplete` and ContentValidator fail. See [`docs/debug-spawns.md`](docs/debug-spawns.md).
+
 ```bash
 dotnet run --project tools/ContentValidator -- content
 ```
