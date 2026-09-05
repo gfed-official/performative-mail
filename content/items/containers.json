@@ -24,6 +24,12 @@
     "beltAccess": "none"
   },
   {
+    "id": "depot",
+    "grid": [16, 10],
+    "view": "grid",
+    "beltAccess": "any_side"
+  },
+  {
     "id": "po_intake",
     "grid": [20, 16],
     "view": "manifest",

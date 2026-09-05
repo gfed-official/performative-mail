@@ -35,6 +35,7 @@ public sealed class ContentStarterTests
         Assert.Contains("belt_mk1_elevated", buildings);
         Assert.Contains("address_sorter_mk1", buildings);
         Assert.Contains("inserter", buildings);
+        Assert.Contains("depot", buildings);
         Assert.Contains("recipe_wall_wood", recipes);
         Assert.Contains("recipe_chest", recipes);
         Assert.Contains("recipe_belt_mk1", recipes);
@@ -42,6 +43,7 @@ public sealed class ContentStarterTests
         Assert.Contains("recipe_belt_mk1_elevated", recipes);
         Assert.Contains("recipe_address_sorter_mk1", recipes);
         Assert.Contains("recipe_inserter", recipes);
+        Assert.Contains("recipe_depot", recipes);
         Assert.Contains("bandage_x3", shop);
         Assert.Contains("bike", shop);
         Assert.Equal(12, perks.Count);
