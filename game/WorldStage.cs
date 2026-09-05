@@ -43,7 +43,7 @@ public partial class WorldStage : Node3D
         SpawnStreets(tables.Streets, tileM);
         SpawnHouses(tables.Houses, tables.Streets, tileM);
         SpawnMailboxes(tables.Houses, tables.Streets, tileM);
-        SpawnIntake(tables.PostOffice, tileM);
+        SpawnIntake(tables.PostOffice, tables.Streets, tileM);
     }
 
     public void Clear()
@@ -73,17 +73,38 @@ public partial class WorldStage : Node3D
     private void SpawnPostOffice(PostOfficeRecord po, StreetRecord[] streets, float tileM)
     {
         var origin = Vec(WorldTilePlacement.FootprintOrigin(po.Tile, po.SizeTiles, tileM));
-        var size = new Vector3(po.SizeTiles.X * tileM, 2.4f, po.SizeTiles.Y * tileM);
         var toward = WorldTilePlacement.TowardNearestStreet(origin.X, origin.Z, streets, tileM);
-        AddLabeledBox(
-            PostOfficeName,
-            origin,
-            size,
-            PostOfficeBrick,
-            1.2f,
-            "Post Office",
-            toward.X,
-            toward.Z);
+        var footprint = new Vector3(
+            po.SizeTiles.X * tileM,
+            ArtMesh.PostOfficeHeightMeters,
+            po.SizeTiles.Y * tileM);
+        var visual = ArtMesh.TryInstantiate(ArtMesh.PostOffice);
+        if (visual is not null)
+        {
+            ArtMesh.FitFootprint(visual, footprint, toward.X, toward.Z, modelFrontIsPlusZ: true, scaleY: true);
+            AddLabeled(
+                PostOfficeName,
+                origin,
+                footprint,
+                footprint.Y * 0.5f,
+                "Post Office",
+                toward.X,
+                toward.Z,
+                visual: visual);
+        }
+        else
+        {
+            AddLabeledBox(
+                PostOfficeName,
+                origin,
+                new Vector3(footprint.X, 2.4f, footprint.Z),
+                PostOfficeBrick,
+                1.2f,
+                "Post Office",
+                toward.X,
+                toward.Z);
+        }
+
         AddBox(
             Vec(WorldTilePlacement.TileCenter(po.SpawnPadTile, tileM)),
             new Vector3(tileM * 0.9f, 0.12f, tileM * 0.9f),
@@ -91,15 +112,36 @@ public partial class WorldStage : Node3D
             0.06f);
     }
 
-    private void SpawnIntake(PostOfficeRecord po, float tileM)
+    private void SpawnIntake(PostOfficeRecord po, StreetRecord[] streets, float tileM)
     {
+        var origin = Vec(WorldTilePlacement.TileCenter(po.IntakeTile, tileM));
+        var toward = WorldTilePlacement.TowardNearestStreet(origin.X, origin.Z, streets, tileM);
+        var visual = ArtMesh.TryInstantiate(ArtMesh.Intake);
+        if (visual is not null)
+        {
+            ArtMesh.Orient(visual, toward.X, toward.Z, modelFrontIsPlusZ: false);
+            var size = VisualSize(visual, new Vector3(0.9f, 1.0f, 0.9f));
+            AddLabeled(
+                MailIntakeName,
+                origin,
+                size,
+                size.Y * 0.5f,
+                "Mail",
+                toward.X,
+                toward.Z,
+                visual: visual);
+            return;
+        }
+
         AddLabeledBox(
             MailIntakeName,
-            Vec(WorldTilePlacement.TileCenter(po.IntakeTile, tileM)),
+            origin,
             new Vector3(0.9f, 1.0f, 0.9f),
             MailIntakeYellow,
             0.5f,
-            "Mail");
+            "Mail",
+            toward.X,
+            toward.Z);
     }
 
     private void SpawnStreets(StreetRecord[] streets, float tileM)
@@ -153,6 +195,23 @@ public partial class WorldStage : Node3D
                 1.8f,
                 house.LotSizeTiles.Y * tileM * 0.7f);
             var toward = WorldTilePlacement.TowardNearestStreet(origin.X, origin.Z, streets, tileM);
+            var visual = ArtMesh.TryInstantiate(ArtMesh.HouseVariant(i));
+            if (visual is not null)
+            {
+                ArtMesh.FitFootprint(visual, size, toward.X, toward.Z, modelFrontIsPlusZ: true, scaleY: false);
+                float height = MathF.Max(ArtMesh.LocalAabb(visual).Size.Y, size.Y);
+                AddLabeled(
+                    HousePrefix + house.Address.Number,
+                    origin,
+                    new Vector3(size.X, height, size.Z),
+                    height * 0.5f,
+                    address,
+                    toward.X,
+                    toward.Z,
+                    visual: visual);
+                continue;
+            }
+
             var root = AddLabeledBox(
                 HousePrefix + house.Address.Number,
                 origin,
@@ -176,17 +235,35 @@ public partial class WorldStage : Node3D
             var view = ViewFrame.From(new PlayerPose(pose.XCm, pose.YCm, pose.ZCm, 0));
             string address = AddressText.Format(house.Address, streets);
             var toward = WorldTilePlacement.TowardNearestStreet(view.X, view.Z, streets, tileM);
-            var size = new Vector3(0.28f, 1.15f, 0.28f);
+            var origin = new Vector3(view.X, 0f, view.Z);
+            var visual = ArtMesh.TryInstantiate(ArtMesh.Mailbox);
+            if (visual is not null)
+            {
+                ArtMesh.Orient(visual, toward.X, toward.Z, modelFrontIsPlusZ: false);
+                var size = VisualSize(visual, new Vector3(0.28f, 1.15f, 0.28f));
+                AddLabeled(
+                    MailboxPrefix + house.Address.Number,
+                    origin,
+                    size,
+                    size.Y * 0.5f,
+                    address,
+                    toward.X,
+                    toward.Z,
+                    visual: visual);
+                continue;
+            }
+
+            var sizeBox = new Vector3(0.28f, 1.15f, 0.28f);
             var root = AddLabeledBox(
                 MailboxPrefix + house.Address.Number,
-                new Vector3(view.X, 0f, view.Z),
-                size,
+                origin,
+                sizeBox,
                 MailboxBlue,
                 0.57f,
                 address,
                 toward.X,
                 toward.Z);
-            AddMailboxFlag(root, size, toward.X, toward.Z);
+            AddMailboxFlag(root, sizeBox, toward.X, toward.Z);
         }
     }
 
@@ -201,6 +278,26 @@ public partial class WorldStage : Node3D
         float towardZ = 0f,
         float stackHeight = 0f)
     {
+        var mesh = new MeshInstance3D
+        {
+            Mesh = new BoxMesh { Size = size },
+            MaterialOverride = new StandardMaterial3D { AlbedoColor = color },
+            Position = new Vector3(0f, heightCenter, 0f),
+        };
+        return AddLabeled(name, origin, size, heightCenter, labelText, towardX, towardZ, stackHeight, mesh);
+    }
+
+    private Node3D AddLabeled(
+        string name,
+        Vector3 origin,
+        Vector3 size,
+        float heightCenter,
+        string labelText,
+        float towardX = 0f,
+        float towardZ = 0f,
+        float stackHeight = 0f,
+        Node3D? visual = null)
+    {
         var offset = WorldLabelPlacement.AboveStreetFace(
             size.X,
             size.Y + stackHeight,
@@ -213,13 +310,8 @@ public partial class WorldStage : Node3D
             Name = name,
             Position = origin,
         };
-        var mesh = new MeshInstance3D
-        {
-            Mesh = new BoxMesh { Size = size },
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = color },
-            Position = new Vector3(0f, heightCenter, 0f),
-        };
-        root.AddChild(mesh);
+        if (visual is not null)
+            root.AddChild(visual);
         root.AddChild(new Label3D
         {
             Name = "Label",
@@ -271,6 +363,12 @@ public partial class WorldStage : Node3D
         };
         AddChild(node);
         _spawned.Add(node);
+    }
+
+    private static Vector3 VisualSize(Node3D visual, Vector3 fallback)
+    {
+        var size = ArtMesh.LocalAabb(visual).Size;
+        return size.LengthSquared() > 0.01f ? size : fallback;
     }
 
     private static Vector3 Vec((float X, float Y, float Z) p) => new(p.X, p.Y, p.Z);

@@ -156,7 +156,7 @@ public partial class Main : Node3D
             case PlaySession.Playing playing:
                 ShowMenuChrome(false);
                 SetMouseCaptured(!_pause.IsOpen);
-                _pawns.Sync(playing.Pawns, _look.PitchRadians);
+                _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing));
                 _world.Sync(playing.World);
                 BindHud(playing.Hud);
                 if (_overlay.IsOpen && playing.Overlay is OverlayReplica overlay)
@@ -802,18 +802,21 @@ public partial class Main : Node3D
         return true;
     }
 
-    private static bool HasHeldMail(PlaySession.Playing playing)
+    private static bool HasHeldMail(PlaySession.Playing playing) =>
+        HeldMailKind(playing) is not null;
+
+    private static MailKindId? HeldMailKind(PlaySession.Playing playing)
     {
         if (playing.Overlay is not OverlayReplica overlay)
-            return false;
+            return null;
 
         foreach (var entry in overlay.Hotbar.Entries)
         {
-            if (entry.Stack is MailStack)
-                return true;
+            if (entry.Stack is MailStack mail)
+                return mail.Kind;
         }
 
-        return false;
+        return null;
     }
 
     private bool TryOpenLiveOverlay(PlaySession.Playing playing)
