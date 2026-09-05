@@ -14,6 +14,13 @@ public readonly record struct AddressId(byte District, byte Street, byte Number,
         (byte)packed);
 }
 
+public readonly record struct SegmentId(ulong Value);
+
+public readonly record struct AddressColour(byte District, byte Street)
+{
+    public static AddressColour From(AddressId address) => new(address.District, address.Street);
+}
+
 public readonly record struct MailKindId(ushort Value);
 
 public readonly record struct DestinationId(uint Value);

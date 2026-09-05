@@ -55,3 +55,12 @@ ts	phase	decision	why	evidence	result
 2026-09-05T04:40:00Z	u2.2	TryPlace consumeFrom is the requester bag	One registry owns occupancy; each player has a bag	src/Server/ServerRuntime.cs	accepted
 2026-09-05T04:50:00Z	fix	BindPlayerBags writes _bags	PlaceConstruct returned before TryPlace because only EquipPlayer filled the map	src/Server/ServerRuntime.cs	accepted
 2026-09-05T04:50:00Z	verify	U2.2 local suite on BindPlayerBags fix	Sim 490, Net 302, Bot 16, ContentValidator 0	tests/Net.Tests/ConstructEventTests.cs	VERIFIED
+2026-09-05T04:45:00Z	frame	U3.1 done is client lane count matches server after LaneInsert and LaneRemove	Issue 216 plus m2-frame U3.1; no checksum or interest	docs/m2-frame.md	accepted
+2026-09-05T04:45:00Z	how	Reuse ConstructCodec event pattern; BeltNetwork still has no server hook	Kinds 60-63 and BroadcastReliable exist; TryInsert lives only on BeltSegment	src/Sim/Net/ConstructCodec.cs	accepted
+2026-09-05T04:45:00Z	how	ClientRuntime.Apply throws on unknown MessageKind	New lane kinds must be handled or every later packet crashes the client	src/Client/ClientRuntime.cs	accepted
+2026-09-05T04:45:00Z	architect	Run arena for U3.1 wire shape	Frame names replication events as a one-way door	docs/m2-frame.md	open
+2026-09-05T05:50:00Z	architect	Base is journal plus RunHash SegmentId	Candidates 2 and 4 agreed; sticky uint lost on extra mint table	/tmp/arena-u31/candidate-2/sketch.md	accepted
+2026-09-05T05:50:00Z	subtract	Kinds 70/71, count-only replica, no checksum batch or reset	Family tens; U3.1 verify is counts; LaneReset and itemId wait	docs/m2-frame.md	accepted
+2026-09-05T05:50:00Z	architect	addressColour is district plus street; position is i32 cm	Chapter 09 wants both swatches; BitWriter has no float	src/Sim/Core/Ids.cs	accepted
+2026-09-05T05:50:00Z	subtract	LaneRemove is segment plus lane; Compile emits nothing	Head take is the only remove; compile wipe is later	src/Sim/Automation/LaneEvents.cs	accepted
+2026-09-05T06:00:00Z	verify	U3.1 local suite after head-at-end insert	Sim 490, Net 308, Bot 16, ContentValidator 0	tests/Net.Tests/LaneEventTests.cs	VERIFIED

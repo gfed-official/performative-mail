@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PerformativeMail.Sim.Automation;
 using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
@@ -55,6 +56,8 @@ public sealed class ClientRuntime
     public InventorySystem? Inventory { get; }
 
     public ConstructRegistry? Constructs { get; set; }
+
+    public LaneReplica Lanes { get; } = new LaneReplica();
 
     public int InventoryEventCount { get; private set; }
 
@@ -147,6 +150,12 @@ public sealed class ClientRuntime
                 break;
             case MessageKind.RemoveConstructConfirmed:
                 ApplyRemoveConstruct(payload);
+                break;
+            case MessageKind.LaneInsert:
+                ApplyLaneInsert(payload);
+                break;
+            case MessageKind.LaneRemove:
+                ApplyLaneRemove(payload);
                 break;
             case MessageKind.HelloReject:
                 ApplyHelloReject(payload);
@@ -283,6 +292,22 @@ public sealed class ClientRuntime
             return;
 
         Constructs.TryApplyRemoved(removed.ConstructId);
+    }
+
+    private void ApplyLaneInsert(byte[] payload)
+    {
+        if (!LaneCodec.TryDecode(payload, out LaneInsert insert))
+            return;
+
+        Lanes.Apply(insert);
+    }
+
+    private void ApplyLaneRemove(byte[] payload)
+    {
+        if (!LaneCodec.TryDecode(payload, out LaneRemove remove))
+            return;
+
+        Lanes.Apply(remove);
     }
 
     private void ApplySnapshot(byte[] payload)

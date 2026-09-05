@@ -1,4 +1,5 @@
 using System;
+using PerformativeMail.Sim.Automation;
 using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
@@ -23,6 +24,8 @@ public sealed class SimWorld
     public InventorySystem? Inventory { get; }
 
     public ConstructRegistry? Constructs { get; set; }
+
+    public BeltNetwork Belts { get; } = new BeltNetwork();
 
     public MailRegistry? Mail { get; }
 

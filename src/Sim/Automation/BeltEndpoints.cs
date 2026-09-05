@@ -107,8 +107,8 @@ public sealed class BeltEndpoints
             if (!TryPopMinMail(out var mail))
                 return;
             int itemId = (int)mail.Ids[0].Value;
-            if (!segment.TryInsert(0, itemId, 0f, mail.Kind)
-                && (mail.Kind.Equals(MailKinds.Cargo) || !segment.TryInsert(1, itemId, 0f, mail.Kind)))
+            if (!segment.TryInsert(0, itemId, 0f, mail.Kind, mail.Address)
+                && (mail.Kind.Equals(MailKinds.Cargo) || !segment.TryInsert(1, itemId, 0f, mail.Kind, mail.Address)))
                 _inventory.Apply(Actor.System, new Deposit(_intake, mail));
             return;
         }
