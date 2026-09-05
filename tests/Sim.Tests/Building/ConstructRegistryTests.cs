@@ -147,7 +147,7 @@ public sealed class ConstructRegistryTests
     }
 
     [Fact]
-    public void RepoDefs_WallAndChestRecipes_MatchChapterCosts()
+    public void RepoDefs_WallChestAndBeltRecipes_MatchChapterCosts()
     {
         var buildings = Index(LoadBuildings());
         var recipes = Index(LoadRecipes());
@@ -167,6 +167,17 @@ public sealed class ConstructRegistryTests
         Assert.Equal("log", chestRecipe.Inputs[0].Item);
         Assert.Equal(4, chestRecipe.Inputs[0].Count);
         Assert.Equal(200, chest.Hp);
+
+        Assert.True(buildings.TryGetValue("belt_mk1", out var belt));
+        Assert.True(recipes.TryGetValue(belt.Recipe, out var beltRecipe));
+        Assert.Equal("belt_mk1", beltRecipe.ProducesBuilding);
+        Assert.Equal("plank", beltRecipe.Inputs[0].Item);
+        Assert.Equal(1, beltRecipe.Inputs[0].Count);
+        Assert.Equal("iron_ingot", beltRecipe.Inputs[1].Item);
+        Assert.Equal(1, beltRecipe.Inputs[1].Count);
+        Assert.Equal(80, belt.Hp);
+        Assert.False(belt.OnStreet);
+        Assert.Equal(BuildingBehaviour.Belt, belt.Behaviour);
     }
 
     private static Fixture Loaded(int logs, PlacementField? field = null)

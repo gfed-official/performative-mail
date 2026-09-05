@@ -1,0 +1,9 @@
+{
+  "id": "recipe_belt_mk1",
+  "produces": { "building": "belt_mk1" },
+  "inputs": [
+    { "item": "plank", "count": 1 },
+    { "item": "iron_ingot", "count": 1 }
+  ],
+  "unlockShift": 1
+}

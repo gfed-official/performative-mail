@@ -1,0 +1,18 @@
+{
+  "id": "belt_mk1",
+  "name": "Conveyor Belt",
+  "footprint": [1, 1],
+  "rotations": 4,
+  "hp": 80,
+  "placement": {
+    "onStreet": false,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": true
+  },
+  "behaviour": "belt",
+  "params": { "speed": 2, "lanes": 2, "elevated": false },
+  "recipe": "recipe_belt_mk1",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["automation"]
+}
