@@ -147,7 +147,7 @@ public sealed class HudFrameTests
     [Fact]
     public void SameDisplay_IgnoresNowInsideTheSameSecond()
     {
-        var a = Snapshot(InteractPrompt.None.Instance, now: 0, deadline: 2700);
+        var a = Snapshot(InteractPrompt.None.Instance, now: 1, deadline: 2700);
         var b = Snapshot(InteractPrompt.None.Instance, now: 29, deadline: 2700);
 
         Assert.True(HudFrame.SameDisplay(in a, in b));

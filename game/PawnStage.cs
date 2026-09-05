@@ -59,11 +59,11 @@ public partial class PawnStage : Node3D
             if (visual.Label.Visible == local)
                 visual.Label.Visible = !local;
 
-            if (visual.Camera.Current != local)
-                visual.Camera.Current = local;
+            var camera = visual.Camera;
+            camera.Current = local;
             var pitch = local ? new Vector3(localPitchRadians, 0f, 0f) : Vector3.Zero;
-            if (visual.Camera.Rotation != pitch)
-                visual.Camera.Rotation = pitch;
+            if (camera.Rotation != pitch)
+                camera.Rotation = pitch;
             SyncHeldMail(visual, local ? heldMail : null);
         }
 
