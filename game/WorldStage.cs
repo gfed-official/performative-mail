@@ -26,6 +26,16 @@ public partial class WorldStage : Node3D
     private static readonly Color MailboxBlue = new(0.18f, 0.23f, 0.55f); // #2F3A8C
     private static readonly Color MailboxFlag = new(0.91f, 0.36f, 0.23f); // #E85D3A
 
+    private static readonly StandardMaterial3D PostOfficeBrickMat = Solid(PostOfficeBrick);
+    private static readonly StandardMaterial3D SpawnPadGoldMat = Solid(SpawnPadGold);
+    private static readonly StandardMaterial3D MailIntakeYellowMat = Solid(MailIntakeYellow);
+    private static readonly StandardMaterial3D StreetAsphaltMat = Solid(StreetAsphalt);
+    private static readonly StandardMaterial3D StreetCurbMat = Solid(StreetCurb);
+    private static readonly StandardMaterial3D HouseStuccoMat = Solid(HouseStucco);
+    private static readonly StandardMaterial3D HouseRoofMat = Solid(HouseRoof);
+    private static readonly StandardMaterial3D MailboxBlueMat = Solid(MailboxBlue);
+    private static readonly StandardMaterial3D MailboxFlagMat = Solid(MailboxFlag);
+
     private WorldTables? _bound;
     private readonly List<Node> _spawned = new();
 
@@ -311,7 +321,7 @@ public partial class WorldStage : Node3D
         var mesh = new MeshInstance3D
         {
             Mesh = new BoxMesh { Size = size },
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = color },
+            MaterialOverride = SolidFor(color),
             Position = new Vector3(0f, heightCenter, 0f),
         };
         return AddLabeled(name, origin, size, heightCenter, labelText, towardX, towardZ, stackHeight, mesh);
@@ -365,7 +375,7 @@ public partial class WorldStage : Node3D
         {
             Name = "Roof",
             Mesh = new BoxMesh { Size = new Vector3(roof.X, roof.Y, roof.Z) },
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = HouseRoof },
+            MaterialOverride = HouseRoofMat,
             Position = new Vector3(0f, WorldPropPlacement.RoofCenterY(bodySize.Y), 0f),
         });
     }
@@ -378,7 +388,7 @@ public partial class WorldStage : Node3D
         {
             Name = "Flag",
             Mesh = new BoxMesh { Size = new Vector3(flag.X, flag.Y, flag.Z) },
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = MailboxFlag },
+            MaterialOverride = MailboxFlagMat,
             Position = new Vector3(at.X, at.Y, at.Z),
         });
     }
@@ -404,7 +414,7 @@ public partial class WorldStage : Node3D
         {
             mesh = new BoxMesh { Size = boxSize };
             yLift = boxSize.Y * 0.5f;
-            overlay = new StandardMaterial3D { AlbedoColor = boxColor };
+            overlay = SolidFor(boxColor);
             artScaleX = 1f;
             artScaleZ = 1f;
         }
@@ -455,7 +465,7 @@ public partial class WorldStage : Node3D
         var node = new MeshInstance3D
         {
             Mesh = new BoxMesh { Size = size },
-            MaterialOverride = new StandardMaterial3D { AlbedoColor = color },
+            MaterialOverride = SolidFor(color),
             Position = origin + new Vector3(0f, heightCenter, 0f),
         };
         AddChild(node);
@@ -469,4 +479,29 @@ public partial class WorldStage : Node3D
     }
 
     private static Vector3 Vec((float X, float Y, float Z) p) => new(p.X, p.Y, p.Z);
+
+    private static StandardMaterial3D SolidFor(Color color)
+    {
+        if (color == PostOfficeBrick)
+            return PostOfficeBrickMat;
+        if (color == SpawnPadGold)
+            return SpawnPadGoldMat;
+        if (color == MailIntakeYellow)
+            return MailIntakeYellowMat;
+        if (color == StreetAsphalt)
+            return StreetAsphaltMat;
+        if (color == StreetCurb)
+            return StreetCurbMat;
+        if (color == HouseStucco)
+            return HouseStuccoMat;
+        if (color == HouseRoof)
+            return HouseRoofMat;
+        if (color == MailboxBlue)
+            return MailboxBlueMat;
+        if (color == MailboxFlag)
+            return MailboxFlagMat;
+        return Solid(color);
+    }
+
+    private static StandardMaterial3D Solid(Color color) => new() { AlbedoColor = color };
 }

@@ -37,12 +37,20 @@ public readonly record struct HudFrame(
         _ => throw new ArgumentOutOfRangeException(nameof(Match), Match, null),
     };
 
+    public static bool SameDisplay(in HudSnapshot a, in HudSnapshot b) =>
+        a.Phase == b.Phase
+        && a.Shift == b.Shift
+        && a.Wallet == b.Wallet
+        && a.Earnings == b.Earnings
+        && a.Quota == b.Quota
+        && a.Complaint == b.Complaint
+        && a.Deadline == b.Deadline
+        && RemainingSeconds(in a) == RemainingSeconds(in b)
+        && Equals(a.Interact, b.Interact);
+
     public static HudFrame From(in HudSnapshot snapshot)
     {
-        uint remainingTicks = snapshot.Deadline > snapshot.Now
-            ? snapshot.Deadline - snapshot.Now
-            : 0;
-        int remainingSeconds = (int)(remainingTicks / TickClock.TickHz);
+        int remainingSeconds = RemainingSeconds(in snapshot);
 
         int earnings = snapshot.Earnings.Value;
         int quota = snapshot.Quota.Value;
@@ -64,6 +72,14 @@ public readonly record struct HudFrame(
             quotaMet,
             earnings,
             quota);
+    }
+
+    internal static int RemainingSeconds(in HudSnapshot snapshot)
+    {
+        uint remainingTicks = snapshot.Deadline > snapshot.Now
+            ? snapshot.Deadline - snapshot.Now
+            : 0;
+        return (int)(remainingTicks / TickClock.TickHz);
     }
 
     private static (string Held, string Target, MatchMark Mark) Prompt(InteractPrompt interact)

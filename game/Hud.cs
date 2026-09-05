@@ -42,27 +42,31 @@ public partial class Hud : Control
     public void Bind(in HudFrame frame)
     {
         CacheLabels();
-        _shift.Text = frame.ShiftLabel;
-        _phase.Text = frame.PhaseLabel;
-        _timer.Text = frame.TimerLabel;
+        SetText(_shift, frame.ShiftLabel);
+        SetText(_phase, frame.PhaseLabel);
+        SetText(_timer, frame.TimerLabel);
         _timer.Modulate = frame.TimerTone switch
         {
             TimerTone.Amber => Amber,
             TimerTone.Red => Red,
             _ => Colors.White,
         };
-        _wallet.Text = frame.WalletLabel;
-        _quota.Text = frame.QuotaLabel;
+        SetText(_wallet, frame.WalletLabel);
+        SetText(_quota, frame.QuotaLabel);
         double max = Math.Max(1, frame.QuotaTarget);
-        _quotaBar.MinValue = 0;
-        _quotaBar.MaxValue = max;
-        _quotaBar.Value = Math.Clamp((double)frame.QuotaEarnings, 0d, max);
+        if (_quotaBar.MinValue != 0)
+            _quotaBar.MinValue = 0;
+        if (_quotaBar.MaxValue != max)
+            _quotaBar.MaxValue = max;
+        double value = Math.Clamp((double)frame.QuotaEarnings, 0d, max);
+        if (_quotaBar.Value != value)
+            _quotaBar.Value = value;
         _quotaBar.Modulate = frame.QuotaMet ? Green : Colors.White;
-        _surplus.Text = frame.SurplusLabel;
-        _complaint.Text = frame.ComplaintLabel;
-        _held.Text = frame.HeldAddress;
-        _target.Text = frame.TargetAddress;
-        _match.Text = frame.MatchLabel;
+        SetText(_surplus, frame.SurplusLabel);
+        SetText(_complaint, frame.ComplaintLabel);
+        SetText(_held, frame.HeldAddress);
+        SetText(_target, frame.TargetAddress);
+        SetText(_match, frame.MatchLabel);
         _match.Modulate = frame.Match switch
         {
             MatchMark.Tick => Green,
@@ -88,11 +92,17 @@ public partial class Hud : Control
             $"MatchMark={_match.Text}";
     }
 
+    private static void SetText(Label label, string text)
+    {
+        if (label.Text != text)
+            label.Text = text;
+    }
+
     private void CacheLabels()
     {
-        PlayTheme.Apply(this);
         if (_shift is not null)
             return;
+        PlayTheme.Apply(this);
         _shift = GetNode<Label>("%" + ShiftPath);
         _phase = GetNode<Label>("%" + PhasePath);
         _timer = GetNode<Label>("%" + TimerPath);

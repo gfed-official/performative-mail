@@ -54,6 +54,13 @@ public partial class Main : Node3D
     private string? _worldDumpPath;
     private string? _debugHelper;
     private bool _holdInteract;
+    private HudSnapshot _boundHud;
+    private bool _hudBound;
+    private OverlayStamp _boundOverlay;
+    private bool _overlayBound;
+    private bool _playUiHidden = true;
+    private bool _usingMenuCamera = true;
+    private bool? _mouseCaptured;
 
     public override void _Ready()
     {
@@ -145,7 +152,7 @@ public partial class Main : Node3D
                 SetMouseCaptured(false);
                 HidePlayUi();
                 UseMenuCamera();
-                _status.Text = "Host a game, or join a friend by LAN IP.";
+                SetStatus("Host a game, or join a friend by LAN IP.");
                 break;
             case PlaySession.Connecting:
                 ShowMenuChrome(false);
@@ -156,6 +163,7 @@ public partial class Main : Node3D
             case PlaySession.Playing playing:
                 ShowMenuChrome(false);
                 SetMouseCaptured(!_pause.IsOpen);
+                _usingMenuCamera = false;
                 _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing));
                 _world.Sync(playing.World);
                 BindHud(playing.Hud);
@@ -167,7 +175,7 @@ public partial class Main : Node3D
                 SetMouseCaptured(false);
                 HidePlayUi();
                 UseMenuCamera();
-                _status.Text = failed.Reason.Message();
+                SetStatus(failed.Reason.Message());
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(state), state, null);
@@ -176,14 +184,23 @@ public partial class Main : Node3D
 
     private void ShowMenuChrome(bool visible)
     {
-        _menuChrome.Visible = visible;
-        _host.Disabled = !visible;
-        _join.Disabled = !visible;
-        _lobby.Visible = false;
+        if (_menuChrome.Visible != visible)
+            _menuChrome.Visible = visible;
+        if (_host.Disabled == visible)
+            _host.Disabled = !visible;
+        if (_join.Disabled == visible)
+            _join.Disabled = !visible;
+        if (_lobby.Visible)
+            _lobby.Visible = false;
     }
 
     private void HidePlayUi()
     {
+        if (_playUiHidden)
+            return;
+        _playUiHidden = true;
+        _hudBound = false;
+        _overlayBound = false;
         _hud.Visible = false;
         _world.Clear();
         _overlay.Close();
@@ -191,12 +208,18 @@ public partial class Main : Node3D
 
     private void UseMenuCamera()
     {
+        if (_usingMenuCamera)
+            return;
+        _usingMenuCamera = true;
         _pawns.DespawnAll();
         _menuCamera.Current = true;
     }
 
     private void SetMouseCaptured(bool captured)
     {
+        if (_mouseCaptured == captured)
+            return;
+        _mouseCaptured = captured;
         Input.MouseMode = captured
             ? Input.MouseModeEnum.Captured
             : Input.MouseModeEnum.Visible;
@@ -323,9 +346,21 @@ public partial class Main : Node3D
         _hud.Visible = false;
     }
 
+    private void SetStatus(string text)
+    {
+        if (_status.Text != text)
+            _status.Text = text;
+    }
+
     private void BindHud(in HudSnapshot snapshot)
     {
-        _hud.Visible = true;
+        _playUiHidden = false;
+        if (!_hud.Visible)
+            _hud.Visible = true;
+        if (_hudBound && HudFrame.SameDisplay(in _boundHud, in snapshot))
+            return;
+        _boundHud = snapshot;
+        _hudBound = true;
         _hud.Bind(HudFrame.From(in snapshot));
     }
 
@@ -375,8 +410,15 @@ public partial class Main : Node3D
         _overlay.Bind(OverlayFrame.From(OverlayBootReplica.Build()));
     }
 
-    private void BindOverlay(in OverlayReplica replica) =>
+    private void BindOverlay(in OverlayReplica replica)
+    {
+        var stamp = replica.Stamp();
+        if (_overlayBound && stamp == _boundOverlay)
+            return;
+        _boundOverlay = stamp;
+        _overlayBound = true;
         _overlay.Bind(OverlayFrame.From(in replica));
+    }
 
     private void BuildPause()
     {
@@ -631,7 +673,7 @@ public partial class Main : Node3D
         if (!JoinTarget.TryParse(_address.Text, SessionOptions.DefaultPort, out var target))
         {
             ShowMenuChrome(true);
-            _status.Text = "Enter a host like 192.168.1.20 or 192.168.1.20:7777.";
+            SetStatus("Enter a host like 192.168.1.20 or 192.168.1.20:7777.");
             return;
         }
 

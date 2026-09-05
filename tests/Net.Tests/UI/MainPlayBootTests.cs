@@ -8,6 +8,8 @@ public sealed class MainPlayBootTests
         var render = MethodBody(ReadMain(), "Render");
         Assert.Contains("BindHud(playing.Hud)", render);
         Assert.Contains("_world.Sync(playing.World)", render);
+        Assert.Contains("HudFrame.SameDisplay", MethodBody(ReadMain(), "BindHud"));
+        Assert.Contains("replica.Stamp()", MethodBody(ReadMain(), "BindOverlay"));
         Assert.DoesNotContain("HudBoot.Placeholder", render);
     }
 

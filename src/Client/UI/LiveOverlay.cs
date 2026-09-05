@@ -30,7 +30,7 @@ public static class LiveOverlay
             return false;
         }
 
-        replica = new OverlayReplica(hotbar, bag, null, external, new HashSet<EntryId>());
+        replica = new OverlayReplica(hotbar, bag, null, external, OverlayReplica.NoPending);
         return true;
     }
 }
