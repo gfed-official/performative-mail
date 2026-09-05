@@ -1,0 +1,18 @@
+{
+  "id": "belt_mk1_ramp",
+  "name": "Belt Ramp",
+  "footprint": [2, 1],
+  "rotations": 4,
+  "hp": 120,
+  "placement": {
+    "onStreet": false,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": true
+  },
+  "behaviour": "belt",
+  "params": { "speed": 2, "lanes": 2, "elevated": false },
+  "recipe": "recipe_belt_mk1_ramp",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["automation"]
+}

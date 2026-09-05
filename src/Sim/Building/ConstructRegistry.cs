@@ -184,6 +184,16 @@ public sealed class ConstructRegistry
     {
         int w = building.Footprint.W;
         int h = building.Footprint.H;
+        if (w == 1 || h == 1)
+        {
+            int length = w >= h ? w : h;
+            Step(rotation, out int sx, out int sy);
+            var walk = new TileCoord[length];
+            for (int i = 0; i < length; i++)
+                walk[i] = new TileCoord(origin.X + sx * i, origin.Y + sy * i);
+            return walk;
+        }
+
         if ((rotation == Facing.East || rotation == Facing.West) && !building.Footprint.IsSquare)
         {
             int swap = w;
@@ -200,5 +210,30 @@ public sealed class ConstructRegistry
         }
 
         return tiles;
+    }
+
+    private static void Step(Facing facing, out int dx, out int dy)
+    {
+        switch (facing)
+        {
+            case Facing.North:
+                dx = 0;
+                dy = 1;
+                return;
+            case Facing.East:
+                dx = 1;
+                dy = 0;
+                return;
+            case Facing.South:
+                dx = 0;
+                dy = -1;
+                return;
+            case Facing.West:
+                dx = -1;
+                dy = 0;
+                return;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(facing), facing, null);
+        }
     }
 }
