@@ -2,6 +2,7 @@ using PerformativeMail.Client.UI;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Net.Tests.UI;
 
@@ -27,12 +28,14 @@ public sealed class OverlayFrameTests
         OverlayCell hands = frame.Hotbar[0, 0];
         Assert.Equal("", hands.Text);
         Assert.False(hands.Pending);
+        Assert.Equal((byte)0, hands.District);
         Assert.Equal(OverlayCell.ConfirmedOpacity, hands.Opacity);
 
         OverlayCell mail = frame.Hotbar[1, 0];
         Assert.Equal("1", mail.CountLabel);
         Assert.Equal("1/1/13", mail.AddressLabel);
         Assert.Equal("1 1/1/13", mail.Text);
+        Assert.Equal((byte)1, mail.District);
         Assert.True(mail.Pending);
         Assert.Equal(OverlayCell.PendingOpacity, mail.Opacity);
         Assert.True(mail.Opacity < OverlayCell.ConfirmedOpacity);
@@ -97,6 +100,30 @@ public sealed class OverlayFrameTests
     }
 
     [Fact]
+    public void From_MailCellKeepsAddressTextAndDestinationDistrict()
+    {
+        var catalog = new LetterOnlyCatalog();
+        var auth = new InventorySystem(catalog);
+        var player = new EntityId(1);
+        var hotbar = auth.CreateContainer(ContainerSpec.Hotbar, player);
+        var inventory = auth.CreateContainer(ContainerSpec.BaseInventory, player);
+        var mail = MailStack.Single(MailKinds.Letter, new AddressId(2, 4, 7, 0), new MailId(1));
+        Assert.IsType<Accepted>(auth.Apply(Actor.System, new Deposit(hotbar, mail)));
+
+        var replica = new InventorySystem(catalog);
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(hotbar)));
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(inventory)));
+        Assert.True(LiveOverlay.TryFrom(replica, out var live));
+
+        OverlayCell cell = OverlayFrame.From(in live).Hotbar[1, 0];
+        Assert.Equal("2/4/7", cell.AddressLabel);
+        Assert.Equal("1 2/4/7", cell.Text);
+        Assert.Equal((byte)2, cell.District);
+        Assert.Equal("#E85D3A", DistrictPalette.HexOf(cell.District));
+        Assert.Contains("2/4/7", cell.Text);
+    }
+
+    [Fact]
     public void From_LiveShapedReplica_HotbarMailUsesHouseNumberNotBootLarch()
     {
         var catalog = new LetterOnlyCatalog();
@@ -117,6 +144,7 @@ public sealed class OverlayFrameTests
         Assert.Equal("1", cell.CountLabel);
         Assert.Equal("1/1/1", cell.AddressLabel);
         Assert.Equal("1 1/1/1", cell.Text);
+        Assert.Equal((byte)1, cell.District);
         Assert.False(cell.Pending);
         Assert.Equal(OverlayCell.ConfirmedOpacity, cell.Opacity);
         Assert.Null(frame.Backpack);

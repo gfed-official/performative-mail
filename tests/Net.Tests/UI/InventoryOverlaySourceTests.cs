@@ -32,6 +32,18 @@ public sealed class InventoryOverlaySourceTests
         Assert.Contains("MouseButton.Left", overlay);
     }
 
+    [Fact]
+    public void MailCells_AddDistrictSwatchBesideAddressText()
+    {
+        string overlay = ReadGame("InventoryOverlay.cs");
+        Assert.Contains("DistrictPalette.HasSwatch(cell.District)", overlay);
+        Assert.Contains("DistrictSwatch.Of(cell.District)", overlay);
+        Assert.Contains("_swatch", overlay);
+        Assert.Contains("cell.Text", overlay);
+        Assert.Contains("district=", overlay);
+        Assert.Contains("swatch=", overlay);
+    }
+
     private static string ReadGame(string file)
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
