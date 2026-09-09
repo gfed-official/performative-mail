@@ -49,7 +49,7 @@ Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4
 - `play` runs a solo Host play report with the golden worldHash, HUD, and world entity counts listed in [`tools/godot/report.md`](tools/godot/report.md).
 - `debug-world` runs a solo Host play report with `--debug-world`. It asserts Playing, PREP, two houses, and debug worldHash `0x4CF184F2FA4D4EEE`.
 - `debug-helpers` runs `--host --debug-world --debug-helper=intake` and asserts the local pawn is at Intake (`1100`, `500`). DebugMenu (F3 or backtick) buttons also teleport to Intake or a mailbox, give mail if the hotbar is empty, and open the inventory overlay.
-- `worldstage` runs `--host --debug-world --report= --world-dump=` and asserts live WorldStage Label3D text for Post Office, Mail, and the debug addresses, plus SmokeReport `worldEntityCounts.mailboxes >= 2`.
+- `worldstage` runs `--host --debug-world --report= --world-dump=` and asserts live WorldStage Label3D text for Post Office, Mail, and the debug addresses, plus ConstructStage labels for the seeded wall/chest/belts/sorter and SmokeReport `constructCounts`.
 - `interact` runs `--host --debug-world --debug-helper=interact`. It stocks Intake, teleports, holds Interact through pickup and mailbox deliver, and asserts SmokeReport `wallet` is `8`.
 - `live-overlay` runs `--host --debug-world --debug-helper=live-overlay` with `--overlay-dump=`. It picks up Intake mail, opens the inventory overlay on the Playing replica, and asserts live hotbar cell text, not the OverlayBootReplica placeholder.
 - `live-hud` runs `--host --debug-world --report= --hud-dump=`. It asserts HUD Control text came from Playing / `HudSnapshot` (phase PREP, shift, timer matching the replica), not `HudBoot.Placeholder`.

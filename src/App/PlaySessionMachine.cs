@@ -73,7 +73,10 @@ public sealed class PlaySessionMachine : IDisposable
             var listen = _stack.Listen(_options.ListenPort, _options.MaxPlayers);
             var server = new ServerRuntime(listen.Link, boot);
             server.Start();
-            var client = new ClientRuntime(Stacks());
+            var client = new ClientRuntime(Stacks())
+            {
+                Constructs = ConstructBoot.Replica(boot.Tables),
+            };
             client.Connect(listen.HostSeat);
             var role = new SessionRole.Listening(HostAdvertisement.For(_options.ListenPort));
             _live = new Live.Hosting(server, listen.Link, client, role);
@@ -598,7 +601,7 @@ public sealed class PlaySessionMachine : IDisposable
         {
             _live.Server?.TickOnce(advanceSim: false);
             client.Receive();
-            return PresentPlaying(client, _live.Role, wallNow);
+            return PresentPlaying(client, _live.Role, wallNow, ticks: 0);
         }
 
         for (int i = 0; i < ticks; i++)
@@ -610,16 +613,16 @@ public sealed class PlaySessionMachine : IDisposable
             client.Receive();
         }
 
-        return PresentPlaying(client, _live.Role, wallNow);
+        return PresentPlaying(client, _live.Role, wallNow, ticks);
     }
 
     private PlaySession EnterPlaying(SessionRole role, ClientRuntime client, EntityId local, TimeSpan wallNow)
     {
         _pacer.Reset(wallNow);
-        return PresentPlaying(client, role, wallNow);
+        return PresentPlaying(client, role, wallNow, ticks: 0);
     }
 
-    private PlaySession PresentPlaying(ClientRuntime client, SessionRole role, TimeSpan wallNow)
+    private PlaySession PresentPlaying(ClientRuntime client, SessionRole role, TimeSpan wallNow, int ticks)
     {
         if (client.LastReject is HelloReject reject)
             return Fail(new FailReason.Rejected(reject.Reason));
@@ -641,6 +644,13 @@ public sealed class PlaySessionMachine : IDisposable
             overlay = replica;
 
         var world = _live.Server?.Tables ?? client.GeneratedWorld;
+        BindClientConstructs(client);
+        float advanceDt = ClockPaused ? 0f : ticks * (float)TickClock.TickDurationSeconds;
+        var constructs = ConstructProjector.From(
+            _live.Server?.World.Constructs ?? client.Constructs,
+            client.Lanes,
+            advanceDt);
+
         return new PlaySession.Playing(
             role,
             local,
@@ -648,7 +658,18 @@ public sealed class PlaySessionMachine : IDisposable
             ProjectHud(client, local),
             world,
             overlay,
-            ProjectResources(_live.Server, world));
+            ProjectResources(_live.Server, world),
+            constructs);
+    }
+
+    private void BindClientConstructs(ClientRuntime client)
+    {
+        if (client.Constructs is not null)
+            return;
+        var tables = _live.Server?.Tables ?? client.GeneratedWorld;
+        if (tables is null)
+            return;
+        client.Constructs = ConstructBoot.Replica(tables);
     }
 
     private HudSnapshot ProjectHud(ClientRuntime client, EntityId local)

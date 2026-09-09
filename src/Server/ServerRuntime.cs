@@ -462,6 +462,7 @@ public sealed class ServerRuntime
         if (result is not Placed placed)
             return;
 
+        World.Belts.Compile(constructs.All);
         BroadcastReliable(ConstructCodec.Encode(new PlaceConstructConfirmed(
             request.ReqId,
             placed.Construct.Id,
@@ -491,6 +492,7 @@ public sealed class ServerRuntime
         if (result is not Deconstructed)
             return;
 
+        World.Belts.Compile(constructs.All);
         BroadcastReliable(ConstructCodec.Encode(new RemoveConstructConfirmed(
             request.ReqId,
             request.ConstructId)));

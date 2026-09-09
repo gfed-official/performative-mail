@@ -21,7 +21,7 @@
 | `play` | Solo Host play report. Asserts Playing, golden `worldHash` `0x821670054873680E`, HUD phase PREP, and shift `Shift 1 / 5`. Keys, units, and jq are in [report.md](report.md). |
 | `debug-world` | Solo Host play report with `--debug-world`. Asserts Playing, PREP, 2 houses / 2 mailboxes, and debug `worldHash` `0x4CF184F2FA4D4EEE`. |
 | `debug-helpers` | Solo Host `--debug-world --debug-helper=intake`. Asserts the local pawn report is at Intake tile centre `1100, 500`. |
-| `worldstage` | Solo Host `--debug-world` plus `--world-dump=`. Asserts SmokeReport mailbox count ≥ 2 and live Label3D text for Post Office, Mail, and `1 Debug Lane` / `2 Debug Lane`. |
+| `worldstage` | Solo Host `--debug-world` plus `--world-dump=`. Asserts SmokeReport mailbox count ≥ 2, constructCounts for the seeded factory, live WorldStage labels, and ConstructStage labels for wall / chest / belts / sorter. |
 | `interact` | Solo Host `--debug-world --debug-helper=interact`. Stocks Intake, teleports, holds Interact through pickup and deliver, and asserts `wallet` is `8`. |
 | `live-overlay` | Solo Host `--debug-world --debug-helper=live-overlay` plus `--overlay-dump=`. Picks up Intake mail, opens the inventory overlay on the Playing replica, and asserts live hotbar cell text (`1 1/1/1`), not OverlayBootReplica `1 1/1/13`. |
 | `live-hud` | Solo Host `--debug-world` plus `--hud-dump=`. Asserts Control text from Playing / `HudSnapshot` (`PREP`, shift, timer matching the report replica), the district-band compass (`CompassFacing=N`, `CompassDistrict=1`), HP/weight extras (`HP 100`, `Wt 0`), the persistent 1–8 hotbar strip (`HotbarSelected=1`, hands + empty icons), not `HudBoot.Placeholder` (`DELIVERY`, `13 Larch Lane`). |

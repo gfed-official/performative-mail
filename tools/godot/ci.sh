@@ -360,10 +360,21 @@ host_worldstage_smoke() {
     and .worldEntityCounts.postOffices == 1
     and .worldEntityCounts.intakes == 1
     and .worldEntityCounts.mailboxes >= 2
+    and .constructCounts.total >= 7
+    and .constructCounts.belts >= 4
+    and .constructCounts.chests >= 1
+    and .constructCounts.walls >= 1
+    and .constructCounts.sorters >= 1
   ' "$report" >/dev/null \
     || fail "host worldstage report failed jq schema: $(cat "$report")"
   grep -q 'WORLD_DUMP' "$dump" || fail "missing WORLD_DUMP: $(cat "$dump")"
   grep -q 'WORLD_DUMP_END' "$dump" || fail "missing WORLD_DUMP_END: $(cat "$dump")"
+  grep -q 'CONSTRUCT_DUMP' "$dump" || fail "missing CONSTRUCT_DUMP: $(cat "$dump")"
+  grep -q 'CONSTRUCT_DUMP_END' "$dump" || fail "missing CONSTRUCT_DUMP_END: $(cat "$dump")"
+  grep -q 'Label=Wooden Wall' "$dump" || fail "ConstructStage dump missing Wooden Wall: $(cat "$dump")"
+  grep -q 'Label=Chest' "$dump" || fail "ConstructStage dump missing Chest: $(cat "$dump")"
+  grep -q 'Label=Conveyor Belt' "$dump" || fail "ConstructStage dump missing Conveyor Belt: $(cat "$dump")"
+  grep -q 'Label=Address Sorter' "$dump" || fail "ConstructStage dump missing Address Sorter: $(cat "$dump")"
   grep -Fqx "PostOffice Label=Post Office district=#3D7EFF" "$dump" \
     || fail "WorldStage dump missing Post Office: $(cat "$dump")"
   grep -Fqx "MailIntake Label=Mail district=#3D7EFF" "$dump" \
@@ -683,7 +694,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|
   play     solo Host play report with golden worldHash and HUD
   debug-world solo Host --debug-world report (2 houses, hash 0x4CF184F2FA4D4EEE)
   debug-helpers solo Host --debug-world --debug-helper=intake; local pawn at Intake (1100, 500)
-  worldstage solo Host --debug-world report plus WorldStage Label3D dump (PO, Mail, addresses)
+  worldstage solo Host --debug-world report plus WorldStage/ConstructStage dump (PO, Mail, factory)
   interact solo Host --debug-world --debug-helper=interact; pickup Intake mail, deliver, wallet 8
   live-overlay solo Host --debug-world --debug-helper=live-overlay; pickup, open overlay, dump live cell text
   live-hud solo Host --debug-world report plus live HUD dump (Playing / HudSnapshot, not Placeholder)

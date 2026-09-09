@@ -17,6 +17,7 @@ public partial class Main : Node3D
     private PlaySessionMachine _session = null!;
     private PawnStage _pawns = null!;
     private WorldStage _world = null!;
+    private ConstructStage _constructs = null!;
     private Camera3D _menuCamera = null!;
     private LineEdit _address = null!;
     private Label _status = null!;
@@ -204,6 +205,7 @@ public partial class Main : Node3D
                 _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing), HeldMailDistrict(playing));
                 _world.Sync(playing.World);
                 _world.SyncHarvest(playing.Resources);
+                _constructs.Sync(playing.Constructs);
                 BindHud(playing.Hud);
                 BindCompass(playing);
                 if (playing.Overlay is OverlayReplica overlay)
@@ -244,6 +246,7 @@ public partial class Main : Node3D
         _overlayBound = false;
         _hud.Visible = false;
         _world.Clear();
+        _constructs.Clear();
         _overlay.Close();
         _map.Close();
     }
@@ -317,6 +320,9 @@ public partial class Main : Node3D
 
         _world = new WorldStage();
         AddChild(_world);
+
+        _constructs = new ConstructStage();
+        AddChild(_constructs);
 
         _pawns = new PawnStage();
         AddChild(_pawns);
@@ -893,7 +899,7 @@ public partial class Main : Node3D
         if (_reportPath is not null && !_reported)
             WriteReport(state, _reportPath);
         if (_worldDumpPath is not null && state is PlaySession.Playing)
-            File.WriteAllText(_worldDumpPath, _world.Dump());
+            File.WriteAllText(_worldDumpPath, _world.Dump() + "\n" + _constructs.Dump());
         if (_overlayDumpPath is not null && state is PlaySession.Playing)
         {
             var dump = new StringBuilder();

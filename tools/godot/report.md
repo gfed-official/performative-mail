@@ -28,6 +28,11 @@
 | `worldEntityCounts.houses` | Playing | number | `WorldTables.Houses.Length`, else `0` |
 | `worldEntityCounts.mailboxes` | Playing | number | Same as `houses` |
 | `overlayOpen` | Playing | boolean | Inventory overlay `IsOpen` |
+| `constructCounts.total` | Playing | number | Placed constructs in `ConstructFrame` |
+| `constructCounts.belts` | Playing | number | `BuildingBehaviour.Belt` |
+| `constructCounts.chests` | Playing | number | `BuildingBehaviour.Container` |
+| `constructCounts.walls` | Playing | number | `BuildingBehaviour.Wall` |
+| `constructCounts.sorters` | Playing | number | `BuildingBehaviour.Sorter` |
 | `debugOpen` | Playing | boolean | Debug menu `IsOpen`. Missing debug control is `false` |
 | `error` | Failed | string | `FailReason.Message()`, JSON-escaped |
 
@@ -41,7 +46,7 @@ When `PlaySession.Playing.World` is null, `worldHash` is `0x0000000000000000` an
 
 `--debug-helper=` does not add keys. `intake` and `mailbox` change `pawns[].x` / `pawns[].y`. `overlay` and `live-overlay` set `overlayOpen` to true. `give-mail` is visible in inventory, not in this object. `interact` stocks Intake, picks up with Interact, delivers to the first mailbox, and leaves `wallet` at `8` and the local pawn at `200, 1600`. `live-overlay` picks up the same Intake letter, opens the overlay, and leaves `overlayOpen` true with the letter still held. `leave` opens pause and confirms Leave; the quit report is Menu (`{"state":"Menu"}`), not Playing.
 
-`--world-dump=` is a sidecar Label3D dump from `WorldStage.Dump`. It is not a SmokeReport key. `tools/godot/ci.sh worldstage` asserts `worldEntityCounts` here and the live labels in that dump.
+`--world-dump=` is a sidecar Label3D dump from `WorldStage.Dump` plus `ConstructStage.Dump`. It is not a SmokeReport key. `tools/godot/ci.sh worldstage` asserts `worldEntityCounts` and `constructCounts` here and the live labels in that dump. `--debug-world` seeds a wall, chest, belt run, and sorter east of the PO so factory primitives show without build UI.
 
 `--overlay-dump=` is a sidecar Control dump from `InventoryOverlay.Dump`. `--inspect-overlay` writes OverlayBootReplica cases `open` and `closed`. A Playing quit with `--overlay-dump=` writes case `live` from the bound replica. `tools/godot/ci.sh live-overlay` asserts `overlayOpen` here and the live hotbar cell in that dump.
 
@@ -50,7 +55,7 @@ When `PlaySession.Playing.World` is null, `worldHash` is `0x0000000000000000` an
 ## Example Playing object
 
 ```json
-{"state":"Playing","local":1,"worldHash":"0x821670054873680E","phase":"Prep","shift":1,"wallet":1820,"quota":640,"hudShift":"Shift 1 / 5","hudPhase":"PREP","hudTimer":"00:00","pawns":[{"id":1,"role":"Local","x":1200,"y":3400}],"worldEntityCounts":{"postOffices":1,"intakes":1,"houses":50,"mailboxes":50},"overlayOpen":false,"debugOpen":false}
+{"state":"Playing","local":1,"worldHash":"0x821670054873680E","phase":"Prep","shift":1,"wallet":1820,"quota":640,"hudShift":"Shift 1 / 5","hudPhase":"PREP","hudTimer":"00:00","pawns":[{"id":1,"role":"Local","x":1200,"y":3400}],"worldEntityCounts":{"postOffices":1,"intakes":1,"houses":50,"mailboxes":50},"constructCounts":{"total":0,"belts":0,"chests":0,"walls":0,"sorters":0},"overlayOpen":false,"debugOpen":false}
 ```
 
 ## Example jq

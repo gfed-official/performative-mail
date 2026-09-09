@@ -36,6 +36,9 @@ public sealed class SmokeReportTests
         Assert.Equal(1, counts.GetProperty("intakes").GetInt32());
         Assert.Equal(50, counts.GetProperty("houses").GetInt32());
         Assert.Equal(50, counts.GetProperty("mailboxes").GetInt32());
+        JsonElement constructs = root.GetProperty("constructCounts");
+        Assert.Equal(0, constructs.GetProperty("total").GetInt32());
+        Assert.Equal(0, constructs.GetProperty("belts").GetInt32());
         Assert.True(root.GetProperty("overlayOpen").GetBoolean());
         Assert.False(root.GetProperty("debugOpen").GetBoolean());
     }

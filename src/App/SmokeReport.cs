@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using PerformativeMail.Client;
 using PerformativeMail.Client.UI;
+using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.App;
@@ -66,6 +67,7 @@ public static class SmokeReport
             hud.TimerLabel,
             pawns,
             CountEntities(playing.World),
+            CountConstructs(playing.Constructs),
             ui.OverlayOpen,
             ui.DebugOpen);
     }
@@ -78,6 +80,52 @@ public static class SmokeReport
         if (world is null)
             return new WorldEntityCountsDocument(0, 0, 0, 0);
         return new WorldEntityCountsDocument(1, 1, world.Houses.Length, world.Houses.Length);
+    }
+
+    private static ConstructCountsDocument CountConstructs(in ConstructFrame frame)
+    {
+        int belts = 0;
+        int chests = 0;
+        int walls = 0;
+        int sorters = 0;
+        for (int i = 0; i < frame.Placed.Count; i++)
+        {
+            switch (frame.Placed[i].Behaviour)
+            {
+                case BuildingBehaviour.Belt:
+                    belts++;
+                    break;
+                case BuildingBehaviour.Container:
+                    chests++;
+                    break;
+                case BuildingBehaviour.Wall:
+                    walls++;
+                    break;
+                case BuildingBehaviour.Sorter:
+                    sorters++;
+                    break;
+                case BuildingBehaviour.Pipe:
+                case BuildingBehaviour.Splitter:
+                case BuildingBehaviour.Merger:
+                case BuildingBehaviour.Inserter:
+                case BuildingBehaviour.Gate:
+                case BuildingBehaviour.Spike:
+                case BuildingBehaviour.Turret:
+                case BuildingBehaviour.Alarm:
+                case BuildingBehaviour.VehicleDepot:
+                case BuildingBehaviour.Port:
+                case BuildingBehaviour.Pump:
+                case BuildingBehaviour.Pier:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(frame),
+                        frame.Placed[i].Behaviour,
+                        null);
+            }
+        }
+
+        return new ConstructCountsDocument(frame.Placed.Count, belts, chests, walls, sorters);
     }
 
     private sealed record StateDocument(
@@ -99,6 +147,13 @@ public static class SmokeReport
         [property: JsonPropertyName("houses")] int Houses,
         [property: JsonPropertyName("mailboxes")] int Mailboxes);
 
+    private sealed record ConstructCountsDocument(
+        [property: JsonPropertyName("total")] int Total,
+        [property: JsonPropertyName("belts")] int Belts,
+        [property: JsonPropertyName("chests")] int Chests,
+        [property: JsonPropertyName("walls")] int Walls,
+        [property: JsonPropertyName("sorters")] int Sorters);
+
     private sealed record PlayingDocument(
         [property: JsonPropertyName("state")] string State,
         [property: JsonPropertyName("local")] uint Local,
@@ -112,6 +167,7 @@ public static class SmokeReport
         [property: JsonPropertyName("hudTimer")] string HudTimer,
         [property: JsonPropertyName("pawns")] PawnDocument[] Pawns,
         [property: JsonPropertyName("worldEntityCounts")] WorldEntityCountsDocument WorldEntityCounts,
+        [property: JsonPropertyName("constructCounts")] ConstructCountsDocument ConstructCounts,
         [property: JsonPropertyName("overlayOpen")] bool OverlayOpen,
         [property: JsonPropertyName("debugOpen")] bool DebugOpen);
 }
