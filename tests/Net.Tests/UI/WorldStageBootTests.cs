@@ -25,6 +25,13 @@ public sealed class WorldStageBootTests
         Assert.Contains("WorldEnvPlacement.StreetCurbs", source);
         Assert.Contains("WorldEnvPlacement.LotGrass", source);
         Assert.Contains("WorldEnvPlacement.PostalClutter", source);
+        Assert.Contains("SpawnResourceNodes", source);
+        Assert.Contains("tables.ResourceNodes", source);
+        Assert.Contains("SyncHarvest", source);
+        Assert.Contains("WorldResourcePlacement.NodeName", source);
+        Assert.Contains("WorldResourcePlacement.BoxSize", source);
+        Assert.Contains("ArtMesh.PathForResource", source);
+        Assert.Contains("ResourcePrefix", source);
         Assert.Contains("Sync(WorldTables", source);
         Assert.Contains("WorldLabelPlacement.AboveStreetFace", source);
         Assert.Contains("WorldTilePlacement.TileCenter", source);
@@ -77,6 +84,12 @@ public sealed class WorldStageBootTests
         Assert.Contains("WorldPropPlacement.MailboxFlagOffset", source);
         Assert.Contains("Name = \"Roof\"", source);
         Assert.Contains("Name = \"Flag\"", source);
+        Assert.Contains("#3D6B2E", source);
+        Assert.Contains("0.24f, 0.42f, 0.18f", source);
+        Assert.Contains("#593D24", source);
+        Assert.Contains("IsMarkerVisible", source);
+        Assert.Contains("HarvestRemnant.Stump", source);
+        Assert.Contains("RemoveResourceMarker", source);
         Assert.DoesNotContain("new Color(0.55f, 0.28f, 0.22f)", source);
         Assert.DoesNotContain("new Color(0.72f, 0.62f, 0.28f)", source);
         Assert.DoesNotContain("new Color(0.95f, 0.82f, 0.2f)", source);

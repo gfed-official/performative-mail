@@ -107,4 +107,23 @@ public static class HarvestTable
             return spec.YieldPerHit / 2;
         return spec.YieldPerHit;
     }
+
+    public static bool TryToolForItem(string itemId, out HarvestTool tool)
+    {
+        switch (itemId)
+        {
+            case "axe":
+                tool = HarvestTool.Axe;
+                return true;
+            case "pickaxe":
+                tool = HarvestTool.Pickaxe;
+                return true;
+            case "shovel":
+                tool = HarvestTool.Shovel;
+                return true;
+            default:
+                tool = HarvestTool.Hand;
+                return false;
+        }
+    }
 }

@@ -12,6 +12,7 @@ public sealed class MainPlayBootTests
         Assert.Contains("BindOverlay(overlay)", render);
         Assert.DoesNotContain("_overlay.IsOpen && playing.Overlay", render);
         Assert.Contains("_world.Sync(playing.World)", render);
+        Assert.Contains("_world.SyncHarvest(playing.Resources)", render);
         Assert.Contains("HudFrame.SameDisplay", MethodBody(ReadMain(), "BindHud"));
         Assert.Contains("CompassFrame.SameDisplay", ReadMain());
         Assert.Contains("replica.Stamp()", MethodBody(ReadMain(), "BindOverlay"));
@@ -94,7 +95,10 @@ public sealed class MainPlayBootTests
         Assert.DoesNotContain("PhaseOverlayBoot", ready);
         Assert.DoesNotContain("BindDebug", ready);
         Assert.DoesNotContain("DebugBoot", ready);
+        Assert.DoesNotContain("BindMap", ready);
+        Assert.DoesNotContain("MapBoot", ready);
         Assert.Contains("BindOverlay", ready);
+        Assert.Contains("BuildMap", ready);
         Assert.Contains("performative-mail boot ok", ready);
     }
 
@@ -107,6 +111,19 @@ public sealed class MainPlayBootTests
         Assert.Contains("CompassBoot.Placeholder()", inspect);
         Assert.Contains("BindOverlay", inspect);
         Assert.Contains("BindCompass", inspect);
+    }
+
+    [Fact]
+    public void InspectMap_UsesMapBootNotHudPlaceholder()
+    {
+        var inspect = MethodBody(ReadMain(), "InspectMap");
+        Assert.Contains("MapBoot.Tables()", inspect);
+        Assert.Contains("MapBoot.Overlay()", inspect);
+        Assert.Contains("ToggleChip(\"mail\")", inspect);
+        Assert.Contains("TryPlacePing(MapBoot.PingTile, 0)", inspect);
+        Assert.Contains("MAP_DUMP_END", inspect);
+        Assert.DoesNotContain("HudBoot.Placeholder", inspect);
+        Assert.DoesNotContain("BindHud", inspect);
     }
 
     [Fact]
@@ -192,6 +209,7 @@ public sealed class MainPlayBootTests
     {
         var body = MethodBody(ReadMain(), "_PhysicsProcess");
         Assert.Contains("PollPause", body);
+        Assert.Contains("PollMapToggle", body);
         Assert.Contains("InputSampler.Sample", body);
     }
 
@@ -228,7 +246,9 @@ public sealed class MainPlayBootTests
         Assert.DoesNotContain("ApplyFirstPersonCamera", ReadMain());
         Assert.Contains("BindHud(playing.Hud)", render);
         Assert.Contains("BindCompass(playing)", render);
+        Assert.Contains("BindMap(playing)", render);
         Assert.Contains("_world.Sync(playing.World)", render);
+        Assert.Contains("_world.SyncHarvest(playing.Resources)", render);
         Assert.DoesNotContain("0f, 9f, 8f", ReadMain());
         Assert.DoesNotContain("_leave", ReadMain());
         Assert.Contains("ShowMenuChrome(true)", render);
@@ -315,6 +335,18 @@ public sealed class MainPlayBootTests
     }
 
     [Fact]
+    public void MaybeFinish_WritesLiveMapDumpOnPlayingQuit()
+    {
+        var finish = MethodBody(ReadMain(), "MaybeFinish");
+        Assert.Contains("_mapDumpPath", finish);
+        Assert.Contains("Dump(\"live\")", finish);
+        Assert.Contains("MAP_DUMP_END", finish);
+        Assert.Contains("PlaySession.Playing", finish);
+        Assert.DoesNotContain("MapBoot", finish);
+        Assert.DoesNotContain("InspectMap", finish);
+    }
+
+    [Fact]
     public void PhysicsProcess_AppliesDebugHelperAfterPump()
     {
         var body = MethodBody(ReadMain(), "_PhysicsProcess");
@@ -326,6 +358,8 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryTeleportToMailbox", helper);
         Assert.Contains("TryGiveMail", helper);
         Assert.Contains("TryOpenLiveOverlay", helper);
+        Assert.Contains("\"map\"", helper);
+        Assert.Contains("TryOpenLiveMap", helper);
         Assert.Contains("\"interact\"", helper);
         Assert.Contains("TryStepInteractSmoke", helper);
         Assert.Contains("\"live-overlay\"", helper);
@@ -338,6 +372,7 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryStepInteractSmoke", main);
         Assert.Contains("TryStepLiveOverlay", main);
         Assert.Contains("TryStepLeaveSmoke", main);
+        Assert.Contains("TryOpenLiveMap", main);
         Assert.Contains("using PerformativeMail.Sim.Inventory;", main);
     }
 

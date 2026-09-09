@@ -41,6 +41,7 @@ Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4
 - `boot` boots the main scene headless and asserts the C# `_Ready` marker.
 - `hud` binds HudFrame and reads Control text.
 - `overlay` opens InventoryOverlay and reads cell text.
+- `map` opens the Map Control from `WorldTables` and reads district/street layers, filter chips, and a placed ping.
 - `lobby` binds LobbyFrame and reads Control text.
 - `overlays` binds payday, draft, and results frames and reads Control text.
 - `debug` opens DebugMenu and reads inspect and cheat labels.
@@ -52,6 +53,7 @@ Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4
 - `interact` runs `--host --debug-world --debug-helper=interact`. It stocks Intake, teleports, holds Interact through pickup and mailbox deliver, and asserts SmokeReport `wallet` is `8`.
 - `live-overlay` runs `--host --debug-world --debug-helper=live-overlay` with `--overlay-dump=`. It picks up Intake mail, opens the inventory overlay on the Playing replica, and asserts live hotbar cell text, not the OverlayBootReplica placeholder.
 - `live-hud` runs `--host --debug-world --report= --hud-dump=`. It asserts HUD Control text came from Playing / `HudSnapshot` (phase PREP, shift, timer matching the replica), not `HudBoot.Placeholder`.
+- `live-map` runs `--host --debug-world --debug-helper=map` with `--map-dump=`. It opens the Map Control on the Playing `WorldTables` (M path) and asserts district/street layers plus filter chips from Debug Lane, not MapBoot placeholder streets.
 - `leave` runs `--host --debug-world --debug-helper=leave`. It opens pause (`OpenPause`, same path as Esc), activates Leave then confirm, and asserts SmokeReport `state` is `Menu`. Host/Join chrome is shown again on the Menu render.
 
 `all` runs every command above. `all` is the default when you omit the argument. The command list and the steps to add a Control-text smoke are in [`tools/godot/README.md`](tools/godot/README.md).

@@ -25,10 +25,11 @@ public static class ArcadeSession
     {
         ulong hash = WorldHash.Compute(tables);
         var atlas = WorldAtlas.FromTables(tables);
-        var bundle = ContentBoot.Load(out _, out var catalog);
+        var bundle = ContentBoot.Load(out var ids, out var catalog);
         var world = new SimWorld(atlas, catalog, unchecked((int)settings.Seed));
         if (world.Mail is null)
             throw new InvalidOperationException("Arcade world has no mail registry.");
+        world.Harvest = new HarvestSession(tables.ResourceNodes, world.Inventory, default, ids.Items);
 
         var destinations = new Destinations(world.Mail);
         for (int i = 0; i < tables.Houses.Length; i++)
@@ -48,6 +49,7 @@ public static class ArcadeSession
             tables,
             bundle.Balance,
             destinations,
-            clock);
+            clock,
+            ids.Items);
     }
 }

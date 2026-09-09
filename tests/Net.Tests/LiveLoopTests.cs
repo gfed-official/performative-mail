@@ -173,6 +173,110 @@ public sealed class LiveLoopTests
     }
 
     [Fact]
+    public void Host_ResourceViews_MatchTableNodes()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        Pump(host, ref now, 8);
+
+        var play = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.NotNull(play.World);
+        Assert.NotEmpty(play.World.ResourceNodes);
+        Assert.Equal(play.World.ResourceNodes.Length, play.Resources.Count);
+        for (int i = 0; i < play.World.ResourceNodes.Length; i++)
+        {
+            var placed = play.World.ResourceNodes[i];
+            var view = play.Resources[i];
+            Assert.Equal(placed.Kind, view.Kind);
+            Assert.Equal(placed.Tile, view.Tile);
+            Assert.Equal(HarvestRemnant.Live, view.Remnant);
+            Assert.Equal(HarvestTable.Of(placed.Kind).Hits, view.HitsLeft);
+        }
+    }
+
+    [Fact]
+    public void Interact_HandHarvest_WoodGrantsLogAndDropsHits()
+    {
+        var boot = ArcadeSession.Create();
+        ResourceNodeRecord? wood = null;
+        foreach (var node in boot.Tables.ResourceNodes)
+        {
+            if (node.Kind != ResourceKind.Wood)
+                continue;
+            wood = node;
+            break;
+        }
+
+        Assert.True(wood.HasValue);
+        Assert.NotNull(boot.World.Harvest);
+        Assert.NotNull(boot.ItemIds);
+        Assert.True(boot.ItemIds.TryGetValue("log", out var logId));
+
+        var loopback = new LoopbackTransport();
+        var server = new ServerRuntime(LoopbackLink.OverPipes(loopback.A), boot);
+        var client = new ClientRuntime(boot.World.Inventory!.Catalog);
+        client.Connect(loopback.B);
+        Handshake(server, client);
+
+        var player = client.LocalPlayer!.Value;
+        Assert.True(server.World.Players.TryGet(player, out var body));
+        PlaceAtTile(body, wood.Value.Tile, boot.Tables.TileCm);
+
+        Assert.True(server.TryHarvestPrompt(player, out var label));
+        Assert.Equal("Wood", label);
+        Assert.True(boot.World.Harvest.TryGet(wood.Value.Tile, out var before));
+        Assert.Equal(5, before.HitsLeft);
+
+        HoldInteract(server, client, 1);
+
+        Assert.True(boot.World.Harvest.TryGet(wood.Value.Tile, out var after));
+        Assert.Equal(4, after.HitsLeft);
+        Assert.Equal(HarvestRemnant.Live, after.Remnant);
+        Assert.True(InventoryHasItem(server, logId));
+    }
+
+    [Fact]
+    public void Interact_HandHarvest_FiveHitsLeaveStump()
+    {
+        var boot = ArcadeSession.Create();
+        ResourceNodeRecord? wood = null;
+        foreach (var node in boot.Tables.ResourceNodes)
+        {
+            if (node.Kind != ResourceKind.Wood)
+                continue;
+            wood = node;
+            break;
+        }
+
+        Assert.True(wood.HasValue);
+        var loopback = new LoopbackTransport();
+        var server = new ServerRuntime(LoopbackLink.OverPipes(loopback.A), boot);
+        var client = new ClientRuntime(boot.World.Inventory!.Catalog);
+        client.Connect(loopback.B);
+        Handshake(server, client);
+
+        var player = client.LocalPlayer!.Value;
+        Assert.True(server.World.Players.TryGet(player, out var body));
+        PlaceAtTile(body, wood.Value.Tile, boot.Tables.TileCm);
+
+        for (int i = 0; i < 5; i++)
+        {
+            HoldInteract(server, client, 1);
+            ReleaseInteract(server, client);
+        }
+
+        Assert.True(boot.World.Harvest!.TryGet(wood.Value.Tile, out var state));
+        Assert.Equal(0, state.HitsLeft);
+        Assert.Equal(HarvestRemnant.Stump, state.Remnant);
+        Assert.True(WorldResourcePlacement.IsMarkerVisible(state.Remnant));
+        var exhausted = Assert.IsType<HarvestRejected>(
+            boot.World.Harvest.Hit(wood.Value.Tile, HarvestTool.Hand));
+        Assert.Equal(HarvestReject.Exhausted, exhausted.Reason);
+    }
+
+    [Fact]
     public void Host_ApproachIntakeWhileHoldingInteract_AcquiresMail()
     {
         var stack = new LoopbackStack();
@@ -277,6 +381,20 @@ public sealed class LiveLoopTests
                             return true;
                     }
                 }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool InventoryHasItem(ServerRuntime server, ItemDefId id)
+    {
+        foreach (var container in server.World.Inventory!.Containers)
+        {
+            foreach (var entry in container.Entries)
+            {
+                if (entry.Stack is ItemStack item && item.Item.Equals(id))
+                    return true;
             }
         }
 

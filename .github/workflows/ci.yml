@@ -97,6 +97,8 @@ jobs:
         run: bash tools/godot/ci.sh hud
       - name: Inventory overlay Control text inspect
         run: bash tools/godot/ci.sh overlay
+      - name: Map Control text inspect
+        run: bash tools/godot/ci.sh map
       - name: Lobby Control text inspect
         run: bash tools/godot/ci.sh lobby
       - name: Payday draft results Control text inspect
@@ -119,5 +121,7 @@ jobs:
         run: bash tools/godot/ci.sh live-overlay
       - name: Headless Host live HUD dump from Playing
         run: bash tools/godot/ci.sh live-hud
+      - name: Headless Host live map Control dump
+        run: bash tools/godot/ci.sh live-map
       - name: Headless Host pause Leave returns to Menu
         run: bash tools/godot/ci.sh leave

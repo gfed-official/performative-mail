@@ -640,13 +640,15 @@ public sealed class PlaySessionMachine : IDisposable
         if (client.Inventory is InventorySystem inv && LiveOverlay.TryFrom(inv, out var replica))
             overlay = replica;
 
+        var world = _live.Server?.Tables ?? client.GeneratedWorld;
         return new PlaySession.Playing(
             role,
             local,
             _pawns.Visible,
             ProjectHud(client, local),
-            _live.Server?.Tables ?? client.GeneratedWorld,
-            overlay);
+            world,
+            overlay,
+            ProjectResources(_live.Server, world));
     }
 
     private HudSnapshot ProjectHud(ClientRuntime client, EntityId local)
@@ -662,6 +664,8 @@ public sealed class PlaySessionMachine : IDisposable
                 interact = new InteractPrompt.Pickup(incoming);
             else if (server.TryInteractAddresses(local, out var held, out var target))
                 interact = new InteractPrompt.Deliver(held, target);
+            else if (server.TryHarvestPrompt(local, out var resource))
+                interact = new InteractPrompt.Harvest(resource);
             return new HudSnapshot(
                 phase,
                 shift,
@@ -718,6 +722,33 @@ public sealed class PlaySessionMachine : IDisposable
         if (bags.Backpack is not null)
             sum += bags.Backpack.WeightPoints;
         return sum;
+    }
+
+    private static ResourceNodeView[] ProjectResources(ServerRuntime? server, WorldTables? tables)
+    {
+        if (tables is null)
+            return Array.Empty<ResourceNodeView>();
+
+        var placed = tables.ResourceNodes;
+        var views = new ResourceNodeView[placed.Length];
+        var harvest = server?.World.Harvest;
+        for (int i = 0; i < placed.Length; i++)
+        {
+            var node = placed[i];
+            if (harvest is not null && harvest.TryGet(node.Tile, out var state))
+            {
+                views[i] = new ResourceNodeView(state.Kind, node.Tile, state.Remnant, state.HitsLeft);
+                continue;
+            }
+
+            views[i] = new ResourceNodeView(
+                node.Kind,
+                node.Tile,
+                HarvestRemnant.Live,
+                HarvestTable.Of(node.Kind).Hits);
+        }
+
+        return views;
     }
 
     private PlaySession Fail(FailReason reason)
