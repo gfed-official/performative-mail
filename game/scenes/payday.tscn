@@ -13,7 +13,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("1_payday")
 
-[node name="Margin" type="MarginContainer" parent="."]
+[node name="Center" type="CenterContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -21,22 +21,22 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 16
 
-[node name="Column" type="VBoxContainer" parent="Margin"]
+[node name="Card" type="PanelContainer" parent="Center"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Column" type="VBoxContainer" parent="Center/Card"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="EarnedLabel" type="Label" parent="Margin/Column"]
+[node name="EarnedLabel" type="Label" parent="Center/Card/Column"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 
-[node name="QuotaLabel" type="Label" parent="Margin/Column"]
+[node name="QuotaLabel" type="Label" parent="Center/Card/Column"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2

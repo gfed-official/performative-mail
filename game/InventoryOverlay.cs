@@ -12,8 +12,8 @@ public partial class InventoryOverlay : Control
     public const string LeftPath = "LeftColumn";
     public const string RightPath = "RightColumn";
 
-    private static readonly Color SlotIdle = new(0.16f, 0.18f, 0.22f, 0.92f);
-    private static readonly Color SlotSelected = new(0.35f, 0.48f, 0.30f, 0.95f);
+    private static readonly Color SlotIdle = PlayTheme.Border;
+    private static readonly Color SlotSelected = PlayTheme.Primary;
 
     private readonly Dictionary<string, Label> _cells = new();
     private readonly Dictionary<string, ColorRect> _slots = new();
@@ -131,6 +131,8 @@ public partial class InventoryOverlay : Control
         if (_left is { } left && _right is { } right)
             return (left, right);
 
+        PlayTheme.Apply(this);
+
         var dim = new ColorRect
         {
             Color = new Color(0.05f, 0.05f, 0.08f, 0.35f),
@@ -166,11 +168,16 @@ public partial class InventoryOverlay : Control
 
     private void AddGrid(VBoxContainer column, OverlayGrid grid)
     {
+        var card = new PanelContainer();
+        column.AddChild(card);
+
         var block = new VBoxContainer();
         block.AddThemeConstantOverride("separation", 4);
-        column.AddChild(block);
+        card.AddChild(block);
 
-        block.AddChild(new Label { Text = grid.Name });
+        var title = new Label { Text = grid.Name };
+        PlayTheme.ApplyMuted(title);
+        block.AddChild(title);
 
         var cells = new Godot.GridContainer { Columns = grid.Cols };
         cells.AddThemeConstantOverride("h_separation", 4);
