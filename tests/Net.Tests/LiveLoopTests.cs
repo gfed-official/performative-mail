@@ -266,7 +266,10 @@ public sealed class LiveLoopTests
         Assert.True(boot.World.Harvest!.TryGet(wood.Value.Tile, out var state));
         Assert.Equal(0, state.HitsLeft);
         Assert.Equal(HarvestRemnant.Stump, state.Remnant);
-        Assert.False(server.TryHarvestPrompt(player, out _));
+        Assert.True(WorldResourcePlacement.IsMarkerVisible(state.Remnant));
+        var exhausted = Assert.IsType<HarvestRejected>(
+            boot.World.Harvest.Hit(wood.Value.Tile, HarvestTool.Hand));
+        Assert.Equal(HarvestReject.Exhausted, exhausted.Reason);
     }
 
     [Fact]

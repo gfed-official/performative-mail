@@ -556,6 +556,18 @@ public sealed class ServerRuntime
             return;
         }
 
+        if (CanDeliver(body, bags.Hotbar))
+        {
+            int held = bags.HoldTicks + 1;
+            _bags[player.Value] = bags.WithHold(held);
+            if (held != InteractHoldTicks)
+                return;
+
+            TryDeliver(player, body, bags.Hotbar);
+            _bags[player.Value] = bags.ResetHold();
+            return;
+        }
+
         if (TryNearestResource(body, liveOnly: true, out var node, out _))
         {
             if (bags.HoldTicks == 0)
@@ -564,18 +576,6 @@ public sealed class ServerRuntime
             return;
         }
 
-        if (!CanDeliver(body, bags.Hotbar))
-        {
-            _bags[player.Value] = bags.ResetHold();
-            return;
-        }
-
-        int held = bags.HoldTicks + 1;
-        _bags[player.Value] = bags.WithHold(held);
-        if (held != InteractHoldTicks)
-            return;
-
-        TryDeliver(player, body, bags.Hotbar);
         _bags[player.Value] = bags.ResetHold();
     }
 
