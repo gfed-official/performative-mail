@@ -20,7 +20,11 @@ public partial class Lobby : Control
     private Label _players = null!;
     private bool _startEnabled;
 
-    public override void _Ready() => CacheNodes();
+    public override void _Ready()
+    {
+        PlayTheme.Apply(this);
+        CacheNodes();
+    }
 
     public void Bind(in LobbyFrame frame)
     {
@@ -62,6 +66,7 @@ public partial class Lobby : Control
     {
         if (_seed is not null)
             return;
+        PlayTheme.Apply(this);
         _seed = GetNode<Label>("%" + SeedPath);
         _archetype = GetNode<Label>("%" + ArchetypePath);
         _kit = GetNode<OptionButton>("%" + KitPath);

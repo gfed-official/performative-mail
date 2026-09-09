@@ -13,7 +13,11 @@ public partial class Draft : Control
     private Label _card2 = null!;
     private Label _card3 = null!;
 
-    public override void _Ready() => CacheNodes();
+    public override void _Ready()
+    {
+        PlayTheme.Apply(this);
+        CacheNodes();
+    }
 
     public void Bind(in DraftFrame frame)
     {
@@ -38,6 +42,7 @@ public partial class Draft : Control
     {
         if (_card1 is not null)
             return;
+        PlayTheme.Apply(this);
         _card1 = GetNode<Label>("%" + Card1Path);
         _card2 = GetNode<Label>("%" + Card2Path);
         _card3 = GetNode<Label>("%" + Card3Path);

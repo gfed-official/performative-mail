@@ -50,6 +50,47 @@ public sealed class PlayThemeSourceTests
         Assert.DoesNotContain("0.12f, 0.13f, 0.16f", hud);
     }
 
+    [Theory]
+    [InlineData("Lobby.cs")]
+    [InlineData("Draft.cs")]
+    [InlineData("Payday.cs")]
+    [InlineData("Results.cs")]
+    [InlineData("InventoryOverlay.cs")]
+    public void PlayScreens_ApplyPlayTheme(string file)
+    {
+        string source = ReadGame(file);
+        Assert.Contains("PlayTheme.Apply(this)", source);
+        Assert.DoesNotContain("0.12f, 0.13f, 0.16f", source);
+        Assert.DoesNotContain("new StyleBoxFlat", source);
+    }
+
+    [Theory]
+    [InlineData("lobby.tscn")]
+    [InlineData("draft.tscn")]
+    [InlineData("payday.tscn")]
+    [InlineData("results.tscn")]
+    public void PlayScenes_UsePanelContainerCards(string file)
+    {
+        string scene = ReadScene(file);
+        Assert.Contains("type=\"PanelContainer\"", scene);
+        Assert.DoesNotContain("theme_override_styles", scene);
+        Assert.DoesNotContain("StyleBoxFlat", scene);
+    }
+
+    [Fact]
+    public void InventoryOverlay_UsesPlayThemeSlotColours()
+    {
+        string overlay = ReadGame("InventoryOverlay.cs");
+        Assert.Contains("PlayTheme.Apply(this)", overlay);
+        Assert.Contains("PlayTheme.ApplyMuted(title)", overlay);
+        Assert.Contains("PlayTheme.Border", overlay);
+        Assert.Contains("PlayTheme.Primary", overlay);
+        Assert.Contains("new PanelContainer()", overlay);
+        Assert.DoesNotContain("0.16f, 0.18f, 0.22f", overlay);
+        Assert.DoesNotContain("0.35f, 0.48f, 0.30f", overlay);
+        Assert.DoesNotContain("0.12f, 0.13f, 0.16f", overlay);
+    }
+
     [Fact]
     public void DebugMenu_KeepsUtilitarianStyle()
     {
@@ -77,5 +118,22 @@ public sealed class PlayThemeSourceTests
         }
 
         throw new FileNotFoundException("game/" + file);
+    }
+
+    private static string ReadScene(string file)
+    {
+        foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
+        {
+            var dir = new DirectoryInfo(Path.GetFullPath(start));
+            while (dir != null)
+            {
+                var candidate = Path.Combine(dir.FullName, "game", "scenes", file);
+                if (File.Exists(candidate))
+                    return File.ReadAllText(candidate);
+                dir = dir.Parent;
+            }
+        }
+
+        throw new FileNotFoundException("game/scenes/" + file);
     }
 }

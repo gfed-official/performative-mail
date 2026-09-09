@@ -26,37 +26,43 @@ theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 16
 
-[node name="Column" type="VBoxContainer" parent="Margin"]
+[node name="Card" type="PanelContainer" parent="Margin"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+mouse_filter = 2
+
+[node name="Column" type="VBoxContainer" parent="Margin/Card"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="PlayerList" type="Label" parent="Margin/Column"]
+[node name="PlayerList" type="Label" parent="Margin/Card/Column"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 
-[node name="ArchetypeLabel" type="Label" parent="Margin/Column"]
+[node name="ArchetypeLabel" type="Label" parent="Margin/Card/Column"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 
-[node name="SeedLabel" type="Label" parent="Margin/Column"]
+[node name="SeedLabel" type="Label" parent="Margin/Card/Column"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 
-[node name="KitDropdown" type="OptionButton" parent="Margin/Column"]
+[node name="KitDropdown" type="OptionButton" parent="Margin/Card/Column"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 
-[node name="ReadyLabel" type="Label" parent="Margin/Column"]
+[node name="ReadyLabel" type="Label" parent="Margin/Card/Column"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 
-[node name="StartLabel" type="Label" parent="Margin/Column"]
+[node name="StartLabel" type="Label" parent="Margin/Card/Column"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2

@@ -11,7 +11,11 @@ public partial class Payday : Control
     private Label _earned = null!;
     private Label _quota = null!;
 
-    public override void _Ready() => CacheNodes();
+    public override void _Ready()
+    {
+        PlayTheme.Apply(this);
+        CacheNodes();
+    }
 
     public void Bind(in PaydayFrame frame)
     {
@@ -34,6 +38,7 @@ public partial class Payday : Control
     {
         if (_earned is not null)
             return;
+        PlayTheme.Apply(this);
         _earned = GetNode<Label>("%" + EarnedPath);
         _quota = GetNode<Label>("%" + QuotaPath);
     }

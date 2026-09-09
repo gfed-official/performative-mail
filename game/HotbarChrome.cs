@@ -5,8 +5,8 @@ namespace PerformativeMail.Game;
 
 public static class HotbarChrome
 {
-    public static readonly Color SlotIdle = new(0.16f, 0.18f, 0.22f, 0.92f);
-    public static readonly Color SlotSelected = new(0.35f, 0.48f, 0.30f, 0.95f);
+    public static Color SlotIdle => PlayTheme.Border;
+    public static Color SlotSelected => PlayTheme.Primary;
     public static readonly Color LetterFill = new(0.97f, 0.95f, 0.87f);
     public static readonly Color PackageFill = new(0.75f, 0.48f, 0.24f);
     public static readonly Color ItemFill = new(0.24f, 0.49f, 1f);

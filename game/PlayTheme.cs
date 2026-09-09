@@ -37,17 +37,20 @@ public static class PlayTheme
 
         var normal = ButtonBox(Primary);
         var hover = ButtonBox(PrimaryHover);
-        theme.SetStylebox("normal", "Button", normal);
-        theme.SetStylebox("hover", "Button", hover);
-        theme.SetStylebox("pressed", "Button", hover);
-        theme.SetStylebox("focus", "Button", hover);
-        theme.SetStylebox("disabled", "Button", ButtonBox(new Color(Primary.R, Primary.G, Primary.B, 0.4f)));
-
-        theme.SetColor("font_color", "Button", Colors.White);
-        theme.SetColor("font_hover_color", "Button", Colors.White);
-        theme.SetColor("font_pressed_color", "Button", Colors.White);
-        theme.SetColor("font_focus_color", "Button", Colors.White);
-        theme.SetColor("font_disabled_color", "Button", new Color(1f, 1f, 1f, 0.55f));
+        var disabled = ButtonBox(new Color(Primary.R, Primary.G, Primary.B, 0.4f));
+        foreach (var type in new[] { "Button", "OptionButton" })
+        {
+            theme.SetStylebox("normal", type, normal);
+            theme.SetStylebox("hover", type, hover);
+            theme.SetStylebox("pressed", type, hover);
+            theme.SetStylebox("focus", type, hover);
+            theme.SetStylebox("disabled", type, disabled);
+            theme.SetColor("font_color", type, Colors.White);
+            theme.SetColor("font_hover_color", type, Colors.White);
+            theme.SetColor("font_pressed_color", type, Colors.White);
+            theme.SetColor("font_focus_color", type, Colors.White);
+            theme.SetColor("font_disabled_color", type, new Color(1f, 1f, 1f, 0.55f));
+        }
 
         theme.SetColor("font_color", "Label", Body);
         theme.AddType(MutedType);

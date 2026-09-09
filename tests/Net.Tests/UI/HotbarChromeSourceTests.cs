@@ -6,8 +6,8 @@ public sealed class HotbarChromeSourceTests
     public void PinsDistinctLetterAndPackagePlaceholders()
     {
         string chrome = ReadGame("HotbarChrome.cs");
-        Assert.Contains("SlotIdle = new(0.16f, 0.18f, 0.22f, 0.92f)", chrome);
-        Assert.Contains("SlotSelected = new(0.35f, 0.48f, 0.30f, 0.95f)", chrome);
+        Assert.Contains("SlotIdle => PlayTheme.Border", chrome);
+        Assert.Contains("SlotSelected => PlayTheme.Primary", chrome);
         Assert.Contains("LetterFill = new(0.97f, 0.95f, 0.87f)", chrome);
         Assert.Contains("PackageFill = new(0.75f, 0.48f, 0.24f)", chrome);
         Assert.Contains("28, 16", chrome);

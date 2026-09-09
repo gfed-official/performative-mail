@@ -11,7 +11,11 @@ public partial class Results : Control
     private Label _score = null!;
     private Label _seed = null!;
 
-    public override void _Ready() => CacheNodes();
+    public override void _Ready()
+    {
+        PlayTheme.Apply(this);
+        CacheNodes();
+    }
 
     public void Bind(in ResultsFrame frame)
     {
@@ -34,6 +38,7 @@ public partial class Results : Control
     {
         if (_score is not null)
             return;
+        PlayTheme.Apply(this);
         _score = GetNode<Label>("%" + ScorePath);
         _seed = GetNode<Label>("%" + SeedPath);
     }
