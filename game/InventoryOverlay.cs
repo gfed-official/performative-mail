@@ -200,7 +200,7 @@ public partial class InventoryOverlay : Control
                     Name = cellName,
                     Text = cell.Text,
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Bottom,
                     CustomMinimumSize = new Vector2(72, 40),
                     MouseFilter = MouseFilterEnum.Ignore,
                     Modulate = new Color(1f, 1f, 1f, cell.Opacity),
@@ -208,14 +208,25 @@ public partial class InventoryOverlay : Control
                 var slot = new ColorRect
                 {
                     Color = SlotIdle,
-                    CustomMinimumSize = new Vector2(76, 44),
+                    CustomMinimumSize = new Vector2(76, 48),
                     MouseFilter = MouseFilterEnum.Stop,
                     MouseDefaultCursorShape = CursorShape.PointingHand,
+                };
+                var icon = new ColorRect
+                {
+                    Name = CellName(grid.Name, x, y) + "_icon",
+                    Color = HotbarChrome.Fill(cell.Icon),
+                    CustomMinimumSize = HotbarChrome.Size(cell.Icon),
+                    MouseFilter = MouseFilterEnum.Ignore,
+                    Visible = cell.Icon != OverlayIcon.Empty,
+                    Modulate = new Color(1f, 1f, 1f, cell.Opacity),
                 };
                 byte cx = x;
                 byte cy = y;
                 string gridName = grid.Name;
                 slot.GuiInput += e => OnSlotInput(e, gridName, cx, cy);
+                slot.AddChild(icon);
+                PlaceIcon(icon, HotbarChrome.Size(cell.Icon));
                 if (DistrictPalette.HasSwatch(cell.District))
                 {
                     var chip = new ColorRect
@@ -261,7 +272,7 @@ public partial class InventoryOverlay : Control
                 if (i >= grid.Cells.Count)
                     return;
                 var cell = grid.Cells[i];
-                if (cell.Text.Length == 0 && !cell.Pending)
+                if (cell.Text.Length == 0 && !cell.Pending && cell.Icon == OverlayIcon.Empty)
                     continue;
                 dump.Append(grid.Name);
                 dump.Append('[');
@@ -276,6 +287,8 @@ public partial class InventoryOverlay : Control
                 dump.Append(cell.Pending ? "1" : "0");
                 dump.Append(" opacity=");
                 dump.Append(cell.Opacity.ToString("0.0", CultureInfo.InvariantCulture));
+                dump.Append(" icon=");
+                dump.Append(cell.IconKey);
                 if (DistrictPalette.HasSwatch(cell.District))
                 {
                     dump.Append(" district=");
@@ -308,6 +321,12 @@ public partial class InventoryOverlay : Control
                 continue;
             pair.Value.Color = pair.Key == _selected ? SlotSelected : SlotIdle;
         }
+    }
+
+    private static void PlaceIcon(ColorRect icon, Vector2 size)
+    {
+        icon.Position = new Vector2((76f - size.X) * 0.5f, 16f);
+        icon.Size = size;
     }
 
     private static void ClearColumn(VBoxContainer column)

@@ -30,6 +30,10 @@ public sealed class InventoryOverlaySourceTests
         Assert.Contains("CellPicked?.Invoke", overlay);
         Assert.Contains("SelectCell", overlay);
         Assert.Contains("MouseButton.Left", overlay);
+        Assert.Contains("PlayTheme.Border", overlay);
+        Assert.Contains("PlayTheme.Primary", overlay);
+        Assert.Contains("HotbarChrome.Fill(cell.Icon)", overlay);
+        Assert.Contains("icon=", overlay);
     }
 
     [Fact]

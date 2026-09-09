@@ -2,13 +2,24 @@ using System;
 using System.Collections.Generic;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
+using PerformativeMail.Sim.Mail;
 
 namespace PerformativeMail.Client.UI;
+
+public enum OverlayIcon : byte
+{
+    Empty,
+    Hands,
+    Letter,
+    Package,
+    Item,
+}
 
 public readonly record struct OverlayCell(
     string CountLabel,
     string AddressLabel,
     bool Pending,
+    OverlayIcon Icon = OverlayIcon.Empty,
     byte District = 0)
 {
     public const float ConfirmedOpacity = 1f;
@@ -27,6 +38,16 @@ public readonly record struct OverlayCell(
             return CountLabel + " " + AddressLabel;
         }
     }
+
+    public string IconKey => Icon switch
+    {
+        OverlayIcon.Empty => "empty",
+        OverlayIcon.Hands => "hands",
+        OverlayIcon.Letter => "letter",
+        OverlayIcon.Package => "package",
+        OverlayIcon.Item => "item",
+        _ => throw new ArgumentOutOfRangeException(nameof(Icon), Icon, null),
+    };
 
     public static string MiniAddress(AddressId address)
     {
@@ -70,7 +91,10 @@ public readonly record struct OverlayFrame(
                 var id = grid.EntryAt(new Cell(x, y));
                 if (id.IsNone || !grid.TryGetEntry(id, out var entry))
                 {
-                    cells[i++] = new OverlayCell("", "", false);
+                    var empty = name == "hotbar" && x == 0 && y == 0
+                        ? OverlayIcon.Hands
+                        : OverlayIcon.Empty;
+                    cells[i++] = new OverlayCell("", "", false, empty);
                     continue;
                 }
 
@@ -83,10 +107,25 @@ public readonly record struct OverlayFrame(
                     district = mail.Address.District;
                 }
 
-                cells[i++] = new OverlayCell(count, address, pending.Contains(entry.Id), district);
+                cells[i++] = new OverlayCell(
+                    count,
+                    address,
+                    pending.Contains(entry.Id),
+                    IconOf(entry.Stack),
+                    district);
             }
         }
 
         return new OverlayGrid(name, cols, rows, cells);
     }
+
+    private static OverlayIcon IconOf(Stack stack) => stack switch
+    {
+        MailStack mail => IsFlatMail(mail.Kind) ? OverlayIcon.Letter : OverlayIcon.Package,
+        ItemStack => OverlayIcon.Item,
+        _ => throw new ArgumentOutOfRangeException(nameof(stack), stack, null),
+    };
+
+    private static bool IsFlatMail(MailKindId kind)
+        => kind.Equals(MailKinds.Letter) || kind.Equals(MailKinds.Postcard);
 }
