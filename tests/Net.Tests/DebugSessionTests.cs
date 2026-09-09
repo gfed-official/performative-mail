@@ -8,6 +8,7 @@ using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.Vehicles;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Net.Tests;
@@ -101,6 +102,34 @@ public sealed class DebugSessionTests
         Assert.Equal(3, CountBagItems(host));
         Assert.False(host.TryBuy("bp_pipes"));
         Assert.Equal(new Cents(920), host.Inspect().Wallet);
+    }
+
+    [Fact]
+    public void HostPrep_ShopBuy_Bike_SpawnsAndMounts()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        Pump(host, ref now, MoveIntent.Idle, 8);
+
+        Assert.True(host.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents)));
+        Assert.True(host.TryShop(out var shop));
+        Assert.Contains(shop.Rows, row => row.Id == "bike" && row.CanBuy);
+
+        Assert.True(host.TryBuy("bike"));
+        Assert.True(host.TryHostWorld(out var world, out var local));
+        Assert.Equal(1, world.Vehicles.Count);
+        Assert.True(world.Players.TryGet(local, out var body));
+        Assert.NotEqual(0u, body.VehicleId.Value);
+        Assert.Equal(new Cents(880), host.Inspect().Wallet);
+
+        Pump(host, ref now, MoveIntent.Idle, 4);
+        var play = Assert.IsType<PlaySession.Playing>(host.State);
+        var bike = Assert.Single(play.Vehicles);
+        Assert.Equal(VehicleKind.Bike, bike.Kind);
+        var pawn = Assert.Single(play.Pawns, p => p.Id == play.LocalPlayer);
+        Assert.Equal(pawn.Pose, bike.Pose);
     }
 
     [Fact]

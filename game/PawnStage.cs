@@ -17,18 +17,35 @@ public static class PawnTransform
     }
 }
 
+public static class VehicleTransform
+{
+    public static Transform3D Of(in PlayerPose pose)
+    {
+        var view = ViewFrame.From(in pose);
+        var toward = new Vector3(-MathF.Sin(view.YawRadians), 0f, -MathF.Cos(view.YawRadians));
+        var basis = toward.LengthSquared() < 1e-8f
+            ? Basis.Identity
+            : Basis.LookingAt(toward, Vector3.Up, useModelFront: true);
+        return new Transform3D(basis, new Vector3(view.X, view.Y, view.Z));
+    }
+}
+
 public partial class PawnStage : Node3D
 {
     public const string CameraName = "Camera";
     public const string BodyName = "Body";
     public const string LabelName = "Label";
     public const string HeldMailName = "HeldMail";
+    public const string VehiclePrefix = "Vehicle_";
     public const int LabelOutlineSize = 8;
     public const float LabelPixelSize = 0.01f;
 
     private readonly Dictionary<uint, PawnVisual> _nodes = new();
+    private readonly Dictionary<uint, VehicleVisual> _vehicles = new();
     private readonly HashSet<uint> _seen = new();
+    private readonly HashSet<uint> _vehicleSeen = new();
     private readonly List<uint> _stale = new();
+    private readonly List<uint> _vehicleStale = new();
 
     public void Sync(
         IReadOnlyList<PawnView> pawns,
@@ -88,13 +105,58 @@ public partial class PawnStage : Node3D
         }
     }
 
+    public void SyncVehicles(IReadOnlyList<VehicleView> vehicles)
+    {
+        _vehicleSeen.Clear();
+        for (int i = 0; i < vehicles.Count; i++)
+        {
+            var view = vehicles[i];
+            _vehicleSeen.Add(view.Id.Value);
+            if (!_vehicles.TryGetValue(view.Id.Value, out var visual))
+            {
+                visual = SpawnVehicle(view);
+                AddChild(visual.Root);
+                _vehicles.Add(view.Id.Value, visual);
+            }
+
+            var pose = view.Pose;
+            if (visual.Pose.Equals(pose))
+                continue;
+            visual.Root.Transform = VehicleTransform.Of(in pose);
+            visual.Pose = pose;
+        }
+
+        if (_vehicles.Count == _vehicleSeen.Count)
+            return;
+
+        _vehicleStale.Clear();
+        foreach (var id in _vehicles.Keys)
+        {
+            if (!_vehicleSeen.Contains(id))
+                _vehicleStale.Add(id);
+        }
+
+        for (int i = 0; i < _vehicleStale.Count; i++)
+        {
+            _vehicles[_vehicleStale[i]].Root.QueueFree();
+            _vehicles.Remove(_vehicleStale[i]);
+        }
+    }
+
     public void DespawnAll()
     {
-        if (_nodes.Count == 0)
+        if (_nodes.Count != 0)
+        {
+            foreach (var visual in _nodes.Values)
+                visual.Root.QueueFree();
+            _nodes.Clear();
+        }
+
+        if (_vehicles.Count == 0)
             return;
-        foreach (var visual in _nodes.Values)
+        foreach (var visual in _vehicles.Values)
             visual.Root.QueueFree();
-        _nodes.Clear();
+        _vehicles.Clear();
     }
 
     private static PawnVisual Spawn(PawnView pawn)
@@ -193,6 +255,29 @@ public partial class PawnStage : Node3D
         held.SetMeta("district", district);
     }
 
+    private static VehicleVisual SpawnVehicle(VehicleView view)
+    {
+        var root = new Node3D { Name = VehiclePrefix + view.Id.Value };
+        var mesh = ArtMesh.TryInstantiate(ArtMesh.PathForVehicle(view.Kind));
+        if (mesh is not null)
+            root.AddChild(mesh);
+        else
+        {
+            root.AddChild(new MeshInstance3D
+            {
+                Mesh = new BoxMesh { Size = new Vector3(0.45f, 1.05f, 1.7f) },
+                MaterialOverride = new StandardMaterial3D
+                {
+                    AlbedoColor = new Color(0.18f, 0.23f, 0.55f), // #2F3A8C
+                },
+                Position = new Vector3(0f, 0.525f, 0f),
+            });
+        }
+
+        root.Transform = VehicleTransform.Of(in view.Pose);
+        return new VehicleVisual(root, view.Pose);
+    }
+
     private sealed class PawnVisual
     {
         public PawnVisual(Node3D root, Node3D body, Label3D label, Camera3D camera, PlayerPose pose)
@@ -210,5 +295,17 @@ public partial class PawnStage : Node3D
         public Camera3D Camera { get; }
         public PlayerPose Pose { get; set; }
         public Node3D? HeldMail { get; set; }
+    }
+
+    private sealed class VehicleVisual
+    {
+        public VehicleVisual(Node3D root, PlayerPose pose)
+        {
+            Root = root;
+            Pose = pose;
+        }
+
+        public Node3D Root { get; }
+        public PlayerPose Pose { get; set; }
     }
 }

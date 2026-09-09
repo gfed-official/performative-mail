@@ -23,6 +23,7 @@ public sealed class ArtMeshBootTests
         Assert.Contains("res://art/world/grass_tile_01.glb", source);
         Assert.Contains("res://art/props/crate_01.glb", source);
         Assert.Contains("res://art/props/cart_01.glb", source);
+        Assert.Contains("res://art/props/bike_01.glb", source);
         Assert.Contains("res://art/world/resource_wood_01.glb", source);
         Assert.Contains("res://art/world/resource_wood_stump_01.glb", source);
         Assert.Contains("res://art/world/resource_fiber_01.glb", source);
@@ -32,6 +33,8 @@ public sealed class ArtMeshBootTests
         Assert.Contains("res://art/world/resource_berries_01.glb", source);
         Assert.Contains("TryMesh", source);
         Assert.Contains("PathForProp", source);
+        Assert.Contains("PathForVehicle", source);
+        Assert.Contains("VehicleKind.Bike", source);
         Assert.Contains("PathForResource", source);
         Assert.Contains("mat_pawn_vest", source);
         Assert.Contains("mat_pawn_hat", source);
@@ -76,6 +79,7 @@ public sealed class ArtMeshBootTests
         Assert.True(File.Exists(Path.Combine(art, "world", "grass_tile_01.glb")));
         Assert.True(File.Exists(Path.Combine(art, "props", "crate_01.glb")));
         Assert.True(File.Exists(Path.Combine(art, "props", "cart_01.glb")));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "bike_01.glb"));
     }
 
     private static string ReadGame(string fileName)
