@@ -95,6 +95,14 @@ public sealed class ClientRuntime
         Connection.Send(InputChannel, WireCodec.Encode(new Ping(stamp)));
     }
 
+    public void SendPlaceConstruct(in PlaceConstructRequest request)
+    {
+        if (Connection is null)
+            return;
+
+        Connection.Send(NetChannels.Reliable, ConstructCodec.Encode(request));
+    }
+
     public void SubmitInput(in InputCmd cmd)
     {
         var stamped = new InputCmd(ServerTickEstimate, cmd.AxisX, cmd.AxisY, cmd.Yaw, cmd.Buttons);

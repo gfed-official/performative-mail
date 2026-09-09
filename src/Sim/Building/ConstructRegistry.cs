@@ -128,6 +128,25 @@ public sealed class ConstructRegistry
     public bool TryGetBuilding(string id, out BuildingDef building) =>
         _buildings.TryGetValue(id, out building);
 
+    public bool TryGetAt(TileCoord tile, out ConstructRecord record)
+    {
+        record = default;
+        return _at.TryGetValue(tile, out var id) && _byId.TryGetValue(id.Value, out record);
+    }
+
+    public PlaceReject? Preview(
+        string buildingId,
+        TileCoord tile,
+        Facing rotation,
+        ContainerId? consumeFrom = null)
+    {
+        if (Validate(buildingId, tile, rotation, out var recipe, out _, out _) is PlaceReject reject)
+            return reject;
+        if (!TryInputs(recipe, consumeFrom ?? _from, consume: false, out var input))
+            return input;
+        return null;
+    }
+
     public PlaceResult TryPlace(
         string buildingId,
         TileCoord tile,
@@ -135,30 +154,12 @@ public sealed class ConstructRegistry
         EntityId owner = default,
         ContainerId? consumeFrom = null)
     {
-        if (!_buildings.TryGetValue(buildingId, out var building))
-            return new PlaceRejected(PlaceReject.UnknownBuilding);
-        if (!_recipes.TryGetValue(building.Recipe, out var recipe))
-            return new PlaceRejected(PlaceReject.UnknownRecipe);
+        if (Validate(buildingId, tile, rotation, out var recipe, out var building, out var planned) is PlaceReject reject)
+            return new PlaceRejected(reject);
 
         var covered = Covered(building, tile, rotation);
-        for (int i = 0; i < covered.Length; i++)
-        {
-            var at = covered[i];
-            if (!_field.InBounds(at))
-                return new PlaceRejected(PlaceReject.OutOfBounds);
-            if (building.OnWater == WaterPlacement.None && _field.IsWater(at))
-                return new PlaceRejected(PlaceReject.Water);
-            if (!building.OnStreet && _field.IsStreet(at))
-                return new PlaceRejected(PlaceReject.Street);
-            if (_at.ContainsKey(at))
-                return new PlaceRejected(PlaceReject.Occupied);
-        }
-
-        if (!_field.TryPlanFlatten(covered, out var planned))
-            return new PlaceRejected(PlaceReject.Slope);
-
-        if (!TryConsume(recipe, consumeFrom ?? _from, out var reject))
-            return new PlaceRejected(reject);
+        if (!TryInputs(recipe, consumeFrom ?? _from, consume: true, out var input))
+            return new PlaceRejected(input);
 
         _field.ApplyFlatten(planned);
         for (int i = 0; i < planned.Length; i++)
@@ -338,7 +339,42 @@ public sealed class ConstructRegistry
         return true;
     }
 
-    private bool TryConsume(RecipeDef recipe, ContainerId from, out PlaceReject reject)
+    private PlaceReject? Validate(
+        string buildingId,
+        TileCoord tile,
+        Facing rotation,
+        out RecipeDef recipe,
+        out BuildingDef building,
+        out FlattenedTile[] planned)
+    {
+        recipe = null!;
+        building = null!;
+        planned = Array.Empty<FlattenedTile>();
+        if (!_buildings.TryGetValue(buildingId, out building))
+            return PlaceReject.UnknownBuilding;
+        if (!_recipes.TryGetValue(building.Recipe, out recipe))
+            return PlaceReject.UnknownRecipe;
+
+        var covered = Covered(building, tile, rotation);
+        for (int i = 0; i < covered.Length; i++)
+        {
+            var at = covered[i];
+            if (!_field.InBounds(at))
+                return PlaceReject.OutOfBounds;
+            if (building.OnWater == WaterPlacement.None && _field.IsWater(at))
+                return PlaceReject.Water;
+            if (!building.OnStreet && _field.IsStreet(at))
+                return PlaceReject.Street;
+            if (_at.ContainsKey(at))
+                return PlaceReject.Occupied;
+        }
+
+        if (!_field.TryPlanFlatten(covered, out planned))
+            return PlaceReject.Slope;
+        return null;
+    }
+
+    private bool TryInputs(RecipeDef recipe, ContainerId from, bool consume, out PlaceReject reject)
     {
         if (_inventory is null)
         {
@@ -378,6 +414,12 @@ public sealed class ConstructRegistry
                 reject = PlaceReject.MissingInput;
                 return false;
             }
+        }
+
+        if (!consume)
+        {
+            reject = default;
+            return true;
         }
 
         for (int i = 0; i < takes.Count; i++)

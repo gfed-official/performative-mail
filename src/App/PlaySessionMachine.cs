@@ -2,6 +2,7 @@ using PerformativeMail.Client;
 using PerformativeMail.Client.UI;
 using PerformativeMail.Server;
 using PerformativeMail.Sim;
+using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
@@ -30,6 +31,9 @@ public sealed class PlaySessionMachine : IDisposable
     private byte _shopRolledShift;
     private RunPhase _shopRolledPhase;
     private bool _shopRolled;
+    private ContentBundle? _bundle;
+    private BuildModeState? _build;
+    private uint _placeReq;
 
     public PlaySessionMachine(INetworkStack stack, SessionOptions? options = null)
     {
@@ -47,6 +51,8 @@ public sealed class PlaySessionMachine : IDisposable
             return _spawns!;
         }
     }
+
+    public BuildModeState? Build => _build;
 
     public bool ClockPaused { get; private set; }
 
@@ -119,6 +125,7 @@ public sealed class PlaySessionMachine : IDisposable
     {
         ClockPaused = false;
         ResetShop();
+        _build?.Close();
         _live.Dispose();
         _live = Live.None.Instance;
         _pawns.Clear();
@@ -320,13 +327,124 @@ public sealed class PlaySessionMachine : IDisposable
         return true;
     }
 
+    public bool TryToggleBuild()
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+        EnsureBuild();
+        _build!.Toggle();
+        return true;
+    }
+
+    public bool TryOpenBuild()
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+        EnsureBuild();
+        _build!.Open();
+        return true;
+    }
+
+    public void CloseBuild() => _build?.Close();
+
+    public IReadOnlyList<ConstructRecord> PlacedConstructs()
+    {
+        if (_state is not PlaySession.Playing)
+            return Array.Empty<ConstructRecord>();
+        return _live.Client.Constructs?.All ?? Array.Empty<ConstructRecord>();
+    }
+
+    public bool TryGhost(TileCoord tile, out BuildGhostHint hint)
+    {
+        hint = default;
+        if (_build is not { IsOpen: true, SelectedId: { Length: > 0 } id })
+            return false;
+        if (!TryPreviewRegistry(out var constructs, out var bag))
+        {
+            hint = new BuildGhostHint(false, BuildRejectText.Of(PlaceReject.UnknownBuilding), tile);
+            return true;
+        }
+
+        if (TryHostPlaying(out var server, out var local) &&
+            server.World.Players.TryGet(local, out var body) &&
+            !InBuildRange(body.Xcm, body.Ycm, tile, constructs.TileCm))
+        {
+            hint = new BuildGhostHint(false, BuildRejectText.OutOfRange, tile);
+            return true;
+        }
+
+        var reject = constructs.Preview(id, tile, _build.Facing, bag);
+        hint = reject is PlaceReject reason
+            ? new BuildGhostHint(false, BuildRejectText.Of(reason), tile)
+            : new BuildGhostHint(true, "", tile);
+        return true;
+    }
+
+    public bool TryPipetteAt(TileCoord tile)
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+        EnsureBuild();
+        if (_live.Client.Constructs is ConstructRegistry client &&
+            client.TryGetAt(tile, out var row) &&
+            _build!.TryPipette(row.DefId))
+        {
+            _build.Open();
+            return true;
+        }
+
+        if (_live.Server?.World.Constructs is ConstructRegistry host &&
+            host.TryGetAt(tile, out var placed) &&
+            _build!.TryPipette(placed.DefId))
+        {
+            _build.Open();
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool TryPlaceAt(TileCoord tile)
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+        if (_build is not { IsOpen: true, SelectedId: { Length: > 0 } id })
+            return false;
+        if (TryGhost(tile, out var hint) && !hint.Valid)
+            return false;
+
+        var client = _live.Client;
+        if (client.Connection is null)
+            return false;
+
+        int before = PlacedConstructs().Count;
+        if (_live.Server?.World.Constructs is ConstructRegistry host)
+            before = host.Count;
+        client.SendPlaceConstruct(new PlaceConstructRequest(++_placeReq, id, tile.X, tile.Y, _build.Facing));
+        _live.Server?.TickOnce();
+        client.Receive();
+        int after = PlacedConstructs().Count;
+        if (_live.Server?.World.Constructs is ConstructRegistry placed)
+            after = placed.Count;
+        return after > before;
+    }
+
+    public bool TryAimTile(in PlayerPose pose, float pitchRadians, out TileCoord tile)
+    {
+        tile = default;
+        WorldTables? tables = _live.Server?.Tables ?? _live.Client.GeneratedWorld;
+        if (tables is null)
+            return false;
+        return BuildAim.TryTile(in pose, pitchRadians, tables.TileCm, tables.Width, tables.Height, out tile);
+    }
+
     private void EnsureContent()
     {
-        if (_catalog is not null && _ids is not null && _spawns is not null && _shopCatalog is not null)
+        if (_catalog is not null && _ids is not null && _spawns is not null && _bundle is not null && _shopCatalog is not null)
             return;
-        var bundle = ContentBoot.Load(out _ids, out _catalog);
-        _spawns = DebugSpawnCatalog.From(bundle, _ids);
-        _shopCatalog = bundle.Shop;
+        _bundle = ContentBoot.Load(out _ids, out _catalog);
+        _spawns = DebugSpawnCatalog.From(_bundle, _ids);
+        _shopCatalog = _bundle.Shop;
     }
 
     private bool TryEnsureShop(
@@ -379,6 +497,53 @@ public sealed class PlaySessionMachine : IDisposable
         _shopRolled = false;
         _shopRolledShift = 0;
         _shopRolledPhase = default;
+    }
+
+    private void EnsureBuild()
+    {
+        EnsureContent();
+        _build ??= new BuildModeState(_bundle!.Buildings);
+    }
+
+    private void AttachClientConstructs(ClientRuntime client, WorldTables? tables)
+    {
+        if (client.Constructs is not null || tables is null)
+            return;
+        EnsureContent();
+        client.Constructs = ConstructBoot.ForWorld(_bundle!, _ids!, tables, client.Inventory);
+    }
+
+    private bool TryPreviewRegistry(out ConstructRegistry constructs, out ContainerId bag)
+    {
+        constructs = null!;
+        bag = default;
+        if (TryHostPlaying(out var server, out _) &&
+            server.World.Constructs is ConstructRegistry host)
+        {
+            constructs = host;
+            if (server.World.Inventory is InventorySystem inventory)
+                TryBag(inventory, out bag);
+            return true;
+        }
+
+        if (_state is not PlaySession.Playing)
+            return false;
+        if (_live.Client.Constructs is not ConstructRegistry replica)
+            return false;
+        constructs = replica;
+        if (_live.Client.Inventory is InventorySystem clientInv)
+            TryBag(clientInv, out bag);
+        return true;
+    }
+
+    private static bool InBuildRange(int xcm, int ycm, TileCoord tile, int tileCm)
+    {
+        int half = tileCm / 2;
+        int x = tile.X * tileCm + half;
+        int y = tile.Y * tileCm + half;
+        long dx = xcm - x;
+        long dy = ycm - y;
+        return dx * dx + dy * dy <= (long)ServerRuntime.BuildRangeCm * ServerRuntime.BuildRangeCm;
     }
 
     private ContentStackCatalog Stacks()
@@ -727,6 +892,8 @@ public sealed class PlaySessionMachine : IDisposable
         if (client.LocalPlayer is not EntityId local)
             return Fail(new FailReason.HostLost());
 
+        AttachClientConstructs(client, _live.Server?.Tables ?? client.GeneratedWorld);
+
         OverlayReplica? overlay = null;
         if (client.Inventory is InventorySystem inv && LiveOverlay.TryFrom(inv, out var replica))
             overlay = replica;
@@ -864,6 +1031,7 @@ public sealed class PlaySessionMachine : IDisposable
     {
         ClockPaused = false;
         ResetShop();
+        _build?.Close();
         _live.Dispose();
         _live = Live.None.Instance;
         _pawns.Clear();

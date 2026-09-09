@@ -229,7 +229,11 @@ public sealed class MainPlayBootTests
         Assert.Contains("PollPause", body);
         Assert.Contains("PollMapToggle", body);
         Assert.Contains("PollShopToggle", body);
+        Assert.Contains("PollBuild", body);
         Assert.Contains("InputSampler.Sample", body);
+        Assert.Contains("InputSampler.BuildHeld", MethodBody(ReadMain(), "PollBuild"));
+        Assert.Contains("TryPlaceAt", MethodBody(ReadMain(), "PollBuild"));
+        Assert.Contains("TryPipetteAt", MethodBody(ReadMain(), "PollBuild"));
     }
 
     [Fact]
@@ -321,6 +325,8 @@ public sealed class MainPlayBootTests
         Assert.Contains("\"--world-dump=\"", apply);
         Assert.Contains("\"--inspect-shop\"", apply);
         Assert.Contains("\"--shop-dump=\"", apply);
+        Assert.Contains("\"--inspect-build\"", apply);
+        Assert.Contains("\"--build-dump=\"", apply);
     }
 
     [Fact]
@@ -383,6 +389,31 @@ public sealed class MainPlayBootTests
     }
 
     [Fact]
+    public void MaybeFinish_WritesLiveBuildDumpOnPlayingQuit()
+    {
+        var finish = MethodBody(ReadMain(), "MaybeFinish");
+        Assert.Contains("_buildDumpPath", finish);
+        Assert.Contains("Dump(\"live\")", finish);
+        Assert.Contains("BUILD_DUMP_END", finish);
+        Assert.Contains("constructs=", finish);
+        Assert.Contains("PlaySession.Playing", finish);
+        Assert.DoesNotContain("InspectBuild", finish);
+    }
+
+    [Fact]
+    public void InspectBuild_BindsOpenStreetAndClosed()
+    {
+        var inspect = MethodBody(ReadMain(), "InspectBuild");
+        Assert.Contains("BuildModeState", inspect);
+        Assert.Contains("Dump(\"open\")", inspect);
+        Assert.Contains("PlaceReject.Street", inspect);
+        Assert.Contains("Dump(\"street\")", inspect);
+        Assert.Contains("Dump(\"closed\")", inspect);
+        Assert.Contains("BUILD_DUMP_END", inspect);
+        Assert.DoesNotContain("HudBoot.Placeholder", inspect);
+    }
+
+    [Fact]
     public void PhysicsProcess_AppliesDebugHelperAfterPump()
     {
         var body = MethodBody(ReadMain(), "_PhysicsProcess");
@@ -404,6 +435,8 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryStepLeaveSmoke", helper);
         Assert.Contains("\"shop\"", helper);
         Assert.Contains("TryStepShopSmoke", helper);
+        Assert.Contains("\"build\"", helper);
+        Assert.Contains("TryStepBuildSmoke", helper);
         var main = ReadMain();
         Assert.Contains("TryStockIntake", main);
         Assert.Contains("HasHeldMail", main);
@@ -412,6 +445,7 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryStepLeaveSmoke", main);
         Assert.Contains("TryOpenLiveMap", main);
         Assert.Contains("TryStepShopSmoke", main);
+        Assert.Contains("TryStepBuildSmoke", main);
         Assert.Contains("using PerformativeMail.Sim.Inventory;", main);
     }
 

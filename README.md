@@ -46,6 +46,7 @@ Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4
 - `overlays` binds payday, draft, and results frames and reads Control text.
 - `shop` binds ShopFrame from `content/shop/*` prices and reads Control text.
 - `debug` opens DebugMenu and reads inspect and cheat labels.
+- `build` binds the build-mode bar and reads category, selected building, and ghost reason text.
 - `join` runs a two-process LAN host and join on `127.0.0.1:7777`.
 - `play` runs a solo Host play report with the golden worldHash, HUD, and world entity counts listed in [`tools/godot/report.md`](tools/godot/report.md).
 - `debug-world` runs a solo Host play report with `--debug-world`. It asserts Playing, PREP, two houses, and debug worldHash `0x4CF184F2FA4D4EEE`.
@@ -56,6 +57,7 @@ Godot integration is tested in GitHub Actions inside `barichello/godot-ci:mono-4
 - `live-hud` runs `--host --debug-world --report= --hud-dump=`. It asserts HUD Control text came from Playing / `HudSnapshot` (phase PREP, shift, timer matching the replica), not `HudBoot.Placeholder`.
 - `live-map` runs `--host --debug-world --debug-helper=map` with `--map-dump=`. It opens the Map Control on the Playing `WorldTables` (M path) and asserts district/street layers plus filter chips from Debug Lane, not MapBoot placeholder streets.
 - `live-shop` runs `--host --debug-world --debug-helper=shop` with `--shop-dump=`. It credits the wallet, buys `bandage_x3` through `ShopSession`, opens the shop UI, and asserts catalog prices plus wallet `$9.20`.
+- `live-build` runs `--host --debug-world --debug-helper=build` with `--build-dump=`. It enters build mode, places `wall_wood` into `ConstructRegistry`, and asserts the live dump has `constructs=1`.
 - `leave` runs `--host --debug-world --debug-helper=leave`. It opens pause (`OpenPause`, same path as Esc), activates Leave then confirm, and asserts SmokeReport `state` is `Menu`. Host/Join chrome is shown again on the Menu render.
 
 `all` runs every command above. `all` is the default when you omit the argument. The command list and the steps to add a Control-text smoke are in [`tools/godot/README.md`](tools/godot/README.md).

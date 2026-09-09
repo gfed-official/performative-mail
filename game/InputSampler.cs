@@ -56,6 +56,38 @@ public static class InputSampler
         return false;
     }
 
+    public static bool BuildHeld()
+    {
+        if (Input.IsPhysicalKeyPressed(Key.B))
+            return true;
+
+        for (int id = 0; id < 8; id++)
+        {
+            if (Input.IsJoyButtonPressed(id, JoyButton.LeftShoulder))
+                return true;
+        }
+
+        return false;
+    }
+
+    public static bool RotateHeld()
+    {
+        if (Input.IsPhysicalKeyPressed(Key.R))
+            return true;
+
+        for (int id = 0; id < 8; id++)
+        {
+            if (Input.IsJoyButtonPressed(id, JoyButton.RightShoulder))
+                return true;
+        }
+
+        return false;
+    }
+
+    public static bool PipetteHeld() => Input.IsPhysicalKeyPressed(Key.Q);
+
+    public static bool PlaceHeld() => Input.IsMouseButtonPressed(MouseButton.Left);
+
     public static bool TryHotbarSlot(InputEvent @event, out int slot)
     {
         slot = -1;

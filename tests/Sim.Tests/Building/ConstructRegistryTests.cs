@@ -120,6 +120,39 @@ public sealed class ConstructRegistryTests
     }
 
     [Fact]
+    public void Preview_Street_DoesNotConsume()
+    {
+        var field = PlacementField.Flat(3, 3, 200).WithStreet(Origin);
+        var fx = Loaded(logs: 3, field);
+
+        Assert.Equal(PlaceReject.Street, fx.Registry.Preview("wall_wood", Origin, Facing.North));
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.Equal(3, CountLog(fx));
+    }
+
+    [Fact]
+    public void Preview_Valid_DoesNotConsumeOrRegister()
+    {
+        var fx = Loaded(logs: 3);
+
+        Assert.Null(fx.Registry.Preview("wall_wood", Origin, Facing.North));
+        Assert.Equal(0, fx.Registry.Count);
+        Assert.Equal(3, CountLog(fx));
+        Assert.IsType<Placed>(fx.Registry.TryPlace("wall_wood", Origin, Facing.North));
+        Assert.True(fx.Registry.TryGetAt(Origin, out var row));
+        Assert.Equal("wall_wood", row.DefId);
+    }
+
+    [Fact]
+    public void Preview_MissingInput_DoesNotRegister()
+    {
+        var fx = Loaded(logs: 0);
+
+        Assert.Equal(PlaceReject.MissingInput, fx.Registry.Preview("wall_wood", Origin, Facing.North));
+        Assert.Equal(0, fx.Registry.Count);
+    }
+
+    [Fact]
     public void Slope_AtOrAbove15Deg_FlattensAndPlaces()
     {
         var field = PlacementField.Flat(3, 3, 200, 100).WithHeight(new TileCoord(2, 1), 154);

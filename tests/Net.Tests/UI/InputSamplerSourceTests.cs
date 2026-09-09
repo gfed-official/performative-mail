@@ -18,6 +18,15 @@ public sealed class InputSamplerSourceTests
         Assert.Contains("MapHeld", source);
         Assert.Contains("Key.M", source);
         Assert.Contains("JoyButton.Back", source);
+        Assert.Contains("BuildHeld", source);
+        Assert.Contains("Key.B", source);
+        Assert.Contains("JoyButton.LeftShoulder", source);
+        Assert.Contains("RotateHeld", source);
+        Assert.Contains("Key.R", source);
+        Assert.Contains("PipetteHeld", source);
+        Assert.Contains("Key.Q", source);
+        Assert.Contains("PlaceHeld", source);
+        Assert.Contains("MouseButton.Left", source);
     }
 
     private static string ReadGame(string file)

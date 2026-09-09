@@ -145,6 +145,11 @@ shop_inspect() {
   SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-shop.sh" "$(mktemp)"
 }
 
+build_inspect() {
+  echo "==> build mode Control text inspect"
+  SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-build.sh" "$(mktemp)"
+}
+
 host_join_smoke() {
   echo "==> headless host/join smoke"
   local reports host_log guest_log host_pid
@@ -709,6 +714,40 @@ host_live_shop_smoke() {
   fi
 }
 
+host_live_build_smoke() {
+  echo "==> headless host build-mode place"
+  local report log dump
+  report="$(mktemp)"
+  log="$(mktemp)"
+  dump="$(mktemp)"
+  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+    --host --debug-world --debug-helper=build --quit-after-ms=8000 \
+    --report="$report" --build-dump="$dump" \
+    >"$log" 2>&1; then
+    cat "$log"
+    fail "host live-build process exited non-zero"
+  fi
+  if [[ ! -f "$report" ]]; then
+    cat "$log"
+    fail "host live-build did not write a report"
+  fi
+  if [[ ! -f "$dump" ]]; then
+    cat "$log"
+    fail "host live-build did not write a build dump"
+  fi
+  cat "$report"
+  echo
+  echo "---- $dump ----"
+  cat "$dump"
+  echo
+  grep -q '"state":"Playing"' "$report" || fail "host live-build report is not Playing: $(cat "$report")"
+  grep -q 'BUILD_DUMP case=live' "$dump" || fail "missing live build dump"
+  grep -Fqx "open=true" "$dump" || fail "live build dump is not open"
+  grep -Fqx "selected=wall_wood" "$dump" || fail "live build dump missing wall_wood"
+  grep -Fqx "constructs=1" "$dump" || fail "live build dump missing placed construct: $(cat "$dump")"
+  grep -q 'BUILD_DUMP_END' "$dump" || fail "missing BUILD_DUMP_END"
+}
+
 host_leave_smoke() {
   echo "==> headless host pause Leave returns to Menu"
   local report log
@@ -740,7 +779,7 @@ host_leave_smoke() {
 
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|shop|debug|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay|live-hud|live-map|live-shop|leave]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|shop|debug|build|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay|live-hud|live-map|live-shop|live-build|leave]
 
   verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import   godot --import + dotnet build of game/
@@ -752,6 +791,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|
   overlays bind payday, draft, and results frames and read Control text
   shop     bind ShopFrame from ShopBoot and read catalog prices
   debug    open DebugMenu from DebugBoot and read inspect/cheat labels
+  build    bind BuildBar and read category/choice/reason Control text
   join     two-process LAN host/join on 127.0.0.1:7777
   play     solo Host play report with golden worldHash and HUD
   debug-world solo Host --debug-world report (2 houses, hash 0x4CF184F2FA4D4EEE)
@@ -762,6 +802,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|
   live-hud solo Host --debug-world report plus live HUD dump (Playing / HudSnapshot, not Placeholder)
   live-map solo Host --debug-world --debug-helper=map plus --map-dump=; M-path map Control from WorldTables
   live-shop solo Host --debug-world --debug-helper=shop; give wallet, ShopSession buy, dump live catalog
+  live-build solo Host --debug-world --debug-helper=build; enter B-mode, place wall_wood, dump construct count
   leave    solo Host --debug-world --debug-helper=leave; Esc pause Leave confirm; SmokeReport state Menu
   all      all of the above (default)
 EOF
@@ -800,6 +841,9 @@ case "$cmd" in
   debug)
     debug_inspect
     ;;
+  build)
+    build_inspect
+    ;;
   join)
     host_join_smoke
     ;;
@@ -830,6 +874,9 @@ case "$cmd" in
   live-shop)
     host_live_shop_smoke
     ;;
+  live-build)
+    host_live_build_smoke
+    ;;
   leave)
     host_leave_smoke
     ;;
@@ -845,6 +892,7 @@ case "$cmd" in
     overlays_inspect
     shop_inspect
     debug_inspect
+    build_inspect
     host_join_smoke
     host_play_smoke
     host_debug_world_smoke
@@ -855,6 +903,7 @@ case "$cmd" in
     host_live_hud_smoke
     host_live_map_smoke
     host_live_shop_smoke
+    host_live_build_smoke
     host_leave_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;
