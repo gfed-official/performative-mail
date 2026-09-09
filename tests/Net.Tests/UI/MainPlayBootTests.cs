@@ -206,7 +206,12 @@ public sealed class MainPlayBootTests
     {
         var render = MethodBody(ReadMain(), "Render");
         Assert.Contains("ShowMenuChrome(false)", render);
-        Assert.Contains("_pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing))", render);
+        Assert.Contains(
+            "_pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing), HeldMailDistrict(playing))",
+            render);
+        Assert.Contains("HeldMailDistrict", ReadMain());
+        Assert.Contains("HeldMailStack", ReadMain());
+        Assert.Contains("Address.District", ReadMain());
         Assert.DoesNotContain("ApplyFirstPersonCamera", ReadMain());
         Assert.Contains("BindHud(playing.Hud)", render);
         Assert.Contains("_world.Sync(playing.World)", render);

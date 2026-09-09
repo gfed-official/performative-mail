@@ -27,6 +27,7 @@ public static class ArtMesh
 
     public const string PawnVestMaterial = "mat_pawn_vest";
     public const string PawnHatMaterial = "mat_pawn_hat";
+    public const string DistrictMaterial = "mat_district";
     public const float PostOfficeHeightMeters = 4.5f;
 
     private static readonly Dictionary<string, PackedScene> Packed = new();
@@ -177,6 +178,12 @@ public static class ArtMesh
             Tint(root, color, requireName: false, ref named);
     }
 
+    public static void ApplyDistrictColor(Node root, Color color)
+    {
+        int applied = 0;
+        TintNamed(root, DistrictMaterial, color, ref applied);
+    }
+
     private static MeshInstance3D? FindMeshInstance(Node node)
     {
         if (node is MeshInstance3D inst && inst.Mesh is not null)
@@ -283,11 +290,42 @@ public static class ArtMesh
             Tint(child, color, requireName, ref applied);
     }
 
+    private static void TintNamed(Node node, string slot, Color color, ref int applied)
+    {
+        if (node is MeshInstance3D mesh)
+        {
+            int surfaces = mesh.Mesh?.GetSurfaceCount() ?? 0;
+            for (int i = 0; i < surfaces; i++)
+            {
+                if (mesh.GetActiveMaterial(i) is not BaseMaterial3D mat)
+                    continue;
+                if (!IsNamedSlot(mat.ResourceName, slot)
+                    && !IsNamedSlot(mesh.Name, slot)
+                    && !IsNamedSlot(mesh.Mesh?.SurfaceGetMaterial(i)?.ResourceName, slot))
+                    continue;
+
+                var copy = (BaseMaterial3D)mat.Duplicate();
+                copy.AlbedoColor = color;
+                mesh.SetSurfaceOverrideMaterial(i, copy);
+                applied++;
+            }
+        }
+
+        foreach (var child in node.GetChildren())
+            TintNamed(child, slot, color, ref applied);
+    }
+
     private static bool IsKitSlot(string? name)
     {
         if (string.IsNullOrEmpty(name))
             return false;
         return name.Contains(PawnVestMaterial, StringComparison.OrdinalIgnoreCase)
             || name.Contains(PawnHatMaterial, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsNamedSlot(string? name, string slot)
+    {
+        return !string.IsNullOrEmpty(name)
+            && name.Contains(slot, StringComparison.OrdinalIgnoreCase);
     }
 }

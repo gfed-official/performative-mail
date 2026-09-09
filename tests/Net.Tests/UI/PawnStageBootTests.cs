@@ -13,6 +13,11 @@ public sealed class PawnStageBootTests
         Assert.Contains("ArtMesh.PawnRemote", source);
         Assert.Contains("ArtMesh.ApplyPawnKitColor", source);
         Assert.Contains("ArtMesh.PathForMail", source);
+        Assert.Contains("ArtMesh.ApplyDistrictColor", source);
+        Assert.Contains("DistrictSwatch.Of", source);
+        Assert.Contains("heldDistrict", source);
+        Assert.Contains("SetMeta(\"district\"", source);
+        Assert.Contains("sameArt && sameDistrict", source);
         Assert.Contains("HeldMailName", source);
         Assert.Contains("ViewFrame.From", source);
         Assert.Contains("camera.Current = local", source);
