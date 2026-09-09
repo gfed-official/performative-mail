@@ -18,15 +18,18 @@ public static class ArcadeSession
 
     public static ArcadeBoot CreateDebug()
     {
-        return Boot(DebugWorld.Tables(), RunSettings.Arcade());
+        return Boot(DebugWorld.Tables(), RunSettings.Arcade(), seedFactory: true);
     }
 
-    private static ArcadeBoot Boot(WorldTables tables, RunSettings settings)
+    private static ArcadeBoot Boot(WorldTables tables, RunSettings settings, bool seedFactory = false)
     {
         ulong hash = WorldHash.Compute(tables);
         var atlas = WorldAtlas.FromTables(tables);
         var bundle = ContentBoot.Load(out var ids, out var catalog);
         var world = new SimWorld(atlas, catalog, unchecked((int)settings.Seed));
+        world.Constructs = ConstructBoot.ForWorld(bundle, ids, tables, world.Inventory);
+        if (seedFactory)
+            DebugFactory.Seed(world);
         if (world.Mail is null)
             throw new InvalidOperationException("Arcade world has no mail registry.");
         world.Harvest = new HarvestSession(tables.ResourceNodes, world.Inventory, default, ids.Items);

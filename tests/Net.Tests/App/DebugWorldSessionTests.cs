@@ -49,6 +49,11 @@ public sealed class DebugWorldSessionTests
         Assert.Equal(DebugWorld.Hash, WorldHash.Compute(play.World));
         Assert.NotEqual(0x821670054873680EUL, WorldHash.Compute(play.World));
         Assert.Equal(SpawnRing.CentreOf(WorldAtlas.FromTables(play.World)), play.Pawns[0].Pose);
+        Assert.True(play.Constructs.Placed.Count >= 7);
+        Assert.Contains(play.Constructs.Placed, view => view.DefId == "wall_wood");
+        Assert.Contains(play.Constructs.Placed, view => view.DefId == "chest");
+        Assert.Contains(play.Constructs.Placed, view => view.DefId == "belt_mk1");
+        Assert.Contains(play.Constructs.Placed, view => view.DefId == "address_sorter_mk1");
     }
 
     [Fact]

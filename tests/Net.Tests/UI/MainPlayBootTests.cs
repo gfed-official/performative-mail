@@ -12,6 +12,7 @@ public sealed class MainPlayBootTests
         Assert.DoesNotContain("_overlay.IsOpen && playing.Overlay", render);
         Assert.Contains("_world.Sync(playing.World)", render);
         Assert.Contains("_world.SyncHarvest(playing.Resources)", render);
+        Assert.Contains("_constructs.Sync(playing.Constructs)", render);
         Assert.Contains("HudFrame.SameDisplay", MethodBody(ReadMain(), "BindHud"));
         Assert.Contains("replica.Stamp()", MethodBody(ReadMain(), "BindOverlay"));
         Assert.Contains("_hud.BindHotbar", MethodBody(ReadMain(), "BindOverlay"));
@@ -30,6 +31,7 @@ public sealed class MainPlayBootTests
         var build = MethodBody(ReadMain(), "BuildWorld");
         Assert.DoesNotContain("PlaneMesh", build);
         Assert.Contains("WorldStage", build);
+        Assert.Contains("ConstructStage", build);
     }
 
     [Fact]
@@ -243,6 +245,7 @@ public sealed class MainPlayBootTests
         Assert.Contains("BindMap(playing)", render);
         Assert.Contains("_world.Sync(playing.World)", render);
         Assert.Contains("_world.SyncHarvest(playing.Resources)", render);
+        Assert.Contains("_constructs.Sync(playing.Constructs)", render);
         Assert.DoesNotContain("0f, 9f, 8f", ReadMain());
         Assert.DoesNotContain("_leave", ReadMain());
         Assert.Contains("ShowMenuChrome(true)", render);
@@ -300,6 +303,7 @@ public sealed class MainPlayBootTests
         var finish = MethodBody(ReadMain(), "MaybeFinish");
         Assert.Contains("_worldDumpPath", finish);
         Assert.Contains("_world.Dump()", finish);
+        Assert.Contains("_constructs.Dump()", finish);
         Assert.Contains("PlaySession.Playing", finish);
     }
 

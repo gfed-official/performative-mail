@@ -52,7 +52,8 @@ public abstract record PlaySession
             in HudSnapshot hud,
             WorldTables? world,
             OverlayReplica? overlay,
-            IReadOnlyList<ResourceNodeView>? resources = null)
+            IReadOnlyList<ResourceNodeView>? resources = null,
+            ConstructFrame? constructs = null)
         {
             Role = role;
             LocalPlayer = localPlayer;
@@ -74,6 +75,7 @@ public abstract record PlaySession
                     harvested[i] = resources[i];
                 Resources = harvested;
             }
+            Constructs = constructs ?? ConstructFrame.Empty;
         }
 
         public SessionRole Role { get; }
@@ -89,6 +91,8 @@ public abstract record PlaySession
         public OverlayReplica? Overlay { get; }
 
         public IReadOnlyList<ResourceNodeView> Resources { get; }
+
+        public ConstructFrame Constructs { get; }
     }
 
     public sealed record Failed(FailReason Reason) : PlaySession;
