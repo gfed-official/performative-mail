@@ -18,5 +18,9 @@ public sealed class HudBootTests
         Assert.Equal("Quota 640 / 2214", frame.QuotaLabel);
         Assert.Equal("", frame.SurplusLabel);
         Assert.Equal("23", frame.ComplaintLabel);
+        Assert.Equal("HP 100", frame.HpLabel);
+        Assert.Equal(100, frame.HpPct);
+        Assert.Equal("Wt 0", frame.WeightLabel);
+        Assert.Equal(0, frame.WeightPoints);
     }
 }

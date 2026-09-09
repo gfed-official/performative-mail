@@ -20,7 +20,11 @@ public readonly record struct HudFrame(
     string ComplaintLabel,
     bool QuotaMet,
     int QuotaEarnings,
-    int QuotaTarget)
+    int QuotaTarget,
+    string HpLabel,
+    int HpPct,
+    string WeightLabel,
+    int WeightPoints)
 {
     public const int ShiftCount = 5;
     public const int AmberSeconds = 60;
@@ -45,6 +49,8 @@ public readonly record struct HudFrame(
         && a.Quota == b.Quota
         && a.Complaint == b.Complaint
         && a.Deadline == b.Deadline
+        && a.HpPct == b.HpPct
+        && a.WeightPoints == b.WeightPoints
         && RemainingSeconds(in a) == RemainingSeconds(in b)
         && Equals(a.Interact, b.Interact);
 
@@ -71,7 +77,11 @@ public readonly record struct HudFrame(
             snapshot.Complaint.ToString(CultureInfo.InvariantCulture),
             quotaMet,
             earnings,
-            quota);
+            quota,
+            $"HP {snapshot.HpPct}",
+            snapshot.HpPct,
+            $"Wt {snapshot.WeightPoints}",
+            snapshot.WeightPoints);
     }
 
     internal static int RemainingSeconds(in HudSnapshot snapshot)
