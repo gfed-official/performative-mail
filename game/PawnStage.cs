@@ -30,7 +30,11 @@ public partial class PawnStage : Node3D
     private readonly HashSet<uint> _seen = new();
     private readonly List<uint> _stale = new();
 
-    public void Sync(IReadOnlyList<PawnView> pawns, float localPitchRadians, MailKindId? heldMail = null)
+    public void Sync(
+        IReadOnlyList<PawnView> pawns,
+        float localPitchRadians,
+        MailKindId? heldMail = null,
+        byte heldDistrict = 0)
     {
         _seen.Clear();
         for (int i = 0; i < pawns.Count; i++)
@@ -64,7 +68,7 @@ public partial class PawnStage : Node3D
             var pitch = local ? new Vector3(localPitchRadians, 0f, 0f) : Vector3.Zero;
             if (camera.Rotation != pitch)
                 camera.Rotation = pitch;
-            SyncHeldMail(visual, local ? heldMail : null);
+            SyncHeldMail(visual, local ? heldMail : null, local ? heldDistrict : (byte)0);
         }
 
         if (_nodes.Count == _seen.Count)
@@ -148,7 +152,7 @@ public partial class PawnStage : Node3D
         return new PawnVisual(root, body, label, camera, pawn.Pose);
     }
 
-    private static void SyncHeldMail(PawnVisual visual, MailKindId? kind)
+    private static void SyncHeldMail(PawnVisual visual, MailKindId? kind, byte district)
     {
         var held = visual.HeldMail;
         if (kind is null)
@@ -171,14 +175,22 @@ public partial class PawnStage : Node3D
         }
 
         held.Visible = true;
-        if (held.HasMeta("art") && held.GetMeta("art").AsString() == path)
+        bool sameArt = held.HasMeta("art") && held.GetMeta("art").AsString() == path;
+        bool sameDistrict = held.HasMeta("district") && (byte)held.GetMeta("district").AsInt32() == district;
+        if (sameArt && sameDistrict)
             return;
 
-        foreach (var child in held.GetChildren())
-            child.QueueFree();
-        if (ArtMesh.TryInstantiate(path) is { } mesh)
-            held.AddChild(mesh);
-        held.SetMeta("art", path);
+        if (!sameArt)
+        {
+            foreach (var child in held.GetChildren())
+                child.QueueFree();
+            if (ArtMesh.TryInstantiate(path) is { } mesh)
+                held.AddChild(mesh);
+            held.SetMeta("art", path);
+        }
+
+        ArtMesh.ApplyDistrictColor(held, DistrictSwatch.Of(district));
+        held.SetMeta("district", district);
     }
 
     private sealed class PawnVisual

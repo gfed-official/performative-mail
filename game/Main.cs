@@ -184,7 +184,7 @@ public partial class Main : Node3D
                 ShowMenuChrome(false);
                 SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen);
                 _usingMenuCamera = false;
-                _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing));
+                _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing), HeldMailDistrict(playing));
                 _world.Sync(playing.World);
                 BindHud(playing.Hud);
                 if (_overlay.IsOpen && playing.Overlay is OverlayReplica overlay)
@@ -871,15 +871,21 @@ public partial class Main : Node3D
     private bool HasHeldMail(PlaySession.Playing playing) =>
         HeldMailKind(playing) is not null;
 
-    private MailKindId? HeldMailKind(PlaySession.Playing playing)
+    private MailKindId? HeldMailKind(PlaySession.Playing playing) =>
+        HeldMailStack(playing)?.Kind;
+
+    private byte HeldMailDistrict(PlaySession.Playing playing) =>
+        HeldMailStack(playing)?.Address.District ?? 0;
+
+    private MailStack? HeldMailStack(PlaySession.Playing playing)
     {
         if (playing.Overlay is not OverlayReplica overlay)
             return null;
 
         var id = overlay.Hotbar.EntryAt(new Cell((byte)_hotbarSlot, 0));
-        if (!id.IsNone && overlay.Hotbar.TryGetEntry(id, out var entry) && entry.Stack is MailStack mail)
-            return mail.Kind;
-        return null;
+        if (id.IsNone || !overlay.Hotbar.TryGetEntry(id, out var entry) || entry.Stack is not MailStack mail)
+            return null;
+        return mail;
     }
 
     private void SelectHotbar(int slot)

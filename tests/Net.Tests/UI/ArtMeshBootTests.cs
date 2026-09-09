@@ -27,6 +27,8 @@ public sealed class ArtMeshBootTests
         Assert.Contains("PathForProp", source);
         Assert.Contains("mat_pawn_vest", source);
         Assert.Contains("mat_pawn_hat", source);
+        Assert.Contains("mat_district", source);
+        Assert.Contains("ApplyDistrictColor", source);
         Assert.Contains("GltfDocument", source);
         Assert.Contains("ResourceLoader.Load", source);
         Assert.Contains("Art mesh missing:", source);
@@ -56,10 +58,10 @@ public sealed class ArtMeshBootTests
         Assert.True(File.Exists(Path.Combine(art, "world", "house_b.glb")));
         Assert.True(File.Exists(Path.Combine(art, "world", "house_c.glb")));
         Assert.True(File.Exists(Path.Combine(art, "pawns", "pawn_remote.glb")));
-        Assert.True(File.Exists(Path.Combine(art, "props", "mail_letter.glb")));
-        Assert.True(File.Exists(Path.Combine(art, "props", "mail_pkg_s.glb")));
-        Assert.True(File.Exists(Path.Combine(art, "props", "mail_pkg_m.glb")));
-        Assert.True(File.Exists(Path.Combine(art, "props", "mail_pkg_l.glb")));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "mail_letter.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "mail_pkg_s.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "mail_pkg_m.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "mail_pkg_l.glb"));
         Assert.True(File.Exists(Path.Combine(art, "world", "street_tile_01.glb")));
         Assert.True(File.Exists(Path.Combine(art, "world", "street_curb_01.glb")));
         Assert.True(File.Exists(Path.Combine(art, "world", "spawn_pad_01.glb")));
@@ -100,5 +102,11 @@ public sealed class ArtMeshBootTests
         }
 
         throw new DirectoryNotFoundException("game/art");
+    }
+
+    private static void AssertNonEmptyGlb(string path)
+    {
+        Assert.True(File.Exists(path));
+        Assert.True(new FileInfo(path).Length > 0, path);
     }
 }
