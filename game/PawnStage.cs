@@ -274,8 +274,9 @@ public partial class PawnStage : Node3D
             });
         }
 
-        root.Transform = VehicleTransform.Of(in view.Pose);
-        return new VehicleVisual(root, view.Pose);
+        var pose = view.Pose;
+        root.Transform = VehicleTransform.Of(in pose);
+        return new VehicleVisual(root, pose);
     }
 
     private sealed class PawnVisual
