@@ -27,6 +27,7 @@ public sealed class ConstructStageBootTests
         Assert.Contains("BuildingBehaviour.Wall", source);
         Assert.Contains("BuildingBehaviour.Sorter", source);
         Assert.Contains("ArgumentOutOfRangeException", source);
+        Assert.DoesNotContain("in visual.View", source);
         Assert.DoesNotContain("QuadMesh", source);
         Assert.DoesNotContain("Colors.Magenta", source);
     }

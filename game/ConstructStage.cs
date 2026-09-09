@@ -54,7 +54,7 @@ public partial class ConstructStage : Node3D
                 AddChild(visual.Root);
                 _nodes.Add(view.Id, visual);
             }
-            else if (!SamePose(in visual.View, in view))
+            else if (!SamePose(visual.View, in view))
             {
                 Place(visual.Root, in view, tileM);
                 visual.View = view;
@@ -205,7 +205,7 @@ public partial class ConstructStage : Node3D
             : Basis.LookingAt(dir, Vector3.Up, useModelFront: true);
     }
 
-    private static bool SamePose(in ConstructView a, in ConstructView b) =>
+    private static bool SamePose(ConstructView a, in ConstructView b) =>
         a.Tile == b.Tile && a.Rotation == b.Rotation && a.DefId == b.DefId;
 
     private static StandardMaterial3D MaterialFor(BuildingBehaviour behaviour)
