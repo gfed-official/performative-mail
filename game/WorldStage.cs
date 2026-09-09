@@ -74,11 +74,19 @@ public partial class WorldStage : Node3D
         dump.AppendLine("WORLD_DUMP");
         foreach (var child in GetChildren())
         {
-            if (child.GetNodeOrNull<Label3D>("Label") is not { } label)
+            if (child.GetNodeOrNull<Label3D>("Label") is { } label)
+            {
+                dump.Append(child.Name);
+                dump.Append(" Label=");
+                dump.AppendLine(label.Text);
                 continue;
-            dump.Append(child.Name);
-            dump.Append(" Label=");
-            dump.AppendLine(label.Text);
+            }
+
+            string name = child.Name;
+            if (name.StartsWith("Crate_", StringComparison.Ordinal)
+                || name.StartsWith("Cart_", StringComparison.Ordinal)
+                || name.StartsWith("StreetPole_", StringComparison.Ordinal))
+                dump.AppendLine(name);
         }
         dump.Append("WORLD_DUMP_END");
         return dump.ToString();

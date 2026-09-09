@@ -92,6 +92,9 @@ public sealed class WorldStageBootTests
         Assert.Contains("WORLD_DUMP", source);
         Assert.Contains("GetNodeOrNull<Label3D>(\"Label\")", source);
         Assert.Contains("Label=", source);
+        Assert.Contains("StreetPole_", source);
+        Assert.Contains("Crate_", source);
+        Assert.Contains("Cart_", source);
         Assert.Contains("WORLD_DUMP_END", source);
         Assert.DoesNotContain("ReadAllText", source);
     }
