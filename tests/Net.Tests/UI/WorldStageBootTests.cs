@@ -21,6 +21,9 @@ public sealed class WorldStageBootTests
         Assert.Contains("ArtMesh.SpawnPad", source);
         Assert.Contains("ArtMesh.GrassTile", source);
         Assert.Contains("ArtMesh.PathForProp", source);
+        Assert.Contains("FallbackClutter", source);
+        Assert.Contains("EnvPropKind.StreetPole", source);
+        Assert.Contains("0.12f, 2.4f, 0.12f", source);
         Assert.Contains("WorldEnvPlacement.StreetTiles", source);
         Assert.Contains("WorldEnvPlacement.StreetCurbs", source);
         Assert.Contains("WorldEnvPlacement.LotGrass", source);

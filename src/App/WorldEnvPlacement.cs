@@ -16,6 +16,7 @@ public enum EnvPropKind : byte
 {
     Crate = 0,
     Cart = 1,
+    StreetPole = 2,
 }
 
 public readonly record struct EnvInstancePose(float X, float Y, float Z, float YawRadians);
@@ -114,6 +115,22 @@ public static class WorldEnvPlacement
                 face + 0.8f,
                 side,
                 -2.4f,
+                YawToward(street.X, street.Z)),
+            Place(
+                EnvPropKind.StreetPole,
+                origin,
+                street,
+                face + 1.5f,
+                side,
+                3.8f,
+                YawToward(street.X, street.Z)),
+            Place(
+                EnvPropKind.StreetPole,
+                origin,
+                street,
+                face + 1.5f,
+                side,
+                -3.8f,
                 YawToward(street.X, street.Z)),
         ];
     }
