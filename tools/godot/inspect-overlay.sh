@@ -48,8 +48,8 @@ expect "hotbar cols=8 rows=1"
 expect "inventory cols=8 rows=2"
 expect "backpack cols=8 rows=2"
 expect "external cols=8 rows=4"
-expect "hotbar[1,0] count=1 address=13 pending=1 opacity=0.6"
-expect "hotbar_1_0 text=1 13 opacity=0.6"
+expect "hotbar[1,0] count=1 address=1/1/13 pending=1 opacity=0.6"
+expect "hotbar_1_0 text=1 1/1/13 opacity=0.6"
 expect "ShiftLabel=Shift 1 / 5"
 expect "PhaseLabel=DELIVERY"
 expect "WalletLabel=\$18.20"
@@ -62,7 +62,7 @@ open_visible="$(awk '/OVERLAY_DUMP case=open/,/OVERLAY_DUMP case=closed/' "$DUMP
 closed_visible="$(awk '/OVERLAY_DUMP case=closed/,/OVERLAY_DUMP_END/' "$DUMP" | grep -m1 '^visible=')"
 test "$open_visible" = "visible=true" || fail "open case is not visible"
 test "$closed_visible" = "visible=false" || fail "closed case is still visible"
-if awk '/OVERLAY_DUMP case=open/,/OVERLAY_DUMP case=closed/' "$DUMP" | grep -Fqx 'hotbar_1_0 text=1 13 opacity=1.0'; then
+if awk '/OVERLAY_DUMP case=open/,/OVERLAY_DUMP case=closed/' "$DUMP" | grep -Fqx 'hotbar_1_0 text=1 1/1/13 opacity=1.0'; then
   fail "pending hotbar cell is fully opaque"
 fi
 echo "overlay open/close split ok"

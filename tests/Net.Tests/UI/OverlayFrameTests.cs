@@ -31,8 +31,8 @@ public sealed class OverlayFrameTests
 
         OverlayCell mail = frame.Hotbar[1, 0];
         Assert.Equal("1", mail.CountLabel);
-        Assert.Equal("13", mail.AddressLabel);
-        Assert.Equal("1 13", mail.Text);
+        Assert.Equal("1/1/13", mail.AddressLabel);
+        Assert.Equal("1 1/1/13", mail.Text);
         Assert.True(mail.Pending);
         Assert.Equal(OverlayCell.PendingOpacity, mail.Opacity);
         Assert.True(mail.Opacity < OverlayCell.ConfirmedOpacity);
@@ -88,10 +88,12 @@ public sealed class OverlayFrameTests
     }
 
     [Fact]
-    public void MiniAddress_DropsUnitWhenZero()
+    public void MiniAddress_UsesDistrictStreetNumberNotBareHouseNumber()
     {
-        Assert.Equal("13", OverlayCell.MiniAddress(new AddressId(1, 1, 13, 0)));
-        Assert.Equal("13-2", OverlayCell.MiniAddress(new AddressId(1, 1, 13, 2)));
+        Assert.Equal("1/1/13", OverlayCell.MiniAddress(new AddressId(1, 1, 13, 0)));
+        Assert.Equal("1/1/13-2", OverlayCell.MiniAddress(new AddressId(1, 1, 13, 2)));
+        Assert.Equal("2/4/7", OverlayCell.MiniAddress(new AddressId(2, 4, 7, 0)));
+        Assert.NotEqual("13", OverlayCell.MiniAddress(new AddressId(1, 1, 13, 0)));
     }
 
     [Fact]
@@ -113,13 +115,14 @@ public sealed class OverlayFrameTests
         var frame = OverlayFrame.From(in live);
         OverlayCell cell = frame.Hotbar[1, 0];
         Assert.Equal("1", cell.CountLabel);
-        Assert.Equal("1", cell.AddressLabel);
-        Assert.Equal("1 1", cell.Text);
+        Assert.Equal("1/1/1", cell.AddressLabel);
+        Assert.Equal("1 1/1/1", cell.Text);
         Assert.False(cell.Pending);
         Assert.Equal(OverlayCell.ConfirmedOpacity, cell.Opacity);
         Assert.Null(frame.Backpack);
         Assert.NotEqual("13", cell.AddressLabel);
         Assert.NotEqual("1 13", cell.Text);
+        Assert.NotEqual("1/1/13", cell.AddressLabel);
     }
 
     private sealed class LetterOnlyCatalog : IStackCatalog

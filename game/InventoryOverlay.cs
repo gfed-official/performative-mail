@@ -11,11 +11,18 @@ public partial class InventoryOverlay : Control
     public const string LeftPath = "LeftColumn";
     public const string RightPath = "RightColumn";
 
+    private static readonly Color SlotIdle = new(0.16f, 0.18f, 0.22f, 0.92f);
+    private static readonly Color SlotSelected = new(0.35f, 0.48f, 0.30f, 0.95f);
+
     private readonly Dictionary<string, Label> _cells = new();
+    private readonly Dictionary<string, ColorRect> _slots = new();
     private VBoxContainer _left = null!;
     private VBoxContainer _right = null!;
     private OverlayFrame _frame;
     private bool _open;
+    private string _selected = "";
+
+    public Action<string, byte, byte>? CellPicked;
 
     public bool IsOpen => _open && Visible;
 
@@ -55,6 +62,7 @@ public partial class InventoryOverlay : Control
         ClearColumn(left);
         ClearColumn(right);
         _cells.Clear();
+        _slots.Clear();
         AddGrid(left, frame.Hotbar);
         AddGrid(left, frame.Inventory);
         if (frame.Backpack is { } pack)
@@ -62,6 +70,13 @@ public partial class InventoryOverlay : Control
         if (frame.External is { } ext)
             AddGrid(right, ext);
         Visible = _open;
+        ApplySelection();
+    }
+
+    public void SelectCell(string grid, byte x, byte y)
+    {
+        _selected = CellName(grid, x, y);
+        ApplySelection();
     }
 
     public string Dump(string caseName)
@@ -73,6 +88,9 @@ public partial class InventoryOverlay : Control
         dump.Append('\n');
         dump.Append("visible=");
         dump.Append(IsOpen ? "true" : "false");
+        dump.Append('\n');
+        dump.Append("selected=");
+        dump.Append(_selected);
         dump.Append('\n');
         WriteGrid(dump, _frame.Hotbar);
         WriteGrid(dump, _frame.Inventory);
@@ -103,7 +121,7 @@ public partial class InventoryOverlay : Control
         var dim = new ColorRect
         {
             Color = new Color(0.05f, 0.05f, 0.08f, 0.35f),
-            MouseFilter = MouseFilterEnum.Ignore,
+            MouseFilter = MouseFilterEnum.Stop,
         };
         dim.SetAnchorsPreset(LayoutPreset.FullRect);
         AddChild(dim);
@@ -163,17 +181,25 @@ public partial class InventoryOverlay : Control
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center,
                     CustomMinimumSize = new Vector2(72, 40),
+                    MouseFilter = MouseFilterEnum.Ignore,
                     Modulate = new Color(1f, 1f, 1f, cell.Opacity),
                 };
                 var slot = new ColorRect
                 {
-                    Color = new Color(0.16f, 0.18f, 0.22f, 0.92f),
+                    Color = SlotIdle,
                     CustomMinimumSize = new Vector2(76, 44),
+                    MouseFilter = MouseFilterEnum.Stop,
+                    MouseDefaultCursorShape = CursorShape.PointingHand,
                 };
+                byte cx = x;
+                byte cy = y;
+                string gridName = grid.Name;
+                slot.GuiInput += e => OnSlotInput(e, gridName, cx, cy);
                 slot.AddChild(label);
                 label.SetAnchorsPreset(LayoutPreset.FullRect);
                 cells.AddChild(slot);
                 _cells[label.Name] = label;
+                _slots[label.Name] = slot;
             }
         }
     }
@@ -217,6 +243,25 @@ public partial class InventoryOverlay : Control
     }
 
     private static string CellName(string grid, byte x, byte y) => grid + "_" + x + "_" + y;
+
+    private void OnSlotInput(InputEvent @event, string grid, byte x, byte y)
+    {
+        if (@event is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+            return;
+        SelectCell(grid, x, y);
+        CellPicked?.Invoke(grid, x, y);
+        AcceptEvent();
+    }
+
+    private void ApplySelection()
+    {
+        foreach (var pair in _slots)
+        {
+            if (!GodotObject.IsInstanceValid(pair.Value))
+                continue;
+            pair.Value.Color = pair.Key == _selected ? SlotSelected : SlotIdle;
+        }
+    }
 
     private static void ClearColumn(VBoxContainer column)
     {

@@ -20,6 +20,18 @@ public sealed class InventoryOverlaySourceTests
         Assert.Contains("grid.Cells is null || grid.Cells.Count == 0", overlay);
     }
 
+    [Fact]
+    public void Slots_StopMouseAndRaiseCellPicked()
+    {
+        string overlay = ReadGame("InventoryOverlay.cs");
+        Assert.Contains("MouseFilter = MouseFilterEnum.Stop", overlay);
+        Assert.Contains("MouseFilter = MouseFilterEnum.Ignore", overlay);
+        Assert.Contains("slot.GuiInput +=", overlay);
+        Assert.Contains("CellPicked?.Invoke", overlay);
+        Assert.Contains("SelectCell", overlay);
+        Assert.Contains("MouseButton.Left", overlay);
+    }
+
     private static string ReadGame(string file)
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })

@@ -184,6 +184,23 @@ public sealed class MainPlayBootTests
     }
 
     [Fact]
+    public void Input_SelectsHotbarFromKeysAndWheel()
+    {
+        var input = MethodBody(ReadMain(), "_Input");
+        Assert.Contains("InputSampler.TryHotbarSlot", input);
+        Assert.Contains("InputSampler.TryHotbarWheel", input);
+        Assert.Contains("SelectHotbar", input);
+        Assert.Contains("SetInputAsHandled", input);
+        Assert.Contains("_overlay.IsOpen", MethodBody(ReadMain(), "_UnhandledInput"));
+        Assert.Contains("!_pause.IsOpen && !_overlay.IsOpen", MethodBody(ReadMain(), "Render"));
+        Assert.Contains("!_pause.IsOpen && !_overlay.IsOpen", MethodBody(ReadMain(), "_PhysicsProcess"));
+        Assert.Contains("CellPicked", MethodBody(ReadMain(), "BuildOverlay"));
+        Assert.Contains("OnOverlayCellPicked", ReadMain());
+        Assert.Contains("TryQuickMove", ReadMain());
+        Assert.Contains("EntryAt(new Cell((byte)_hotbarSlot, 0))", ReadMain());
+    }
+
+    [Fact]
     public void Playing_HidesMenuChromeAndUsesPerPawnCameras()
     {
         var render = MethodBody(ReadMain(), "Render");

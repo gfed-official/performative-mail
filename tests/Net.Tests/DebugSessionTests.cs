@@ -31,6 +31,7 @@ public sealed class DebugSessionTests
         Assert.False(machine.TryTeleportToIntake());
         Assert.False(machine.TryTeleportToMailbox());
         Assert.False(machine.TryGiveMail());
+        Assert.False(machine.TryQuickMove(new ContainerId(1), new EntryId(1), new ContainerId(2)));
         Assert.False(machine.TryStockIntake());
         Assert.False(machine.TrySpawn(new DebugSpawnId(DebugSpawnKind.Item, "axe")));
     }
@@ -245,8 +246,8 @@ public sealed class DebugSessionTests
         var frame = OverlayFrame.From(held.Overlay.Value);
         OverlayCell cell = frame.Hotbar[1, 0];
         Assert.Equal("1", cell.CountLabel);
-        Assert.Equal("1", cell.AddressLabel);
-        Assert.Equal("1 1", cell.Text);
+        Assert.Equal("1/1/1", cell.AddressLabel);
+        Assert.Equal("1 1/1/1", cell.Text);
         Assert.False(cell.Pending);
         Assert.NotEqual("13", cell.AddressLabel);
 

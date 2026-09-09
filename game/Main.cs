@@ -61,6 +61,7 @@ public partial class Main : Node3D
     private bool _playUiHidden = true;
     private bool _usingMenuCamera = true;
     private bool? _mouseCaptured;
+    private int _hotbarSlot = InputSampler.DefaultHotbarSlot;
 
     public override void _Ready()
     {
@@ -113,9 +114,26 @@ public partial class Main : Node3D
 
     public override void _ExitTree() => _session.Dispose();
 
-    public override void _UnhandledInput(InputEvent @event)
+    public override void _Input(InputEvent @event)
     {
         if (_pause.IsOpen || _menuChrome.Visible)
+            return;
+        if (InputSampler.TryHotbarSlot(@event, out int slot))
+        {
+            SelectHotbar(slot);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        if (!InputSampler.TryHotbarWheel(@event, out int delta))
+            return;
+        SelectHotbar(_hotbarSlot + delta);
+        GetViewport().SetInputAsHandled();
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (_pause.IsOpen || _menuChrome.Visible || _overlay.IsOpen)
             return;
         if (@event is not InputEventMouseMotion motion)
             return;
@@ -140,6 +158,8 @@ public partial class Main : Node3D
         if (_debug is { IsOpen: true })
             BindDebug(_session.Inspect());
         MaybeApplyDebugHelper(state);
+        if (state is PlaySession.Playing)
+            SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen);
         MaybeFinish(state);
     }
 
@@ -162,7 +182,7 @@ public partial class Main : Node3D
                 break;
             case PlaySession.Playing playing:
                 ShowMenuChrome(false);
-                SetMouseCaptured(!_pause.IsOpen);
+                SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen);
                 _usingMenuCamera = false;
                 _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing));
                 _world.Sync(playing.World);
@@ -407,7 +427,9 @@ public partial class Main : Node3D
         var layer = new CanvasLayer { Layer = 11 };
         AddChild(layer);
         layer.AddChild(_overlay);
+        _overlay.CellPicked = OnOverlayCellPicked;
         _overlay.Bind(OverlayFrame.From(OverlayBootReplica.Build()));
+        _overlay.SelectCell("hotbar", (byte)_hotbarSlot, 0);
     }
 
     private void BindOverlay(in OverlayReplica replica)
@@ -418,6 +440,7 @@ public partial class Main : Node3D
         _boundOverlay = stamp;
         _overlayBound = true;
         _overlay.Bind(OverlayFrame.From(in replica));
+        _overlay.SelectCell("hotbar", (byte)_hotbarSlot, 0);
     }
 
     private void BuildPause()
@@ -844,21 +867,54 @@ public partial class Main : Node3D
         return true;
     }
 
-    private static bool HasHeldMail(PlaySession.Playing playing) =>
+    private bool HasHeldMail(PlaySession.Playing playing) =>
         HeldMailKind(playing) is not null;
 
-    private static MailKindId? HeldMailKind(PlaySession.Playing playing)
+    private MailKindId? HeldMailKind(PlaySession.Playing playing)
     {
         if (playing.Overlay is not OverlayReplica overlay)
             return null;
 
-        foreach (var entry in overlay.Hotbar.Entries)
+        var id = overlay.Hotbar.EntryAt(new Cell((byte)_hotbarSlot, 0));
+        if (!id.IsNone && overlay.Hotbar.TryGetEntry(id, out var entry) && entry.Stack is MailStack mail)
+            return mail.Kind;
+        return null;
+    }
+
+    private void SelectHotbar(int slot)
+    {
+        _hotbarSlot = InputSampler.WrapHotbarSlot(slot);
+        _overlay.SelectCell("hotbar", (byte)_hotbarSlot, 0);
+    }
+
+    private void OnOverlayCellPicked(string grid, byte x, byte y)
+    {
+        if (grid == "hotbar")
         {
-            if (entry.Stack is MailStack mail)
-                return mail.Kind;
+            SelectHotbar(x);
+            return;
         }
 
-        return null;
+        if (_session.State is not PlaySession.Playing playing)
+            return;
+        if (playing.Overlay is not OverlayReplica replica)
+            return;
+
+        var source = grid switch
+        {
+            "inventory" => replica.Inventory,
+            "backpack" => replica.Backpack,
+            "external" => replica.External,
+            _ => null,
+        };
+        if (source is null)
+            return;
+
+        var entry = source.EntryAt(new Cell(x, y));
+        if (entry.IsNone)
+            return;
+        if (_session.TryQuickMove(source.Id, entry, replica.Hotbar.Id))
+            SelectHotbar(_hotbarSlot);
     }
 
     private bool TryOpenLiveOverlay(PlaySession.Playing playing)

@@ -27,10 +27,11 @@ public readonly record struct OverlayCell(
         }
     }
 
-    public static string MiniAddress(AddressId address) =>
-        address.Unit == 0
-            ? address.Number.ToString()
-            : address.Number + "-" + address.Unit;
+    public static string MiniAddress(AddressId address)
+    {
+        string core = address.District + "/" + address.Street + "/" + address.Number;
+        return address.Unit == 0 ? core : core + "-" + address.Unit;
+    }
 }
 
 public readonly record struct OverlayGrid(
