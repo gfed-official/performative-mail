@@ -23,6 +23,7 @@ public sealed class ArtMeshBootTests
         Assert.Contains("res://art/world/grass_tile_01.glb", source);
         Assert.Contains("res://art/props/crate_01.glb", source);
         Assert.Contains("res://art/props/cart_01.glb", source);
+        Assert.Contains("res://art/world/street_pole_01.glb", source);
         Assert.Contains("TryMesh", source);
         Assert.Contains("PathForProp", source);
         Assert.Contains("mat_pawn_vest", source);
@@ -66,6 +67,8 @@ public sealed class ArtMeshBootTests
         Assert.True(File.Exists(Path.Combine(art, "world", "grass_tile_01.glb")));
         Assert.True(File.Exists(Path.Combine(art, "props", "crate_01.glb")));
         Assert.True(File.Exists(Path.Combine(art, "props", "cart_01.glb")));
+        Assert.True(File.Exists(Path.Combine(art, "world", "street_pole_01.glb")));
+        Assert.True(new FileInfo(Path.Combine(art, "world", "street_pole_01.glb")).Length > 0);
     }
 
     private static string ReadGame(string fileName)

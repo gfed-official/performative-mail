@@ -77,17 +77,24 @@ public sealed class WorldEnvPlacementTests
     }
 
     [Fact]
-    public void PostalClutter_IsFivePropsOffTheSpawnPad()
+    public void PostalClutter_IsSevenPropsOffTheSpawnPad()
     {
         var tables = DebugWorld.Tables();
         float tileM = tables.TileCm / 100f;
         var props = WorldEnvPlacement.PostalClutter(tables.PostOffice, tables.Streets, tileM);
         var spawn = WorldTilePlacement.TileCenter(tables.PostOffice.SpawnPadTile, tileM);
         var intake = WorldTilePlacement.TileCenter(tables.PostOffice.IntakeTile, tileM);
+        var origin = WorldTilePlacement.FootprintOrigin(
+            tables.PostOffice.Tile,
+            tables.PostOffice.SizeTiles,
+            tileM);
+        var toward = WorldTilePlacement.TowardNearestStreet(origin.X, origin.Z, tables.Streets, tileM);
+        float streetYaw = WorldEnvPlacement.YawToward(toward.X, toward.Z);
 
-        Assert.Equal(5, props.Length);
+        Assert.Equal(7, props.Length);
         Assert.Equal(3, props.Count(p => p.Kind == EnvPropKind.Crate));
         Assert.Equal(2, props.Count(p => p.Kind == EnvPropKind.Cart));
+        Assert.Equal(2, props.Count(p => p.Kind == EnvPropKind.StreetPole));
         foreach (var prop in props)
         {
             float dx = prop.X - spawn.X;
@@ -97,6 +104,9 @@ public sealed class WorldEnvPlacementTests
 
         Assert.Contains(props, p => p.Kind == EnvPropKind.Cart && p.X > intake.X);
         Assert.Contains(props, p => p.Kind == EnvPropKind.Crate && p.Z < -12f);
+        Assert.Contains(props, p => p.Kind == EnvPropKind.StreetPole && p.Z < -12f);
+        foreach (var pole in props.Where(p => p.Kind == EnvPropKind.StreetPole))
+            Assert.Equal(streetYaw, pole.YawRadians);
     }
 
     [Fact]
