@@ -16,6 +16,7 @@
 | `map` | `inspect-map.sh` with `SKIP_BUILD=1`. Opens the Map Control from `MapBoot` WorldTables and reads district/street layers, filter chips, and a placed ping. |
 | `lobby` | `inspect-lobby.sh` with `SKIP_BUILD=1`. Binds LobbyFrame and reads seed and ready text. |
 | `overlays` | `inspect-overlays.sh` with `SKIP_BUILD=1`. Binds payday, draft, and results frames and reads Control text. |
+| `shop` | `inspect-shop.sh` with `SKIP_BUILD=1`. Binds ShopFrame from ShopBoot and reads catalog prices. |
 | `debug` | `inspect-debug.sh` with `SKIP_BUILD=1`. Opens DebugMenu from DebugBoot and reads inspect and cheat labels. |
 | `join` | Two-process LAN host and join on `127.0.0.1:7777`. Asserts both reports are Playing with at least two pawns. |
 | `play` | Solo Host play report. Asserts Playing, golden `worldHash` `0x821670054873680E`, HUD phase PREP, and shift `Shift 1 / 5`. Keys, units, and jq are in [report.md](report.md). |
@@ -26,6 +27,7 @@
 | `live-overlay` | Solo Host `--debug-world --debug-helper=live-overlay` plus `--overlay-dump=`. Picks up Intake mail, opens the inventory overlay on the Playing replica, and asserts live hotbar cell text (`1 1/1/1`), not OverlayBootReplica `1 1/1/13`. |
 | `live-hud` | Solo Host `--debug-world` plus `--hud-dump=`. Asserts Control text from Playing / `HudSnapshot` (`PREP`, shift, timer matching the report replica), the district-band compass (`CompassFacing=N`, `CompassDistrict=1`), HP/weight extras (`HP 100`, `Wt 0`), the persistent 1–8 hotbar strip (`HotbarSelected=1`, hands + empty icons), not `HudBoot.Placeholder` (`DELIVERY`, `13 Larch Lane`). |
 | `live-map` | Solo Host `--debug-world --debug-helper=map` plus `--map-dump=`. Opens the Map Control from Playing `WorldTables` (same path as M) and asserts Debug Lane district/street chips, not MapBoot `Oak Street`. |
+| `live-shop` | Solo Host `--debug-world --debug-helper=shop` plus `--shop-dump=`. Credits wallet, buys `bandage_x3` through `ShopSession`, opens the shop UI, and asserts catalog prices plus wallet `$9.20`. |
 | `leave` | Solo Host `--debug-world --debug-helper=leave`. Opens pause (`OpenPause`, same path as Esc), activates Leave then confirm, and asserts SmokeReport `state` is `Menu`. |
 | `all` | Every command above, in that order. `all` is the default. |
 | `-h`, `--help` | Print the command list. |
@@ -39,11 +41,12 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 | `map` | `inspect-map.sh` | `--inspect-map` | `--map-dump=` |
 | `lobby` | `inspect-lobby.sh` | `--inspect-lobby` | `--lobby-dump=` |
 | `overlays` | `inspect-overlays.sh` | `--inspect-overlays` | `--overlays-dump=` |
+| `shop` | `inspect-shop.sh` | `--inspect-shop` | `--shop-dump=` |
 | `debug` | `inspect-debug.sh` | `--inspect-debug` | `--debug-dump=` |
 
-`join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, `interact`, `live-overlay`, `live-hud`, `live-map`, and `leave` live inline in `ci.sh`.
+`join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, `interact`, `live-overlay`, `live-hud`, `live-map`, `live-shop`, and `leave` live inline in `ci.sh`.
 
-`--debug-helper=` runs one host cheat. Values are `intake`, `mailbox`, `give-mail`, `overlay`, `map`, `interact`, `live-overlay`, and `leave`. `intake`, `mailbox`, `give-mail`, `overlay`, `map`, and `leave` finish on the first Playing frame. `interact` stays set until the wallet credits: it stocks Intake, teleports to Intake, holds Interact to pick up, teleports to the matching mailbox, and holds Interact to deliver. `live-overlay` stays set until the hotbar holds mail and the overlay is open: it stocks Intake, teleports, holds Interact to pick up, then binds `InventoryOverlay` from the Playing replica. `leave` calls `OpenPause` (the Esc edge in `PollPause`), then `OnPauseChoice` for `PauseFrame.LeaveId` and `ConfirmLeaveId`, which runs `_session.Leave()` when `WantsLeave` is set. `--overlay-dump=` on the live-overlay path writes `OVERLAY_DUMP case=live` at quit. `--inspect-overlay` still dumps the OverlayBootReplica bind. A Playing quit with `--hud-dump=` writes `HUD_DUMP case=live` from the bound Playing snapshot. `--inspect-hud` still dumps `HudBoot.Placeholder`. A Playing quit with `--map-dump=` writes `MAP_DUMP case=live` from the open Map Control. `--inspect-map` still dumps the MapBoot bind. F3 and `` ` `` still toggle DebugMenu for the one-shot cheats.
+`--debug-helper=` runs one host cheat. Values are `intake`, `mailbox`, `give-mail`, `overlay`, `map`, `interact`, `live-overlay`, `shop`, and `leave`. `intake`, `mailbox`, `give-mail`, `overlay`, `map`, and `leave` finish on the first Playing frame. `interact` stays set until the wallet credits: it stocks Intake, teleports to Intake, holds Interact to pick up, teleports to the matching mailbox, and holds Interact to deliver. `live-overlay` stays set until the hotbar holds mail and the overlay is open: it stocks Intake, teleports, holds Interact to pick up, then binds `InventoryOverlay` from the Playing replica. `leave` calls `OpenPause` (the Esc edge in `PollPause`), then `OnPauseChoice` for `PauseFrame.LeaveId` and `ConfirmLeaveId`, which runs `_session.Leave()` when `WantsLeave` is set. `shop` credits the wallet, buys `bandage_x3` through `ShopSession.TryBuy`, and opens the shop UI on the live catalog. `--overlay-dump=` on the live-overlay path writes `OVERLAY_DUMP case=live` at quit. `--inspect-overlay` still dumps the OverlayBootReplica bind. A Playing quit with `--hud-dump=` writes `HUD_DUMP case=live` from the bound Playing snapshot. `--inspect-hud` still dumps `HudBoot.Placeholder`. A Playing quit with `--map-dump=` writes `MAP_DUMP case=live` from the open Map Control. `--inspect-map` still dumps the MapBoot bind. `--shop-dump=` on the live-shop path writes `SHOP_DUMP case=live`. `--inspect-shop` still dumps `ShopBoot.Inspect`. F3 and `` ` `` still toggle DebugMenu for the one-shot cheats. P opens shop during Prep and Payday.
 
 ## Environment
 
@@ -51,7 +54,7 @@ Control-text commands call a sibling `inspect-*.sh`. `ci.sh` sets `SKIP_BUILD=1`
 
 ## CI
 
-The `godot` job in `.github/workflows/ci.yml` runs each command as its own step. It does not call `all`. The steps are `verify`, `import`, `boot`, `hud`, `overlay`, `map`, `lobby`, `overlays`, `debug`, `join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, `interact`, `live-overlay`, `live-hud`, `live-map`, and `leave`.
+The `godot` job in `.github/workflows/ci.yml` runs each command as its own step. It does not call `all`. The steps are `verify`, `import`, `boot`, `hud`, `overlay`, `map`, `lobby`, `overlays`, `shop`, `debug`, `join`, `play`, `debug-world`, `debug-helpers`, `worldstage`, `interact`, `live-overlay`, `live-hud`, `live-map`, `live-shop`, and `leave`.
 
 ## Add a Control-text smoke
 

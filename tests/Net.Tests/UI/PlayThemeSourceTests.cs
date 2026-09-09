@@ -58,6 +58,7 @@ public sealed class PlayThemeSourceTests
     [InlineData("Payday.cs")]
     [InlineData("Results.cs")]
     [InlineData("InventoryOverlay.cs")]
+    [InlineData("Shop.cs")]
     public void PlayScreens_ApplyPlayTheme(string file)
     {
         string source = ReadGame(file);
@@ -71,12 +72,24 @@ public sealed class PlayThemeSourceTests
     [InlineData("draft.tscn")]
     [InlineData("payday.tscn")]
     [InlineData("results.tscn")]
+    [InlineData("shop.tscn")]
     public void PlayScenes_UsePanelContainerCards(string file)
     {
         string scene = ReadScene(file);
         Assert.Contains("type=\"PanelContainer\"", scene);
         Assert.DoesNotContain("theme_override_styles", scene);
         Assert.DoesNotContain("StyleBoxFlat", scene);
+    }
+
+    [Fact]
+    public void Shop_UsesPlayThemeMutedLabels()
+    {
+        string shop = ReadGame("Shop.cs");
+        Assert.Contains("PlayTheme.Apply(this)", shop);
+        Assert.Contains("PlayTheme.ApplyMuted(_wallet)", shop);
+        Assert.Contains("PlayTheme.ApplyMuted(_phase)", shop);
+        Assert.Contains("PlayTheme.ApplyMuted(tag)", shop);
+        Assert.DoesNotContain("new StyleBoxFlat", shop);
     }
 
     [Fact]

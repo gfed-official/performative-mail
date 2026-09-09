@@ -50,6 +50,7 @@ public sealed class PauseFrameTests
         Assert.Equal(PauseBoot.Binds, frame.Binds);
         Assert.Contains(frame.Binds, bind => bind.Action == "Pause menu" && bind.Keyboard == "Esc");
         Assert.Contains(frame.Binds, bind => bind.Action == "Move / look");
+        Assert.Contains(frame.Binds, bind => bind.Action == "Shop (Prep / Payday)" && bind.Keyboard == "P");
         Assert.Equal(PauseFrame.BackId, Assert.Single(frame.Choices).Id);
     }
 

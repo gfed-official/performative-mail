@@ -24,6 +24,7 @@ public partial class DebugMenu : Control
     public const string TeleportMailboxPath = "TeleportMailboxButton";
     public const string GiveMailPath = "GiveMailButton";
     public const string OpenInventoryPath = "OpenInventoryButton";
+    public const string OpenShopPath = "OpenShopButton";
 
     public event Action? GiveWalletPressed;
     public event Action? AdvancePhasePressed;
@@ -32,6 +33,7 @@ public partial class DebugMenu : Control
     public event Action? TeleportMailboxPressed;
     public event Action? GiveMailPressed;
     public event Action? OpenInventoryPressed;
+    public event Action? OpenShopPressed;
     public event Action<DebugSpawnId>? SpawnPressed;
 
     private Label _connection = null!;
@@ -51,6 +53,7 @@ public partial class DebugMenu : Control
     private Button _teleportMailbox = null!;
     private Button _giveMail = null!;
     private Button _openInventory = null!;
+    private Button _openShop = null!;
     private VBoxContainer _spawnColumn = null!;
     private readonly List<(DebugSpawnRow Row, Button Button)> _spawns = new();
     private bool _open;
@@ -110,6 +113,7 @@ public partial class DebugMenu : Control
         SetDisabled(_teleportMailbox, !frame.CanCheat);
         SetDisabled(_giveMail, !frame.CanCheat);
         SetDisabled(_openInventory, !frame.CanCheat);
+        SetDisabled(_openShop, !frame.CanCheat);
         for (int i = 0; i < _spawns.Count; i++)
             SetDisabled(_spawns[i].Button, !frame.CanCheat);
         if (Visible != _open)
@@ -164,6 +168,7 @@ public partial class DebugMenu : Control
             $"TeleportMailbox={Enabled(_teleportMailbox)}\n" +
             $"GiveMail={Enabled(_giveMail)}\n" +
             $"OpenInventory={Enabled(_openInventory)}\n" +
+            $"OpenShop={Enabled(_openShop)}\n" +
             $"SpawnCount={_spawns.Count}\n" +
             $"Spawn.axe={SpawnState("axe")}\n" +
             $"Spawn.letter={SpawnState("letter")}\n" +
@@ -239,6 +244,7 @@ public partial class DebugMenu : Control
         _teleportMailbox = AddCheat(column, TeleportMailboxPath, "Teleport to mailbox", () => TeleportMailboxPressed?.Invoke());
         _giveMail = AddCheat(column, GiveMailPath, "Give mail", () => GiveMailPressed?.Invoke());
         _openInventory = AddCheat(column, OpenInventoryPath, "Open inventory", () => OpenInventoryPressed?.Invoke());
+        _openShop = AddCheat(column, OpenShopPath, "Open shop", () => OpenShopPressed?.Invoke());
 
         column.AddChild(new Label { Text = "SPAWN" });
         var scroll = new ScrollContainer

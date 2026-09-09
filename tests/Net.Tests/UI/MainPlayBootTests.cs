@@ -16,6 +16,8 @@ public sealed class MainPlayBootTests
         Assert.Contains("_constructs.Sync(playing.Constructs)", render);
         Assert.Contains("HudFrame.SameDisplay", MethodBody(ReadMain(), "BindHud"));
         Assert.Contains("CompassFrame.SameDisplay", ReadMain());
+        Assert.Contains("ShopFrame.SameDisplay", MethodBody(ReadMain(), "BindShop"));
+        Assert.Contains("SyncShop(playing)", render);
         Assert.Contains("replica.Stamp()", MethodBody(ReadMain(), "BindOverlay"));
         Assert.Contains("_hud.BindHotbar", MethodBody(ReadMain(), "BindOverlay"));
         Assert.Contains("_hud.BindCompass", ReadMain());
@@ -163,6 +165,20 @@ public sealed class MainPlayBootTests
         Assert.Contains("_payday.Visible = false", build);
         Assert.Contains("_draft.Visible = false", build);
         Assert.Contains("_results.Visible = false", build);
+        Assert.Contains("_shop.Visible = false", build);
+        Assert.Contains("shop.tscn", build);
+        Assert.Contains("OnShopBuy", build);
+    }
+
+    [Fact]
+    public void InspectShop_UsesShopBootNotHudPlaceholder()
+    {
+        var inspect = MethodBody(ReadMain(), "InspectShop");
+        Assert.Contains("ShopBoot.Inspect", inspect);
+        Assert.Contains("_shop.Open()", inspect);
+        Assert.Contains("_shop.Close()", inspect);
+        Assert.DoesNotContain("HudBoot.Placeholder", inspect);
+        Assert.DoesNotContain("BindHud", inspect);
     }
 
     [Fact]
@@ -249,6 +265,7 @@ public sealed class MainPlayBootTests
         Assert.Contains("BindHud(playing.Hud)", render);
         Assert.Contains("BindCompass(playing)", render);
         Assert.Contains("BindMap(playing)", render);
+        Assert.Contains("SyncShop(playing)", render);
         Assert.Contains("_world.Sync(playing.World)", render);
         Assert.Contains("_world.SyncHarvest(playing.Resources)", render);
         Assert.Contains("_constructs.Sync(playing.Constructs)", render);
@@ -301,6 +318,8 @@ public sealed class MainPlayBootTests
         Assert.Contains("_session.Host()", apply);
         Assert.Contains("\"--debug-helper=\"", apply);
         Assert.Contains("\"--world-dump=\"", apply);
+        Assert.Contains("\"--inspect-shop\"", apply);
+        Assert.Contains("\"--shop-dump=\"", apply);
     }
 
     [Fact]
@@ -351,6 +370,18 @@ public sealed class MainPlayBootTests
     }
 
     [Fact]
+    public void MaybeFinish_WritesLiveShopDumpOnPlayingQuit()
+    {
+        var finish = MethodBody(ReadMain(), "MaybeFinish");
+        Assert.Contains("_shopDumpPath", finish);
+        Assert.Contains("Dump(\"live\")", finish);
+        Assert.Contains("SHOP_DUMP_END", finish);
+        Assert.Contains("PlaySession.Playing", finish);
+        Assert.DoesNotContain("ShopBoot.Inspect", finish);
+        Assert.DoesNotContain("InspectShop", finish);
+    }
+
+    [Fact]
     public void PhysicsProcess_AppliesDebugHelperAfterPump()
     {
         var body = MethodBody(ReadMain(), "_PhysicsProcess");
@@ -370,6 +401,8 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryStepLiveOverlay", helper);
         Assert.Contains("\"leave\"", helper);
         Assert.Contains("TryStepLeaveSmoke", helper);
+        Assert.Contains("\"shop\"", helper);
+        Assert.Contains("TryStepShopSmoke", helper);
         var main = ReadMain();
         Assert.Contains("TryStockIntake", main);
         Assert.Contains("HasHeldMail", main);
@@ -377,6 +410,7 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryStepLiveOverlay", main);
         Assert.Contains("TryStepLeaveSmoke", main);
         Assert.Contains("TryOpenLiveMap", main);
+        Assert.Contains("TryStepShopSmoke", main);
         Assert.Contains("using PerformativeMail.Sim.Inventory;", main);
     }
 
