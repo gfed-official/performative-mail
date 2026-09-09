@@ -41,8 +41,10 @@ public sealed class PlayThemeSourceTests
         string hud = ReadGame("Hud.cs");
         Assert.Contains("PlayTheme.Apply(this)", hud);
         Assert.Contains("BindHotbar", hud);
+        Assert.Contains("BindCompass", hud);
         Assert.Contains("SelectHotbar", hud);
         Assert.Contains("HotbarStrip", hud);
+        Assert.Contains("CompassStrip", hud);
         Assert.Contains("HotbarChrome.SlotSelected", hud);
         Assert.Contains("DistrictSwatch.Of(cell.District)", hud);
         Assert.Contains("DistrictPalette.HasSwatch", hud);
