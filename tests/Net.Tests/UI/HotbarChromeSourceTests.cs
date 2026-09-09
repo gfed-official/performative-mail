@@ -32,6 +32,7 @@ public sealed class HotbarChromeSourceTests
         Assert.Contains("name=\"HotbarDock\"", scene);
         Assert.Contains("name=\"HotbarStrip\"", scene);
         Assert.Contains("anchors_preset = 12", scene);
+        Assert.DoesNotContain("name=\"HotbarStrip\" parent=\"Margin/Column/CompassRow\"", scene);
     }
 
     [Fact]

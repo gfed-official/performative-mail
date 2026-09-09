@@ -7,14 +7,17 @@ public sealed class MainPlayBootTests
     {
         var render = MethodBody(ReadMain(), "Render");
         Assert.Contains("BindHud(playing.Hud)", render);
+        Assert.Contains("BindCompass(playing)", render);
         Assert.Contains("playing.Overlay is OverlayReplica overlay", render);
         Assert.Contains("BindOverlay(overlay)", render);
         Assert.DoesNotContain("_overlay.IsOpen && playing.Overlay", render);
         Assert.Contains("_world.Sync(playing.World)", render);
         Assert.Contains("_world.SyncHarvest(playing.Resources)", render);
         Assert.Contains("HudFrame.SameDisplay", MethodBody(ReadMain(), "BindHud"));
+        Assert.Contains("CompassFrame.SameDisplay", ReadMain());
         Assert.Contains("replica.Stamp()", MethodBody(ReadMain(), "BindOverlay"));
         Assert.Contains("_hud.BindHotbar", MethodBody(ReadMain(), "BindOverlay"));
+        Assert.Contains("_hud.BindCompass", ReadMain());
         Assert.DoesNotContain("HudBoot.Placeholder", render);
     }
 
@@ -105,7 +108,9 @@ public sealed class MainPlayBootTests
         var inspect = MethodBody(ReadMain(), "InspectHud");
         Assert.Contains("HudBoot.Placeholder", inspect);
         Assert.Contains("OverlayBootReplica.Build()", inspect);
+        Assert.Contains("CompassBoot.Placeholder()", inspect);
         Assert.Contains("BindOverlay", inspect);
+        Assert.Contains("BindCompass", inspect);
     }
 
     [Fact]
@@ -240,6 +245,7 @@ public sealed class MainPlayBootTests
         Assert.Contains("Address.District", ReadMain());
         Assert.DoesNotContain("ApplyFirstPersonCamera", ReadMain());
         Assert.Contains("BindHud(playing.Hud)", render);
+        Assert.Contains("BindCompass(playing)", render);
         Assert.Contains("BindMap(playing)", render);
         Assert.Contains("_world.Sync(playing.World)", render);
         Assert.Contains("_world.SyncHarvest(playing.Resources)", render);

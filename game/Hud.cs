@@ -18,6 +18,9 @@ public partial class Hud : Control
     public const string TargetPath = "TargetAddress";
     public const string MatchPath = "MatchMark";
     public const string HotbarPath = "HotbarStrip";
+    public const string CompassPath = "CompassStrip";
+    public const string CompassDistrictPath = "CompassDistrict";
+    public const string CompassFacingPath = "CompassFacing";
     public const string HpBarPath = "HpBar";
     public const string HpPath = "HpLabel";
     public const string WeightIconPath = "WeightIcon";
@@ -49,12 +52,18 @@ public partial class Hud : Control
     private readonly Label[] _hotbarCounts = new Label[InputSampler.HotbarSlots];
     private OverlayGrid _hotbarGrid;
     private int _hotbarSelected = InputSampler.DefaultHotbarSlot;
+    private HBoxContainer _compass = null!;
+    private Label _compassDistrict = null!;
+    private Label _compassFacing = null!;
+    private readonly ColorRect[] _compassSlots = new ColorRect[CompassFrame.SlotCount];
+    private CompassFrame _compassFrame = CompassFrame.Empty;
 
     public override void _Ready()
     {
         PlayTheme.Apply(this);
         CacheLabels();
         EnsureStrip();
+        EnsureCompass();
     }
 
     public void Bind(in HudFrame frame)
@@ -110,6 +119,37 @@ public partial class Hud : Control
         SetText(_weight, frame.WeightLabel);
     }
 
+    public void BindCompass(in CompassFrame frame)
+    {
+        EnsureCompass();
+        _compassFrame = frame;
+        SetText(_compassFacing, frame.FacingLabel);
+        SetText(_compassDistrict, DistrictPalette.HasSwatch(frame.CurrentDistrict)
+            ? "D" + frame.CurrentDistrict
+            : "");
+        if (DistrictPalette.HasSwatch(frame.CurrentDistrict))
+            _compassDistrict.Modulate = DistrictSwatch.Of(frame.CurrentDistrict);
+        else
+            _compassDistrict.Modulate = Colors.White;
+        for (int i = 0; i < CompassFrame.SlotCount; i++)
+        {
+            byte district = i < frame.Slots.Count ? frame.Slots[i] : (byte)0;
+            var slot = _compassSlots[i];
+            if (DistrictPalette.HasSwatch(district))
+            {
+                slot.Color = DistrictSwatch.Of(district);
+                slot.Modulate = district == frame.CurrentDistrict
+                    ? Colors.White
+                    : new Color(1f, 1f, 1f, 0.75f);
+            }
+            else
+            {
+                slot.Color = PlayTheme.PanelBg;
+                slot.Modulate = Colors.White;
+            }
+        }
+    }
+
     public void BindHotbar(in OverlayGrid hotbar, int selected)
     {
         EnsureStrip();
@@ -131,6 +171,7 @@ public partial class Hud : Control
     {
         CacheLabels();
         EnsureStrip();
+        EnsureCompass();
         var dump =
             $"HUD_DUMP case={caseName}\n" +
             $"ShiftLabel={_shift.Text}\n" +
@@ -143,6 +184,9 @@ public partial class Hud : Control
             $"HeldAddress={_held.Text}\n" +
             $"TargetAddress={_target.Text}\n" +
             $"MatchMark={_match.Text}\n" +
+            $"CompassFacing={_compassFrame.FacingLabel}\n" +
+            $"CompassDistrict={_compassFrame.CurrentDistrict}\n" +
+            $"CompassSlots={_compassFrame.SlotKey}\n" +
             $"HpLabel={_hp.Text}\n" +
             $"WeightLabel={_weight.Text}\n" +
             $"HotbarSelected={_hotbarSelected}\n";
@@ -205,6 +249,39 @@ public partial class Hud : Control
         const float slot = 56f;
         icon.Position = new Vector2((slot - size.X) * 0.5f, 14f + (28f - size.Y) * 0.5f);
     }
+
+    private void EnsureCompass()
+    {
+        if (_compass is not null)
+            return;
+        CacheLabels();
+        _compassDistrict = GetNode<Label>("%" + CompassDistrictPath);
+        _compassFacing = GetNode<Label>("%" + CompassFacingPath);
+        _compass = GetNode<HBoxContainer>("%" + CompassPath);
+        for (int i = 0; i < CompassFrame.SlotCount; i++)
+        {
+            if (i == CompassFrame.SlotCount / 2)
+                _compass.AddChild(MakeTick());
+            var slot = new ColorRect
+            {
+                Name = "CompassSlot" + i,
+                Color = PlayTheme.PanelBg,
+                CustomMinimumSize = new Vector2(4, 18),
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            _compass.AddChild(slot);
+            _compassSlots[i] = slot;
+        }
+    }
+
+    private static ColorRect MakeTick() => new()
+    {
+        Name = "CompassTick",
+        Color = PlayTheme.Body,
+        CustomMinimumSize = new Vector2(2, 18),
+        MouseFilter = MouseFilterEnum.Ignore,
+    };
 
     private void EnsureStrip()
     {

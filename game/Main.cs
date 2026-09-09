@@ -7,6 +7,7 @@ using PerformativeMail.Game.Net;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Run;
 
 namespace PerformativeMail.Game;
@@ -60,6 +61,8 @@ public partial class Main : Node3D
     private bool _holdInteract;
     private HudSnapshot _boundHud;
     private bool _hudBound;
+    private CompassFrame _boundCompass;
+    private bool _compassBound;
     private OverlayStamp _boundOverlay;
     private bool _overlayBound;
     private bool _playUiHidden = true;
@@ -202,6 +205,7 @@ public partial class Main : Node3D
                 _world.Sync(playing.World);
                 _world.SyncHarvest(playing.Resources);
                 BindHud(playing.Hud);
+                BindCompass(playing);
                 if (playing.Overlay is OverlayReplica overlay)
                     BindOverlay(overlay);
                 BindMap(playing);
@@ -236,6 +240,7 @@ public partial class Main : Node3D
             return;
         _playUiHidden = true;
         _hudBound = false;
+        _compassBound = false;
         _overlayBound = false;
         _hud.Visible = false;
         _world.Clear();
@@ -400,6 +405,29 @@ public partial class Main : Node3D
         _boundHud = snapshot;
         _hudBound = true;
         _hud.Bind(HudFrame.From(in snapshot));
+    }
+
+    private void BindCompass(PlaySession.Playing playing)
+    {
+        var pose = PlayerPose.Origin;
+        for (int i = 0; i < playing.Pawns.Count; i++)
+        {
+            if (playing.Pawns[i].Id != playing.LocalPlayer)
+                continue;
+            pose = playing.Pawns[i].Pose;
+            break;
+        }
+
+        BindCompass(CompassFrame.From(playing.World, in pose));
+    }
+
+    private void BindCompass(in CompassFrame frame)
+    {
+        if (_compassBound && CompassFrame.SameDisplay(in _boundCompass, in frame))
+            return;
+        _boundCompass = frame;
+        _compassBound = true;
+        _hud.BindCompass(in frame);
     }
 
     private void BuildLobby()
@@ -675,6 +703,7 @@ public partial class Main : Node3D
         var dump = new StringBuilder();
         BindHud(HudBoot.Placeholder());
         BindOverlay(OverlayBootReplica.Build());
+        BindCompass(CompassBoot.Placeholder());
         dump.AppendLine(_hud.Dump("match"));
         BindHud(InspectMismatch());
         dump.AppendLine(_hud.Dump("mismatch"));
@@ -690,6 +719,7 @@ public partial class Main : Node3D
     {
         BindHud(HudBoot.Placeholder());
         BindOverlay(OverlayBootReplica.Build());
+        BindCompass(CompassBoot.Placeholder());
         var dump = new StringBuilder();
         _overlay.Open();
         dump.Append(_overlay.Dump("open"));

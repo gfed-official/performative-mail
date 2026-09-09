@@ -548,6 +548,10 @@ host_live_hud_smoke() {
   grep -q 'HUD_DUMP_END' "$dump" || fail "missing HUD_DUMP_END: $(cat "$dump")"
   grep -Fqx "PhaseLabel=PREP" "$dump" || fail "live HUD dump is not PREP: $(cat "$dump")"
   grep -Fqx "ShiftLabel=Shift 1 / 5" "$dump" || fail "live HUD dump missing shift: $(cat "$dump")"
+  grep -Fqx "CompassFacing=N" "$dump" || fail "live HUD dump missing compass facing: $(cat "$dump")"
+  grep -Fqx "CompassDistrict=1" "$dump" || fail "live HUD dump missing nearby district: $(cat "$dump")"
+  grep -Fqx "CompassSlots=000000000011111110000000" "$dump" \
+    || fail "live HUD dump missing district-1 compass band: $(cat "$dump")"
   grep -Fqx "HpLabel=HP 100" "$dump" || fail "live HUD dump missing HP widget: $(cat "$dump")"
   grep -Fqx "WeightLabel=Wt 0" "$dump" || fail "live HUD dump missing weight widget: $(cat "$dump")"
   grep -Fqx "HotbarSelected=1" "$dump" || fail "live HUD dump missing hotbar selection: $(cat "$dump")"
