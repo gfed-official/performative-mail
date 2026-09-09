@@ -23,6 +23,7 @@ public sealed class ArtMeshBootTests
         Assert.Contains("res://art/world/grass_tile_01.glb", source);
         Assert.Contains("res://art/props/crate_01.glb", source);
         Assert.Contains("res://art/props/cart_01.glb", source);
+        Assert.Contains("res://art/world/street_pole_01.glb", source);
         Assert.Contains("res://art/world/resource_wood_01.glb", source);
         Assert.Contains("res://art/world/resource_wood_stump_01.glb", source);
         Assert.Contains("res://art/world/resource_fiber_01.glb", source);
@@ -31,6 +32,12 @@ public sealed class ArtMeshBootTests
         Assert.Contains("res://art/world/resource_sand_01.glb", source);
         Assert.Contains("res://art/world/resource_berries_01.glb", source);
         Assert.Contains("TryMesh", source);
+        Assert.Contains("TryInstantiateLod", source);
+        Assert.Contains("ApplyLod", source);
+        Assert.Contains("LodRootName", source);
+        Assert.Contains("ArtLod.MaxLevel", source);
+        Assert.Contains("ArtLod.Resolve", source);
+        Assert.Contains("ArtLod.HorizontalMeters", source);
         Assert.Contains("PathForProp", source);
         Assert.Contains("PathForResource", source);
         Assert.Contains("mat_pawn_vest", source);
@@ -76,6 +83,31 @@ public sealed class ArtMeshBootTests
         Assert.True(File.Exists(Path.Combine(art, "world", "grass_tile_01.glb")));
         Assert.True(File.Exists(Path.Combine(art, "props", "crate_01.glb")));
         Assert.True(File.Exists(Path.Combine(art, "props", "cart_01.glb")));
+        Assert.True(File.Exists(Path.Combine(art, "world", "street_pole_01.glb")));
+    }
+
+    [Fact]
+    public void P4LodGlbs_ArePresentOnDiskWithoutCrateLo2()
+    {
+        string art = FindArtRoot();
+        AssertNonEmptyGlb(Path.Combine(art, "world", "mailbox_01_lo1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "mailbox_01_lo2.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "intake_01_lo1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "intake_01_lo2.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "po_01_lo1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "po_01_lo2.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "house_a_lo1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "house_a_lo2.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "house_b_lo1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "house_b_lo2.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "house_c_lo1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "house_c_lo2.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "street_pole_01_lo1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "street_pole_01_lo2.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "cart_01_lo1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "cart_01_lo2.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "crate_01_lo1.glb"));
+        Assert.False(File.Exists(Path.Combine(art, "props", "crate_01_lo2.glb")));
     }
 
     private static string ReadGame(string fileName)

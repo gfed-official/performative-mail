@@ -12,6 +12,12 @@ public sealed class WorldStageBootTests
         Assert.Contains("AddressText.Format", source);
         Assert.Contains("AddLabeledBox", source);
         Assert.Contains("ArtMesh.TryInstantiate", source);
+        Assert.Contains("ArtMesh.TryInstantiateLod", source);
+        Assert.Contains("ArtMesh.ApplyLod", source);
+        Assert.Contains("ApplyCameraLod", source);
+        Assert.Contains("GetCamera3D", source);
+        Assert.Contains("ArtLod.Lo1Meters", source);
+        Assert.Contains("ArtLod.Lo2Meters", source);
         Assert.Contains("ArtMesh.PostOffice", source);
         Assert.Contains("ArtMesh.Intake", source);
         Assert.Contains("ArtMesh.Mailbox", source);
