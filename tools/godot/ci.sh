@@ -475,9 +475,9 @@ host_live_overlay_smoke() {
   grep -Fqx "visible=true" "$dump" || fail "live overlay dump is not open: $(cat "$dump")"
   grep -Fqx "hotbar cols=8 rows=1" "$dump" || fail "live overlay dump missing hotbar grid: $(cat "$dump")"
   grep -Fqx "inventory cols=8 rows=2" "$dump" || fail "live overlay dump missing inventory grid: $(cat "$dump")"
-  grep -Fqx "hotbar[1,0] count=1 address=1 pending=0 opacity=1.0" "$dump" \
+  grep -Fqx "hotbar[1,0] count=1 address=1/1/1 pending=0 opacity=1.0" "$dump" \
     || fail "live overlay dump missing pickup mail cell: $(cat "$dump")"
-  grep -Fqx "hotbar_1_0 text=1 1 opacity=1.0" "$dump" \
+  grep -Fqx "hotbar_1_0 text=1 1/1/1 opacity=1.0" "$dump" \
     || fail "live overlay dump missing pickup cell text: $(cat "$dump")"
   if grep -Fq "address=13" "$dump"; then
     fail "live overlay dump still has OverlayBootReplica Larch 13: $(cat "$dump")"

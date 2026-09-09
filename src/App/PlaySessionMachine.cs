@@ -227,6 +227,15 @@ public sealed class PlaySessionMachine : IDisposable
         return TrySpawnLetter(server, inventory, hotbar);
     }
 
+    public bool TryQuickMove(ContainerId from, EntryId entry, ContainerId to)
+    {
+        if (!TryHostPlaying(out var server, out var local))
+            return false;
+        if (server.World.Inventory is not InventorySystem inventory)
+            return false;
+        return inventory.Apply(Actor.Player(local), new QuickMove(from, entry, to)) is Accepted;
+    }
+
     public bool TryStockIntake()
     {
         if (!TryHostPlaying(out var server, out _))
