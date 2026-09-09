@@ -359,17 +359,17 @@ host_worldstage_smoke() {
     || fail "host worldstage report failed jq schema: $(cat "$report")"
   grep -q 'WORLD_DUMP' "$dump" || fail "missing WORLD_DUMP: $(cat "$dump")"
   grep -q 'WORLD_DUMP_END' "$dump" || fail "missing WORLD_DUMP_END: $(cat "$dump")"
-  grep -Fqx "PostOffice Label=Post Office" "$dump" \
+  grep -Fqx "PostOffice Label=Post Office district=#3D7EFF" "$dump" \
     || fail "WorldStage dump missing Post Office: $(cat "$dump")"
-  grep -Fqx "MailIntake Label=Mail" "$dump" \
+  grep -Fqx "MailIntake Label=Mail district=#3D7EFF" "$dump" \
     || fail "WorldStage dump missing Mail intake: $(cat "$dump")"
-  grep -Fqx "House_1 Label=1 Debug Lane" "$dump" \
+  grep -Fqx "House_1 Label=1 Debug Lane district=#3D7EFF" "$dump" \
     || fail "WorldStage dump missing house address 1 Debug Lane: $(cat "$dump")"
-  grep -Fqx "House_2 Label=2 Debug Lane" "$dump" \
+  grep -Fqx "House_2 Label=2 Debug Lane district=#3D7EFF" "$dump" \
     || fail "WorldStage dump missing house address 2 Debug Lane: $(cat "$dump")"
-  grep -Fqx "Mailbox_1 Label=1 Debug Lane" "$dump" \
+  grep -Fqx "Mailbox_1 Label=1 Debug Lane district=#3D7EFF" "$dump" \
     || fail "WorldStage dump missing mailbox 1 Debug Lane: $(cat "$dump")"
-  grep -Fqx "Mailbox_2 Label=2 Debug Lane" "$dump" \
+  grep -Fqx "Mailbox_2 Label=2 Debug Lane district=#3D7EFF" "$dump" \
     || fail "WorldStage dump missing mailbox 2 Debug Lane: $(cat "$dump")"
   local boxes
   boxes="$(grep -c '^Mailbox_' "$dump" || true)"
@@ -475,10 +475,12 @@ host_live_overlay_smoke() {
   grep -Fqx "visible=true" "$dump" || fail "live overlay dump is not open: $(cat "$dump")"
   grep -Fqx "hotbar cols=8 rows=1" "$dump" || fail "live overlay dump missing hotbar grid: $(cat "$dump")"
   grep -Fqx "inventory cols=8 rows=2" "$dump" || fail "live overlay dump missing inventory grid: $(cat "$dump")"
-  grep -Fqx "hotbar[1,0] count=1 address=1/1/1 pending=0 opacity=1.0" "$dump" \
+  grep -Fqx "hotbar[1,0] count=1 address=1/1/1 pending=0 opacity=1.0 district=1 swatch=#3D7EFF" "$dump" \
     || fail "live overlay dump missing pickup mail cell: $(cat "$dump")"
   grep -Fqx "hotbar_1_0 text=1 1/1/1 opacity=1.0" "$dump" \
     || fail "live overlay dump missing pickup cell text: $(cat "$dump")"
+  grep -Fqx "hotbar_1_0_swatch color=#3D7EFF" "$dump" \
+    || fail "live overlay dump missing district swatch: $(cat "$dump")"
   if grep -Fq "address=13" "$dump"; then
     fail "live overlay dump still has OverlayBootReplica Larch 13: $(cat "$dump")"
   fi

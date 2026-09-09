@@ -8,7 +8,8 @@ namespace PerformativeMail.Client.UI;
 public readonly record struct OverlayCell(
     string CountLabel,
     string AddressLabel,
-    bool Pending)
+    bool Pending,
+    byte District = 0)
 {
     public const float ConfirmedOpacity = 1f;
     public const float PendingOpacity = 0.6f;
@@ -74,10 +75,15 @@ public readonly record struct OverlayFrame(
                 }
 
                 string count = entry.Stack.Count.ToString();
-                string address = entry.Stack is MailStack mail
-                    ? OverlayCell.MiniAddress(mail.Address)
-                    : "";
-                cells[i++] = new OverlayCell(count, address, pending.Contains(entry.Id));
+                string address = "";
+                byte district = 0;
+                if (entry.Stack is MailStack mail)
+                {
+                    address = OverlayCell.MiniAddress(mail.Address);
+                    district = mail.Address.District;
+                }
+
+                cells[i++] = new OverlayCell(count, address, pending.Contains(entry.Id), district);
             }
         }
 
