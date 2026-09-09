@@ -35,7 +35,11 @@ public sealed class WorldStageBootTests
         Assert.Contains("PixelSize = LabelPixelSize", source);
         Assert.Contains("LabelOutlineSize = 8", source);
         Assert.Contains("LabelPixelSize = 0.01f", source);
-        Assert.Contains("Modulate = Colors.White", source);
+        Assert.Contains("Modulate = DistrictSwatch.Of(district)", source);
+        Assert.Contains("OutlineModulate = Colors.Black", source);
+        Assert.Contains("house.Address.District", source);
+        Assert.Contains("PoDistrict(streets)", source);
+        Assert.DoesNotContain("Modulate = Colors.White", source);
         Assert.DoesNotContain("OutlineSize = 6", source);
         Assert.DoesNotContain("QuadMesh", source);
         Assert.DoesNotContain("new Vector3(0f, 1.6f, 0f)", source);
@@ -89,6 +93,8 @@ public sealed class WorldStageBootTests
         Assert.Contains("WORLD_DUMP", source);
         Assert.Contains("GetNodeOrNull<Label3D>(\"Label\")", source);
         Assert.Contains("Label=", source);
+        Assert.Contains("district=", source);
+        Assert.Contains("DistrictSwatch.Hex(label.Modulate)", source);
         Assert.Contains("WORLD_DUMP_END", source);
         Assert.DoesNotContain("ReadAllText", source);
     }

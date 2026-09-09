@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Godot;
 using PerformativeMail.Client.UI;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Game;
 
@@ -13,6 +14,7 @@ public partial class InventoryOverlay : Control
 
     private readonly Dictionary<string, Label> _cells = new();
     private readonly Dictionary<string, ColorRect> _slots = new();
+    private readonly Dictionary<string, ColorRect> _swatches = new();
     private VBoxContainer _left = null!;
     private VBoxContainer _right = null!;
     private OverlayFrame _frame;
@@ -60,6 +62,7 @@ public partial class InventoryOverlay : Control
         ClearColumn(right);
         _cells.Clear();
         _slots.Clear();
+        _swatches.Clear();
         AddGrid(left, frame.Hotbar);
         AddGrid(left, frame.Inventory);
         if (frame.Backpack is { } pack)
@@ -104,6 +107,16 @@ public partial class InventoryOverlay : Control
             dump.Append(pair.Value.Text);
             dump.Append(" opacity=");
             dump.Append(pair.Value.Modulate.A.ToString("0.0", CultureInfo.InvariantCulture));
+            dump.Append('\n');
+        }
+
+        foreach (var pair in _swatches)
+        {
+            if (!GodotObject.IsInstanceValid(pair.Value) || !pair.Value.Visible)
+                continue;
+            dump.Append(pair.Key);
+            dump.Append(" color=");
+            dump.Append(DistrictSwatch.Hex(pair.Value.Color));
             dump.Append('\n');
         }
 
@@ -171,9 +184,10 @@ public partial class InventoryOverlay : Control
                 if (i >= grid.Cells.Count)
                     return;
                 var cell = grid.Cells[i];
+                string cellName = CellName(grid.Name, x, y);
                 var label = new Label
                 {
-                    Name = CellName(grid.Name, x, y),
+                    Name = cellName,
                     Text = cell.Text,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Bottom,
@@ -203,6 +217,24 @@ public partial class InventoryOverlay : Control
                 slot.GuiInput += e => OnSlotInput(e, gridName, cx, cy);
                 slot.AddChild(icon);
                 PlaceIcon(icon, HotbarChrome.Size(cell.Icon));
+                if (DistrictPalette.HasSwatch(cell.District))
+                {
+                    var chip = new ColorRect
+                    {
+                        Name = cellName + "_swatch",
+                        Color = DistrictSwatch.Of(cell.District),
+                        CustomMinimumSize = new Vector2(12, 12),
+                        MouseFilter = MouseFilterEnum.Ignore,
+                    };
+                    chip.SetAnchorsPreset(LayoutPreset.TopLeft);
+                    chip.OffsetLeft = 3;
+                    chip.OffsetTop = 3;
+                    chip.OffsetRight = 15;
+                    chip.OffsetBottom = 15;
+                    slot.AddChild(chip);
+                    _swatches[chip.Name] = chip;
+                }
+
                 slot.AddChild(label);
                 label.SetAnchorsPreset(LayoutPreset.FullRect);
                 cells.AddChild(slot);
@@ -247,6 +279,14 @@ public partial class InventoryOverlay : Control
                 dump.Append(cell.Opacity.ToString("0.0", CultureInfo.InvariantCulture));
                 dump.Append(" icon=");
                 dump.Append(cell.IconKey);
+                if (DistrictPalette.HasSwatch(cell.District))
+                {
+                    dump.Append(" district=");
+                    dump.Append(cell.District);
+                    dump.Append(" swatch=");
+                    dump.Append(DistrictSwatch.HexOf(cell.District));
+                }
+
                 dump.Append('\n');
             }
         }
@@ -275,7 +315,7 @@ public partial class InventoryOverlay : Control
 
     private static void PlaceIcon(ColorRect icon, Vector2 size)
     {
-        icon.Position = new Vector2((76f - size.X) * 0.5f, 4f);
+        icon.Position = new Vector2((76f - size.X) * 0.5f, 16f);
         icon.Size = size;
     }
 

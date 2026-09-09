@@ -1,5 +1,6 @@
 using Godot;
 using PerformativeMail.Client.UI;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Game;
 
@@ -36,6 +37,7 @@ public partial class Hud : Control
     private HBoxContainer _hotbar = null!;
     private readonly ColorRect[] _hotbarSlots = new ColorRect[InputSampler.HotbarSlots];
     private readonly ColorRect[] _hotbarIcons = new ColorRect[InputSampler.HotbarSlots];
+    private readonly ColorRect[] _hotbarSwatches = new ColorRect[InputSampler.HotbarSlots];
     private readonly Label[] _hotbarCounts = new Label[InputSampler.HotbarSlots];
     private OverlayGrid _hotbarGrid;
     private int _hotbarSelected = InputSampler.DefaultHotbarSlot;
@@ -122,8 +124,10 @@ public partial class Hud : Control
             var cell = CellAt(i);
             dump +=
                 $"HotbarSlot{i} icon={cell.IconKey} count={cell.CountLabel} address={cell.AddressLabel} selected=" +
-                (i == _hotbarSelected ? "1" : "0") +
-                "\n";
+                (i == _hotbarSelected ? "1" : "0");
+            if (DistrictPalette.HasSwatch(cell.District))
+                dump += " district=" + cell.District;
+            dump += "\n";
         }
 
         return dump.TrimEnd('\n');
@@ -152,6 +156,10 @@ public partial class Hud : Control
         icon.Size = size;
         icon.Modulate = new Color(1f, 1f, 1f, cell.Opacity);
         CenterIcon(icon, size);
+        bool swatch = DistrictPalette.HasSwatch(cell.District);
+        _hotbarSwatches[index].Visible = swatch;
+        if (swatch)
+            _hotbarSwatches[index].Color = DistrictSwatch.Of(cell.District);
         SetText(_hotbarCounts[index], cell.CountLabel);
         _hotbarCounts[index].Modulate = new Color(1f, 1f, 1f, cell.Opacity);
         PaintSelection(index);
@@ -204,6 +212,14 @@ public partial class Hud : Control
             MouseFilter = MouseFilterEnum.Ignore,
             Visible = false,
         };
+        var swatch = new ColorRect
+        {
+            Name = "HotbarSwatch" + index,
+            CustomMinimumSize = new Vector2(12, 12),
+            MouseFilter = MouseFilterEnum.Ignore,
+            Visible = false,
+        };
+        swatch.Position = new Vector2(3, 3);
         var count = new Label
         {
             Name = "HotbarCount" + index,
@@ -214,9 +230,11 @@ public partial class Hud : Control
         };
         slot.AddChild(key);
         slot.AddChild(icon);
+        slot.AddChild(swatch);
         slot.AddChild(count);
         _hotbarSlots[index] = slot;
         _hotbarIcons[index] = icon;
+        _hotbarSwatches[index] = swatch;
         _hotbarCounts[index] = count;
         return slot;
     }

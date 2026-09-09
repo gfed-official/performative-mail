@@ -44,6 +44,8 @@ public sealed class PlayThemeSourceTests
         Assert.Contains("SelectHotbar", hud);
         Assert.Contains("HotbarStrip", hud);
         Assert.Contains("HotbarChrome.SlotSelected", hud);
+        Assert.Contains("DistrictSwatch.Of(cell.District)", hud);
+        Assert.Contains("DistrictPalette.HasSwatch", hud);
         Assert.DoesNotContain("Colors.Gray", hud);
         Assert.DoesNotContain("0.12f, 0.13f, 0.16f", hud);
     }

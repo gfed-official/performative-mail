@@ -2,6 +2,7 @@ using PerformativeMail.Client.UI;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Net.Tests.UI;
 
@@ -27,6 +28,7 @@ public sealed class OverlayFrameTests
         OverlayCell hands = frame.Hotbar[0, 0];
         Assert.Equal("", hands.Text);
         Assert.False(hands.Pending);
+        Assert.Equal((byte)0, hands.District);
         Assert.Equal(OverlayCell.ConfirmedOpacity, hands.Opacity);
         Assert.Equal(OverlayIcon.Hands, hands.Icon);
         Assert.Equal("hands", hands.IconKey);
@@ -35,6 +37,7 @@ public sealed class OverlayFrameTests
         Assert.Equal("1", mail.CountLabel);
         Assert.Equal("1/1/13", mail.AddressLabel);
         Assert.Equal("1 1/1/13", mail.Text);
+        Assert.Equal((byte)1, mail.District);
         Assert.True(mail.Pending);
         Assert.Equal(OverlayCell.PendingOpacity, mail.Opacity);
         Assert.True(mail.Opacity < OverlayCell.ConfirmedOpacity);
@@ -44,6 +47,7 @@ public sealed class OverlayFrameTests
         OverlayCell empty = frame.Hotbar[2, 0];
         Assert.Equal(OverlayIcon.Empty, empty.Icon);
         Assert.Equal("empty", empty.IconKey);
+        Assert.Equal((byte)0, empty.District);
     }
 
     [Fact]
@@ -105,6 +109,30 @@ public sealed class OverlayFrameTests
     }
 
     [Fact]
+    public void From_MailCellKeepsAddressTextAndDestinationDistrict()
+    {
+        var catalog = new LetterOnlyCatalog();
+        var auth = new InventorySystem(catalog);
+        var player = new EntityId(1);
+        var hotbar = auth.CreateContainer(ContainerSpec.Hotbar, player);
+        var inventory = auth.CreateContainer(ContainerSpec.BaseInventory, player);
+        var mail = MailStack.Single(MailKinds.Letter, new AddressId(2, 4, 7, 0), new MailId(1));
+        Assert.IsType<Accepted>(auth.Apply(Actor.System, new Deposit(hotbar, mail)));
+
+        var replica = new InventorySystem(catalog);
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(hotbar)));
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(inventory)));
+        Assert.True(LiveOverlay.TryFrom(replica, out var live));
+
+        OverlayCell cell = OverlayFrame.From(in live).Hotbar[1, 0];
+        Assert.Equal("2/4/7", cell.AddressLabel);
+        Assert.Equal("1 2/4/7", cell.Text);
+        Assert.Equal((byte)2, cell.District);
+        Assert.Equal("#E85D3A", DistrictPalette.HexOf(cell.District));
+        Assert.Contains("2/4/7", cell.Text);
+    }
+
+    [Fact]
     public void From_LiveShapedReplica_HotbarMailUsesHouseNumberNotBootLarch()
     {
         var catalog = new LetterOnlyCatalog();
@@ -125,6 +153,7 @@ public sealed class OverlayFrameTests
         Assert.Equal("1", cell.CountLabel);
         Assert.Equal("1/1/1", cell.AddressLabel);
         Assert.Equal("1 1/1/1", cell.Text);
+        Assert.Equal((byte)1, cell.District);
         Assert.False(cell.Pending);
         Assert.Equal(OverlayCell.ConfirmedOpacity, cell.Opacity);
         Assert.Equal(OverlayIcon.Letter, cell.Icon);
@@ -161,13 +190,16 @@ public sealed class OverlayFrameTests
         Assert.Equal(OverlayIcon.Hands, frame.Hotbar[0, 0].Icon);
         Assert.Equal(OverlayIcon.Letter, frame.Hotbar[1, 0].Icon);
         Assert.Equal("letter", frame.Hotbar[1, 0].IconKey);
+        Assert.Equal((byte)1, frame.Hotbar[1, 0].District);
         Assert.Equal(OverlayIcon.Package, frame.Hotbar[2, 0].Icon);
         Assert.Equal("package", frame.Hotbar[2, 0].IconKey);
         Assert.Equal("1/1/3", frame.Hotbar[2, 0].AddressLabel);
+        Assert.Equal((byte)1, frame.Hotbar[2, 0].District);
         Assert.Equal(OverlayIcon.Item, frame.Inventory[0, 0].Icon);
         Assert.Equal("item", frame.Inventory[0, 0].IconKey);
         Assert.Equal("4", frame.Inventory[0, 0].CountLabel);
         Assert.Equal("", frame.Inventory[0, 0].AddressLabel);
+        Assert.Equal((byte)0, frame.Inventory[0, 0].District);
     }
 
     private sealed class LetterOnlyCatalog : IStackCatalog

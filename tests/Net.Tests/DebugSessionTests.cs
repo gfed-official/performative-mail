@@ -248,6 +248,7 @@ public sealed class DebugSessionTests
         Assert.Equal("1", cell.CountLabel);
         Assert.Equal("1/1/1", cell.AddressLabel);
         Assert.Equal("1 1/1/1", cell.Text);
+        Assert.Equal((byte)1, cell.District);
         Assert.False(cell.Pending);
         Assert.NotEqual("13", cell.AddressLabel);
 

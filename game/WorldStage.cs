@@ -77,7 +77,9 @@ public partial class WorldStage : Node3D
                 continue;
             dump.Append(child.Name);
             dump.Append(" Label=");
-            dump.AppendLine(label.Text);
+            dump.Append(label.Text);
+            dump.Append(" district=");
+            dump.AppendLine(DistrictSwatch.Hex(label.Modulate));
         }
         dump.Append("WORLD_DUMP_END");
         return dump.ToString();
@@ -101,6 +103,7 @@ public partial class WorldStage : Node3D
                 footprint,
                 footprint.Y * 0.5f,
                 "Post Office",
+                PoDistrict(streets),
                 toward.X,
                 toward.Z,
                 visual: visual);
@@ -114,6 +117,7 @@ public partial class WorldStage : Node3D
                 PostOfficeBrick,
                 1.2f,
                 "Post Office",
+                PoDistrict(streets),
                 toward.X,
                 toward.Z);
         }
@@ -154,6 +158,7 @@ public partial class WorldStage : Node3D
                 size,
                 size.Y * 0.5f,
                 "Mail",
+                PoDistrict(streets),
                 toward.X,
                 toward.Z,
                 visual: visual);
@@ -167,6 +172,7 @@ public partial class WorldStage : Node3D
             MailIntakeYellow,
             0.5f,
             "Mail",
+            PoDistrict(streets),
             toward.X,
             toward.Z);
     }
@@ -246,6 +252,7 @@ public partial class WorldStage : Node3D
                     new Vector3(size.X, height, size.Z),
                     height * 0.5f,
                     address,
+                    house.Address.District,
                     toward.X,
                     toward.Z,
                     visual: visual);
@@ -259,6 +266,7 @@ public partial class WorldStage : Node3D
                 HouseStucco,
                 0.9f,
                 address,
+                house.Address.District,
                 toward.X,
                 toward.Z,
                 WorldPropPlacement.HouseRoofHeightMeters);
@@ -287,6 +295,7 @@ public partial class WorldStage : Node3D
                     size,
                     size.Y * 0.5f,
                     address,
+                    house.Address.District,
                     toward.X,
                     toward.Z,
                     visual: visual);
@@ -301,6 +310,7 @@ public partial class WorldStage : Node3D
                 MailboxBlue,
                 0.57f,
                 address,
+                house.Address.District,
                 toward.X,
                 toward.Z);
             AddMailboxFlag(root, sizeBox, toward.X, toward.Z);
@@ -314,6 +324,7 @@ public partial class WorldStage : Node3D
         Color color,
         float heightCenter,
         string labelText,
+        byte district,
         float towardX = 0f,
         float towardZ = 0f,
         float stackHeight = 0f)
@@ -324,7 +335,7 @@ public partial class WorldStage : Node3D
             MaterialOverride = SolidFor(color),
             Position = new Vector3(0f, heightCenter, 0f),
         };
-        return AddLabeled(name, origin, size, heightCenter, labelText, towardX, towardZ, stackHeight, mesh);
+        return AddLabeled(name, origin, size, heightCenter, labelText, district, towardX, towardZ, stackHeight, mesh);
     }
 
     private Node3D AddLabeled(
@@ -333,6 +344,7 @@ public partial class WorldStage : Node3D
         Vector3 size,
         float heightCenter,
         string labelText,
+        byte district,
         float towardX = 0f,
         float towardZ = 0f,
         float stackHeight = 0f,
@@ -360,7 +372,8 @@ public partial class WorldStage : Node3D
             FontSize = 42,
             OutlineSize = LabelOutlineSize,
             PixelSize = LabelPixelSize,
-            Modulate = Colors.White,
+            Modulate = DistrictSwatch.Of(district),
+            OutlineModulate = Colors.Black,
             Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
         });
         AddChild(root);
@@ -479,6 +492,17 @@ public partial class WorldStage : Node3D
     }
 
     private static Vector3 Vec((float X, float Y, float Z) p) => new(p.X, p.Y, p.Z);
+
+    private static byte PoDistrict(StreetRecord[] streets)
+    {
+        for (int i = 0; i < streets.Length; i++)
+        {
+            if (streets[i].District != 0)
+                return streets[i].District;
+        }
+
+        return 1;
+    }
 
     private static StandardMaterial3D SolidFor(Color color)
     {
