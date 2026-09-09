@@ -25,6 +25,11 @@ public sealed class PlaySessionMachine : IDisposable
     private ContentIdMap? _ids;
     private ContentStackCatalog? _catalog;
     private DebugSpawnCatalog? _spawns;
+    private ShopItemDef[]? _shopCatalog;
+    private ShopSession? _shop;
+    private byte _shopRolledShift;
+    private RunPhase _shopRolledPhase;
+    private bool _shopRolled;
 
     public PlaySessionMachine(INetworkStack stack, SessionOptions? options = null)
     {
@@ -113,6 +118,7 @@ public sealed class PlaySessionMachine : IDisposable
     public void Leave()
     {
         ClockPaused = false;
+        ResetShop();
         _live.Dispose();
         _live = Live.None.Instance;
         _pawns.Clear();
@@ -169,6 +175,35 @@ public sealed class PlaySessionMachine : IDisposable
 
         server.World.Wallet.Credit(amount);
         return true;
+    }
+
+    public bool TryBuy(string shopItemId)
+    {
+        if (!TryEnsureShop(out var shop, out var phase, out _, out _))
+            return false;
+        if (!ShopFrame.PhaseOpen(phase))
+            return false;
+        return shop.TryBuy(shopItemId) is ShopBought;
+    }
+
+    public bool TryShop(out ShopFrame frame)
+    {
+        frame = default;
+        if (!TryEnsureShop(out var shop, out var phase, out var shift, out var wallet))
+            return false;
+        frame = ShopFrame.From(_shopCatalog!, shop.Offers, wallet, phase, shift);
+        return true;
+    }
+
+    public bool ShopPhaseOpen
+    {
+        get
+        {
+            if (_live.Server is not ServerRuntime server)
+                return false;
+            var phase = server.Clock?.State.Phase ?? server.Session.Phase;
+            return ShopFrame.PhaseOpen(phase);
+        }
     }
 
     public bool TryAdvancePhase()
@@ -287,10 +322,63 @@ public sealed class PlaySessionMachine : IDisposable
 
     private void EnsureContent()
     {
-        if (_catalog is not null && _ids is not null && _spawns is not null)
+        if (_catalog is not null && _ids is not null && _spawns is not null && _shopCatalog is not null)
             return;
         var bundle = ContentBoot.Load(out _ids, out _catalog);
         _spawns = DebugSpawnCatalog.From(bundle, _ids);
+        _shopCatalog = bundle.Shop;
+    }
+
+    private bool TryEnsureShop(
+        out ShopSession shop,
+        out RunPhase phase,
+        out byte shift,
+        out Cents wallet)
+    {
+        shop = null!;
+        phase = default;
+        shift = 0;
+        wallet = default;
+        if (!TryHostPlaying(out var server, out _))
+            return false;
+        if (server.World.Inventory is not InventorySystem inventory)
+            return false;
+        if (!TryBag(inventory, out var bag))
+            return false;
+
+        EnsureContent();
+        if (_shopCatalog is null || _ids is null)
+            return false;
+
+        phase = server.Clock?.State.Phase ?? server.Session.Phase;
+        shift = server.Clock?.State.Shift ?? server.Session.Shift;
+        wallet = server.World.Wallet.Balance;
+        _shop ??= new ShopSession(
+            _shopCatalog,
+            server.World.Wallet,
+            server.OfferedSettings.Seed,
+            inventory,
+            bag,
+            _ids.Items);
+        shop = _shop;
+        if (ShopFrame.PhaseOpen(phase) &&
+            (!_shopRolled || _shopRolledShift != shift || _shopRolledPhase != phase))
+        {
+            shop.RollOffers(shift, phase);
+            _shopRolled = true;
+            _shopRolledShift = shift;
+            _shopRolledPhase = phase;
+        }
+
+        return true;
+    }
+
+    private void ResetShop()
+    {
+        _shop = null;
+        _shopRolled = false;
+        _shopRolledShift = 0;
+        _shopRolledPhase = default;
     }
 
     private ContentStackCatalog Stacks()
@@ -775,6 +863,7 @@ public sealed class PlaySessionMachine : IDisposable
     private PlaySession Fail(FailReason reason)
     {
         ClockPaused = false;
+        ResetShop();
         _live.Dispose();
         _live = Live.None.Instance;
         _pawns.Clear();

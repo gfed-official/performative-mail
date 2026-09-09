@@ -140,6 +140,11 @@ overlays_inspect() {
   SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-overlays.sh" "$(mktemp)"
 }
 
+shop_inspect() {
+  echo "==> shop Control text inspect"
+  SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-shop.sh" "$(mktemp)"
+}
+
 host_join_smoke() {
   echo "==> headless host/join smoke"
   local reports host_log guest_log host_pid
@@ -648,6 +653,62 @@ host_live_map_smoke() {
   fi
 }
 
+host_live_shop_smoke() {
+  echo "==> headless host Prep shop buy dump"
+  local reports report dump log
+  reports="$(mktemp -d)"
+  report="$reports/report.json"
+  dump="$reports/shop-dump.txt"
+  log="$(mktemp)"
+  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+    --host --debug-world --debug-helper=shop --quit-after-ms=8000 \
+    --report="$report" --shop-dump="$dump" \
+    >"$log" 2>&1; then
+    cat "$log"
+    fail "host live-shop process exited non-zero"
+  fi
+  if [[ ! -f "$report" ]]; then
+    cat "$log"
+    fail "host live-shop did not write a report"
+  fi
+  if [[ ! -f "$dump" ]]; then
+    cat "$log"
+    fail "host live-shop did not write a shop dump"
+  fi
+  cat "$report"
+  echo
+  echo "---- $dump ----"
+  cat "$dump"
+  echo
+  grep -q '"state":"Playing"' "$report" || fail "host live-shop report is not Playing: $(cat "$report")"
+  grep -q '"worldHash":"0x4CF184F2FA4D4EEE"' "$report" \
+    || fail "host live-shop report missing debug worldHash: $(cat "$report")"
+  need_jq
+  jq -e '
+    .state == "Playing"
+    and .phase == "Prep"
+    and .shift == 1
+    and .worldHash == "0x4CF184F2FA4D4EEE"
+    and .wallet == 920
+    and (.pawns | length) >= 1
+  ' "$report" >/dev/null \
+    || fail "host live-shop report failed jq schema: $(cat "$report")"
+  grep -q 'SHOP_DUMP case=live' "$dump" || fail "missing live shop dump: $(cat "$dump")"
+  grep -q 'SHOP_DUMP_END' "$dump" || fail "missing SHOP_DUMP_END: $(cat "$dump")"
+  grep -Fqx "visible=true" "$dump" || fail "live shop dump is not open: $(cat "$dump")"
+  grep -Fqx "WalletLabel=\$9.20" "$dump" || fail "live shop dump wallet is not \$9.20: $(cat "$dump")"
+  grep -Fqx "PhaseLabel=PREP" "$dump" || fail "live shop dump is not PREP: $(cat "$dump")"
+  grep -Fq "Offer.bandage_x3=Bandages ×3|\$0.80|" "$dump" \
+    || fail "live shop dump missing bandage price: $(cat "$dump")"
+  grep -Fq "Offer.axe=Axe|\$0.80|" "$dump" \
+    || fail "live shop dump missing axe price: $(cat "$dump")"
+  grep -Fq "Offer.bp_pipes=Blueprint: Pneumatics|\$7.00|Unlocks shift 3|locked" "$dump" \
+    || fail "live shop dump missing locked pipes blueprint: $(cat "$dump")"
+  if grep -q 'SHOP_DUMP case=open' "$dump"; then
+    fail "live shop dump still has inspect ShopBoot path: $(cat "$dump")"
+  fi
+}
+
 host_leave_smoke() {
   echo "==> headless host pause Leave returns to Menu"
   local report log
@@ -679,7 +740,7 @@ host_leave_smoke() {
 
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|debug|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay|live-hud|live-map|leave]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|shop|debug|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay|live-hud|live-map|live-shop|leave]
 
   verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import   godot --import + dotnet build of game/
@@ -689,6 +750,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|
   map      open Map overlay from MapBoot WorldTables and read layer/chip/ping text
   lobby    bind LobbyFrame and read Control text (seed and ready)
   overlays bind payday, draft, and results frames and read Control text
+  shop     bind ShopFrame from ShopBoot and read catalog prices
   debug    open DebugMenu from DebugBoot and read inspect/cheat labels
   join     two-process LAN host/join on 127.0.0.1:7777
   play     solo Host play report with golden worldHash and HUD
@@ -699,6 +761,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|
   live-overlay solo Host --debug-world --debug-helper=live-overlay; pickup, open overlay, dump live cell text
   live-hud solo Host --debug-world report plus live HUD dump (Playing / HudSnapshot, not Placeholder)
   live-map solo Host --debug-world --debug-helper=map plus --map-dump=; M-path map Control from WorldTables
+  live-shop solo Host --debug-world --debug-helper=shop; give wallet, ShopSession buy, dump live catalog
   leave    solo Host --debug-world --debug-helper=leave; Esc pause Leave confirm; SmokeReport state Menu
   all      all of the above (default)
 EOF
@@ -731,6 +794,9 @@ case "$cmd" in
   overlays)
     overlays_inspect
     ;;
+  shop)
+    shop_inspect
+    ;;
   debug)
     debug_inspect
     ;;
@@ -761,6 +827,9 @@ case "$cmd" in
   live-map)
     host_live_map_smoke
     ;;
+  live-shop)
+    host_live_shop_smoke
+    ;;
   leave)
     host_leave_smoke
     ;;
@@ -774,6 +843,7 @@ case "$cmd" in
     map_inspect
     lobby_inspect
     overlays_inspect
+    shop_inspect
     debug_inspect
     host_join_smoke
     host_play_smoke
@@ -784,6 +854,7 @@ case "$cmd" in
     host_live_overlay_smoke
     host_live_hud_smoke
     host_live_map_smoke
+    host_live_shop_smoke
     host_leave_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;

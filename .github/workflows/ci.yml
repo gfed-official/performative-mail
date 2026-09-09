@@ -103,6 +103,8 @@ jobs:
         run: bash tools/godot/ci.sh lobby
       - name: Payday draft results Control text inspect
         run: bash tools/godot/ci.sh overlays
+      - name: Shop Control text inspect
+        run: bash tools/godot/ci.sh shop
       - name: Debug menu Control text inspect
         run: bash tools/godot/ci.sh debug
       - name: Headless host/join smoke
@@ -123,5 +125,7 @@ jobs:
         run: bash tools/godot/ci.sh live-hud
       - name: Headless Host live map Control dump
         run: bash tools/godot/ci.sh live-map
+      - name: Headless Host Prep shop buy dump
+        run: bash tools/godot/ci.sh live-shop
       - name: Headless Host pause Leave returns to Menu
         run: bash tools/godot/ci.sh leave

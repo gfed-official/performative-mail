@@ -28,6 +28,7 @@ public static class PauseBoot
         new("Deliver all matching", "F", "Hold X longer (1 s)"),
         new("Attack / use tool", "LMB", "RT"),
         new("Inventory", "Tab", "Y"),
+        new("Shop (Prep / Payday)", "P", "D-pad down"),
         new("Map", "M", "View"),
         new("Build mode", "B", "LB"),
         new("Rotate (build / inventory)", "R", "RB"),

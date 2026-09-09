@@ -33,15 +33,18 @@ public partial class Main : Node3D
     private bool _inspectMap;
     private bool _inspectLobby;
     private bool _inspectOverlays;
+    private bool _inspectShop;
     private bool _overlayHeld;
     private bool _mapHeld;
     private bool _pauseHeld;
+    private bool _shopHeld;
     private string? _reportPath;
     private string? _hudDumpPath;
     private string? _overlayDumpPath;
     private string? _mapDumpPath;
     private string? _lobbyDumpPath;
     private string? _overlaysDumpPath;
+    private string? _shopDumpPath;
     private int _quitAfterMs;
     private ulong _startedUsec;
     private Hud _hud = null!;
@@ -51,6 +54,8 @@ public partial class Main : Node3D
     private Payday _payday = null!;
     private Draft _draft = null!;
     private Results _results = null!;
+    private Shop _shop = null!;
+    private RunPhase _shopPhaseSeen;
     private PauseMenu _pauseMenu = null!;
     private readonly PauseMenuState _pause = new();
     private DebugMenu? _debug;
@@ -66,6 +71,8 @@ public partial class Main : Node3D
     private bool _compassBound;
     private OverlayStamp _boundOverlay;
     private bool _overlayBound;
+    private ShopFrame _boundShop;
+    private bool _shopBound;
     private bool _playUiHidden = true;
     private bool _usingMenuCamera = true;
     private bool? _mouseCaptured;
@@ -114,6 +121,12 @@ public partial class Main : Node3D
             return;
         }
 
+        if (_inspectShop)
+        {
+            InspectShop();
+            return;
+        }
+
         if (OS.IsDebugBuild() || _inspectDebug)
             BuildDebugMenu();
 
@@ -131,7 +144,7 @@ public partial class Main : Node3D
 
     public override void _Input(InputEvent @event)
     {
-        if (_pause.IsOpen || _menuChrome.Visible)
+        if (_pause.IsOpen || _menuChrome.Visible || _shop.IsOpen || _map.IsOpen)
             return;
         if (InputSampler.TryHotbarSlot(@event, out int slot))
         {
@@ -148,7 +161,7 @@ public partial class Main : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (_pause.IsOpen || _menuChrome.Visible || _overlay.IsOpen || _map.IsOpen)
+        if (_pause.IsOpen || _menuChrome.Visible || _overlay.IsOpen || _map.IsOpen || _shop.IsOpen)
             return;
         if (@event is not InputEventMouseMotion motion)
             return;
@@ -157,12 +170,12 @@ public partial class Main : Node3D
 
     public override void _PhysicsProcess(double delta)
     {
-        var intent = _pause.IsOpen
+        var intent = _pause.IsOpen || _shop.IsOpen
             ? new MoveIntent(0, 0, _look.Yaw, InputButtons.None)
             : _walk
                 ? new MoveIntent(0, sbyte.MaxValue, _look.Yaw, InputButtons.None)
                 : InputSampler.Sample(in _look);
-        if (_holdInteract && !_pause.IsOpen)
+        if (_holdInteract && !_pause.IsOpen && !_shop.IsOpen)
             intent = new MoveIntent(intent.AxisX, intent.AxisY, intent.Yaw, intent.Buttons | InputButtons.Interact);
         var state = _session.Pump(WallNow(), in intent);
         Render(state);
@@ -170,6 +183,7 @@ public partial class Main : Node3D
         {
             PollOverlayToggle(state);
             PollMapToggle(state);
+            PollShopToggle(state);
         }
         PollPause(state);
         PollDebugToggle();
@@ -177,7 +191,7 @@ public partial class Main : Node3D
             BindDebug(_session.Inspect());
         MaybeApplyDebugHelper(state);
         if (state is PlaySession.Playing)
-            SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen);
+            SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen && !_shop.IsOpen);
         MaybeFinish(state);
     }
 
@@ -200,7 +214,7 @@ public partial class Main : Node3D
                 break;
             case PlaySession.Playing playing:
                 ShowMenuChrome(false);
-                SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen);
+                SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen && !_shop.IsOpen);
                 _usingMenuCamera = false;
                 _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing), HeldMailDistrict(playing));
                 _world.Sync(playing.World);
@@ -211,6 +225,7 @@ public partial class Main : Node3D
                 if (playing.Overlay is OverlayReplica overlay)
                     BindOverlay(overlay);
                 BindMap(playing);
+                SyncShop(playing);
                 break;
             case PlaySession.Failed failed:
                 ShowMenuChrome(true);
@@ -244,11 +259,14 @@ public partial class Main : Node3D
         _hudBound = false;
         _compassBound = false;
         _overlayBound = false;
+        _shopBound = false;
         _hud.Visible = false;
         _world.Clear();
         _constructs.Clear();
         _overlay.Close();
         _map.Close();
+        _shop.Close();
+        _shopPhaseSeen = default;
     }
 
     private void UseMenuCamera()
@@ -462,6 +480,10 @@ public partial class Main : Node3D
         _results = GD.Load<PackedScene>("res://scenes/results.tscn").Instantiate<Results>();
         layer.AddChild(_results);
         _results.Visible = false;
+        _shop = GD.Load<PackedScene>("res://scenes/shop.tscn").Instantiate<Shop>();
+        layer.AddChild(_shop);
+        _shop.Visible = false;
+        _shop.BuyPressed = OnShopBuy;
     }
 
     private void BindPayday(in PaydaySnapshot snapshot) =>
@@ -472,6 +494,15 @@ public partial class Main : Node3D
 
     private void BindResults(in ResultsPayload payload) =>
         _results.Bind(ResultsFrame.From(in payload));
+
+    private void BindShop(in ShopFrame frame)
+    {
+        if (_shopBound && ShopFrame.SameDisplay(in _boundShop, in frame))
+            return;
+        _boundShop = frame;
+        _shopBound = true;
+        _shop.Bind(frame);
+    }
 
     private void BuildOverlay()
     {
@@ -539,6 +570,8 @@ public partial class Main : Node3D
             if (!_overlay.IsOpen)
                 _map.Close();
             _overlay.Toggle();
+            if (_overlay.IsOpen)
+                _shop.Close();
         }
 
         _overlayHeld = held;
@@ -554,12 +587,64 @@ public partial class Main : Node3D
             else if (state is PlaySession.Playing playing)
             {
                 _overlay.Close();
+                _shop.Close();
                 _map.Open();
                 BindMap(playing);
             }
         }
 
         _mapHeld = held;
+    }
+
+    private void PollShopToggle(PlaySession state)
+    {
+        bool held = Input.IsPhysicalKeyPressed(Key.P);
+        if (held && !_shopHeld)
+        {
+            if (_shop.IsOpen)
+                _shop.Close();
+            else if (state is PlaySession.Playing playing &&
+                     ShopFrame.PhaseOpen(playing.Hud.Phase))
+                TryOpenLiveShop(playing);
+        }
+
+        _shopHeld = held;
+    }
+
+    private void SyncShop(PlaySession.Playing playing)
+    {
+        if (!ShopFrame.PhaseOpen(playing.Hud.Phase))
+        {
+            _shop.Close();
+            _shopPhaseSeen = playing.Hud.Phase;
+            return;
+        }
+
+        if (playing.Hud.Phase == RunPhase.Payday && _shopPhaseSeen != RunPhase.Payday)
+            TryOpenLiveShop(playing);
+        _shopPhaseSeen = playing.Hud.Phase;
+        if (_shop.IsOpen && _session.TryShop(out var frame))
+            BindShop(frame);
+    }
+
+    private bool TryOpenLiveShop(PlaySession.Playing playing)
+    {
+        if (!ShopFrame.PhaseOpen(playing.Hud.Phase))
+            return false;
+        if (!_session.TryShop(out var frame))
+            return false;
+        _overlay.Close();
+        _map.Close();
+        BindShop(frame);
+        _shop.Open();
+        return true;
+    }
+
+    private void OnShopBuy(string shopItemId)
+    {
+        _session.TryBuy(shopItemId);
+        if (_session.TryShop(out var frame))
+            BindShop(frame);
     }
 
     private void PollPause(PlaySession state)
@@ -600,6 +685,7 @@ public partial class Main : Node3D
     {
         _overlay.Close();
         _map.Close();
+        _shop.Close();
         _pause.Open(_session.TrySetClockPaused(true));
         BindPause(state);
     }
@@ -662,6 +748,11 @@ public partial class Main : Node3D
         {
             if (_session.State is PlaySession.Playing playing)
                 TryOpenLiveOverlay(playing);
+        };
+        _debug.OpenShopPressed += () =>
+        {
+            if (_session.State is PlaySession.Playing playing)
+                TryOpenLiveShop(playing);
         };
         _debug.SetSpawns(_session.SpawnCatalog.Rows);
         _debug.SpawnPressed += id => _session.TrySpawn(id);
@@ -802,6 +893,22 @@ public partial class Main : Node3D
         GetTree().Quit();
     }
 
+    private void InspectShop()
+    {
+        BindShop(ShopBoot.Inspect());
+        _shop.Open();
+        var dump = new StringBuilder();
+        dump.AppendLine(_shop.Dump("open"));
+        _shop.Close();
+        dump.AppendLine(_shop.Dump("closed"));
+        dump.AppendLine("SHOP_DUMP_END");
+        var text = dump.ToString();
+        GD.Print(text);
+        if (_shopDumpPath is not null)
+            File.WriteAllText(_shopDumpPath, text);
+        GetTree().Quit();
+    }
+
     private static HudSnapshot InspectMismatch() =>
         DeliveryStub(new InteractPrompt.Deliver("13 Larch Lane", "8 Oak Street"));
 
@@ -849,6 +956,8 @@ public partial class Main : Node3D
                 _inspectLobby = true;
             else if (arg == "--inspect-overlays")
                 _inspectOverlays = true;
+            else if (arg == "--inspect-shop")
+                _inspectShop = true;
             else if (arg == "--inspect-debug")
                 _inspectDebug = true;
             else if (arg.StartsWith("--hud-dump=", StringComparison.Ordinal))
@@ -861,6 +970,8 @@ public partial class Main : Node3D
                 _lobbyDumpPath = arg.Substring("--lobby-dump=".Length);
             else if (arg.StartsWith("--overlays-dump=", StringComparison.Ordinal))
                 _overlaysDumpPath = arg.Substring("--overlays-dump=".Length);
+            else if (arg.StartsWith("--shop-dump=", StringComparison.Ordinal))
+                _shopDumpPath = arg.Substring("--shop-dump=".Length);
             else if (arg.StartsWith("--debug-dump=", StringComparison.Ordinal))
                 _debugDumpPath = arg.Substring("--debug-dump=".Length);
             else if (arg.StartsWith("--world-dump=", StringComparison.Ordinal))
@@ -921,6 +1032,13 @@ public partial class Main : Node3D
             dump.AppendLine("MAP_DUMP_END");
             File.WriteAllText(_mapDumpPath, dump.ToString());
         }
+        if (_shopDumpPath is not null && state is PlaySession.Playing)
+        {
+            var dump = new StringBuilder();
+            dump.AppendLine(_shop.Dump("live"));
+            dump.AppendLine("SHOP_DUMP_END");
+            File.WriteAllText(_shopDumpPath, dump.ToString());
+        }
         GetTree().Quit();
     }
 
@@ -944,6 +1062,7 @@ public partial class Main : Node3D
             "interact" => TryStepInteractSmoke(playing),
             "live-overlay" => TryStepLiveOverlay(playing),
             "leave" => TryStepLeaveSmoke(playing),
+            "shop" => TryStepShopSmoke(playing),
             _ => true,
         };
         if (done)
@@ -995,6 +1114,14 @@ public partial class Main : Node3D
         OnPauseChoice(PauseFrame.LeaveId);
         OnPauseChoice(PauseFrame.ConfirmLeaveId);
         return true;
+    }
+
+    private bool TryStepShopSmoke(PlaySession.Playing playing)
+    {
+        if (playing.Hud.Wallet.Value < 80)
+            _session.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents));
+        _session.TryBuy("bandage_x3");
+        return TryOpenLiveShop(playing);
     }
 
     private bool HasHeldMail(PlaySession.Playing playing) =>
@@ -1069,6 +1196,7 @@ public partial class Main : Node3D
         if (playing.World is null)
             return false;
         _overlay.Close();
+        _shop.Close();
         _map.Open();
         BindMap(playing);
         return true;

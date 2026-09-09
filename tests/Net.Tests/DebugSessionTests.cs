@@ -34,6 +34,9 @@ public sealed class DebugSessionTests
         Assert.False(machine.TryQuickMove(new ContainerId(1), new EntryId(1), new ContainerId(2)));
         Assert.False(machine.TryStockIntake());
         Assert.False(machine.TrySpawn(new DebugSpawnId(DebugSpawnKind.Item, "axe")));
+        Assert.False(machine.TryBuy("bandage_x3"));
+        Assert.False(machine.TryShop(out _));
+        Assert.False(machine.ShopPhaseOpen);
     }
 
     [Fact]
@@ -72,6 +75,68 @@ public sealed class DebugSessionTests
         Assert.Equal(new Cents(1000), host.Inspect().Wallet);
         Assert.False(host.TryGiveWallet(new Cents(0)));
         Assert.Equal(new Cents(1000), host.Inspect().Wallet);
+    }
+
+    [Fact]
+    public void HostPrep_ShopBuy_DebitsWalletThroughShopSession()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        Pump(host, ref now, MoveIntent.Idle, 8);
+
+        Assert.True(host.ShopPhaseOpen);
+        Assert.True(host.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents)));
+        Assert.True(host.TryShop(out var before));
+        Assert.Equal("PREP", before.PhaseLabel);
+        Assert.Contains(before.Rows, row => row.Id == "bandage_x3" && row.PriceLabel == "$0.80" && row.CanBuy);
+        Assert.Contains(before.Rows, row => row.Id == "axe" && row.PriceLabel == "$0.80");
+        Assert.Contains(before.Rows, row => row.Id == "bp_pipes" && row.TagLabel == ShopFrame.UnlocksPrefix + "3");
+
+        Assert.True(host.TryBuy("bandage_x3"));
+        Assert.Equal(new Cents(920), host.Inspect().Wallet);
+        Assert.True(host.TryShop(out var after));
+        Assert.Equal("$9.20", after.WalletLabel);
+        Assert.Equal(3, CountBagItems(host));
+        Assert.False(host.TryBuy("bp_pipes"));
+        Assert.Equal(new Cents(920), host.Inspect().Wallet);
+    }
+
+    [Fact]
+    public void HostDelivery_ShopBuy_Rejected()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        Pump(host, ref now, MoveIntent.Idle, 8);
+        Assert.True(host.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents)));
+        Assert.True(host.TryShop(out _));
+        Assert.True(host.TryAdvancePhase());
+        Assert.Equal(RunPhase.Delivery, host.Inspect().Phase);
+        Assert.False(host.ShopPhaseOpen);
+        Assert.False(host.TryBuy("bandage_x3"));
+        Assert.Equal(new Cents(1000), host.Inspect().Wallet);
+        Assert.Equal(0, CountBagItems(host));
+    }
+
+    [Fact]
+    public void HostPayday_ShopBuy_Allowed()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.Host();
+        Pump(host, ref now, MoveIntent.Idle, 8);
+        Assert.True(host.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents)));
+        Assert.True(host.TryAdvancePhase());
+        Assert.True(host.TryAdvancePhase());
+        Assert.Equal(RunPhase.Payday, host.Inspect().Phase);
+        Assert.True(host.ShopPhaseOpen);
+        Assert.True(host.TryBuy("bandage_x3"));
+        Assert.Equal(new Cents(920), host.Inspect().Wallet);
+        Assert.Equal(3, CountBagItems(host));
     }
 
     [Fact]
@@ -129,6 +194,8 @@ public sealed class DebugSessionTests
 
         Assert.False(guest.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents)));
         Assert.False(guest.TryAdvancePhase());
+        Assert.False(guest.TryBuy("bandage_x3"));
+        Assert.False(guest.TryShop(out _));
         Assert.False(guest.TryResetLocalPawn());
         Assert.False(guest.TryTeleportToIntake());
         Assert.False(guest.TryTeleportToMailbox());
@@ -299,6 +366,25 @@ public sealed class DebugSessionTests
         }
 
         return false;
+    }
+
+    private static int CountBagItems(PlaySessionMachine host)
+    {
+        Assert.True(host.TryHostWorld(out var world, out _));
+        Assert.NotNull(world.Inventory);
+        int n = 0;
+        foreach (var container in world.Inventory.Containers)
+        {
+            if (container.Spec.Shape.Cols != 8 || container.Spec.Shape.Rows != 2)
+                continue;
+            foreach (var entry in container.Entries)
+            {
+                if (entry.Stack is ItemStack item)
+                    n += item.Count;
+            }
+        }
+
+        return n;
     }
 
     private static void Pump(PlaySessionMachine machine, ref TimeSpan now, in MoveIntent intent, int steps)
