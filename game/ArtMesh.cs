@@ -2,6 +2,7 @@ using Godot;
 using PerformativeMail.App;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Game;
 
@@ -24,6 +25,13 @@ public static class ArtMesh
     public const string GrassTile = "res://art/world/grass_tile_01.glb";
     public const string Crate = "res://art/props/crate_01.glb";
     public const string Cart = "res://art/props/cart_01.glb";
+    public const string ResourceWood = "res://art/world/resource_wood_01.glb";
+    public const string ResourceWoodStump = "res://art/world/resource_wood_stump_01.glb";
+    public const string ResourceFiber = "res://art/world/resource_fiber_01.glb";
+    public const string ResourceStone = "res://art/world/resource_stone_01.glb";
+    public const string ResourceIronOre = "res://art/world/resource_iron_ore_01.glb";
+    public const string ResourceSand = "res://art/world/resource_sand_01.glb";
+    public const string ResourceBerries = "res://art/world/resource_berries_01.glb";
 
     public const string PawnVestMaterial = "mat_pawn_vest";
     public const string PawnHatMaterial = "mat_pawn_hat";
@@ -106,6 +114,30 @@ public static class ArtMesh
                 return Crate;
             case EnvPropKind.Cart:
                 return Cart;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+        }
+    }
+
+    public static string PathForResource(ResourceKind kind, HarvestRemnant remnant)
+    {
+        if (remnant == HarvestRemnant.Stump && kind == ResourceKind.Wood)
+            return ResourceWoodStump;
+
+        switch (kind)
+        {
+            case ResourceKind.Wood:
+                return ResourceWood;
+            case ResourceKind.Fiber:
+                return ResourceFiber;
+            case ResourceKind.Stone:
+                return ResourceStone;
+            case ResourceKind.IronOre:
+                return ResourceIronOre;
+            case ResourceKind.Sand:
+                return ResourceSand;
+            case ResourceKind.Berries:
+                return ResourceBerries;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }

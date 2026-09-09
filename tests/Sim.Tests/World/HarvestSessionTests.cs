@@ -158,6 +158,37 @@ public sealed class HarvestSessionTests
         Assert.Equal(HarvestRemnant.RegrowNextShift, last.Remnant);
     }
 
+    [Theory]
+    [InlineData("axe", HarvestTool.Axe, true)]
+    [InlineData("pickaxe", HarvestTool.Pickaxe, true)]
+    [InlineData("shovel", HarvestTool.Shovel, true)]
+    [InlineData("log", HarvestTool.Hand, false)]
+    public void TryToolForItem_MapsExistingTools(string itemId, HarvestTool tool, bool ok)
+    {
+        Assert.Equal(ok, HarvestTable.TryToolForItem(itemId, out var mapped));
+        Assert.Equal(tool, mapped);
+    }
+
+    [Fact]
+    public void Hit_GrantToOverride_DepositsToPassedContainer()
+    {
+        var catalog = new MaterialCatalog();
+        var inv = new InventorySystem(catalog);
+        var ctorDest = inv.CreateContainer(ContainerSpec.Chest);
+        var hitDest = inv.CreateContainer(ContainerSpec.Chest);
+        var session = new HarvestSession(
+            new[] { new ResourceNodeRecord(ResourceKind.Wood, Origin) },
+            inv,
+            ctorDest,
+            Ids());
+
+        var hit = Assert.IsType<Harvested>(session.Hit(Origin, HarvestTool.Axe, hitDest));
+
+        Assert.Equal(2, hit.Count);
+        Assert.Equal(0, CountItem(inv, ctorDest, LogId));
+        Assert.Equal(2, CountItem(inv, hitDest, LogId));
+    }
+
     [Fact]
     public void Hit_UnknownTile_Rejected()
     {
@@ -252,9 +283,11 @@ public sealed class HarvestSessionTests
         ["berries"] = new ItemDefId(6)
     };
 
-    private static int CountItem(Fixture fx, ItemDefId id)
+    private static int CountItem(Fixture fx, ItemDefId id) => CountItem(fx.Inv, fx.Dest, id);
+
+    private static int CountItem(InventorySystem inv, ContainerId dest, ItemDefId id)
     {
-        Assert.True(fx.Inv.TryGetContainer(fx.Dest, out var grid));
+        Assert.True(inv.TryGetContainer(dest, out var grid));
         int n = 0;
         foreach (var entry in grid.Entries)
         {

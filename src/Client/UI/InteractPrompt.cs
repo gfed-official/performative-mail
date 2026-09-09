@@ -14,4 +14,6 @@ public abstract record InteractPrompt
     public sealed record Pickup(string Address) : InteractPrompt;
 
     public sealed record Deliver(string HeldAddress, string TargetAddress) : InteractPrompt;
+
+    public sealed record Harvest(string Resource) : InteractPrompt;
 }

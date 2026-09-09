@@ -23,8 +23,16 @@ public sealed class ArtMeshBootTests
         Assert.Contains("res://art/world/grass_tile_01.glb", source);
         Assert.Contains("res://art/props/crate_01.glb", source);
         Assert.Contains("res://art/props/cart_01.glb", source);
+        Assert.Contains("res://art/world/resource_wood_01.glb", source);
+        Assert.Contains("res://art/world/resource_wood_stump_01.glb", source);
+        Assert.Contains("res://art/world/resource_fiber_01.glb", source);
+        Assert.Contains("res://art/world/resource_stone_01.glb", source);
+        Assert.Contains("res://art/world/resource_iron_ore_01.glb", source);
+        Assert.Contains("res://art/world/resource_sand_01.glb", source);
+        Assert.Contains("res://art/world/resource_berries_01.glb", source);
         Assert.Contains("TryMesh", source);
         Assert.Contains("PathForProp", source);
+        Assert.Contains("PathForResource", source);
         Assert.Contains("mat_pawn_vest", source);
         Assert.Contains("mat_pawn_hat", source);
         Assert.Contains("mat_district", source);

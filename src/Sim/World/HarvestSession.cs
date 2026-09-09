@@ -66,7 +66,7 @@ public sealed class HarvestSession
     public bool TryGet(TileCoord tile, out HarvestNodeState state)
         => _nodes.TryGetValue(tile, out state);
 
-    public HarvestResult Hit(TileCoord tile, HarvestTool tool)
+    public HarvestResult Hit(TileCoord tile, HarvestTool tool, ContainerId grantTo = default)
     {
         if (!_nodes.TryGetValue(tile, out var state))
             return new HarvestRejected(HarvestReject.UnknownNode);
@@ -78,11 +78,12 @@ public sealed class HarvestSession
             return new HarvestRejected(HarvestReject.WrongTool);
 
         int count = HarvestTable.YieldFor(state.Kind, tool);
+        var dest = grantTo.Value != 0 ? grantTo : _grantTo;
         if (_inventory is not null)
         {
             if (!_itemIds.TryGetValue(spec.ItemId, out var itemId))
                 return new HarvestRejected(HarvestReject.UnknownItem);
-            var deposited = _inventory.Apply(Actor.System, new Deposit(_grantTo, new ItemStack(itemId, count)));
+            var deposited = _inventory.Apply(Actor.System, new Deposit(dest, new ItemStack(itemId, count)));
             if (deposited is not Accepted)
                 return new HarvestRejected(HarvestReject.NoRoom);
         }
