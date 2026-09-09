@@ -28,6 +28,8 @@ public sealed class OverlayFrameTests
         Assert.Equal("", hands.Text);
         Assert.False(hands.Pending);
         Assert.Equal(OverlayCell.ConfirmedOpacity, hands.Opacity);
+        Assert.Equal(OverlayIcon.Hands, hands.Icon);
+        Assert.Equal("hands", hands.IconKey);
 
         OverlayCell mail = frame.Hotbar[1, 0];
         Assert.Equal("1", mail.CountLabel);
@@ -36,6 +38,12 @@ public sealed class OverlayFrameTests
         Assert.True(mail.Pending);
         Assert.Equal(OverlayCell.PendingOpacity, mail.Opacity);
         Assert.True(mail.Opacity < OverlayCell.ConfirmedOpacity);
+        Assert.Equal(OverlayIcon.Letter, mail.Icon);
+        Assert.Equal("letter", mail.IconKey);
+
+        OverlayCell empty = frame.Hotbar[2, 0];
+        Assert.Equal(OverlayIcon.Empty, empty.Icon);
+        Assert.Equal("empty", empty.IconKey);
     }
 
     [Fact]
@@ -119,10 +127,47 @@ public sealed class OverlayFrameTests
         Assert.Equal("1 1/1/1", cell.Text);
         Assert.False(cell.Pending);
         Assert.Equal(OverlayCell.ConfirmedOpacity, cell.Opacity);
+        Assert.Equal(OverlayIcon.Letter, cell.Icon);
         Assert.Null(frame.Backpack);
         Assert.NotEqual("13", cell.AddressLabel);
         Assert.NotEqual("1 13", cell.Text);
         Assert.NotEqual("1/1/13", cell.AddressLabel);
+    }
+
+    [Fact]
+    public void From_PackagePostcardAndItem_UseDistinctIcons()
+    {
+        var catalog = new LetterOnlyCatalog();
+        var auth = new InventorySystem(catalog);
+        var player = new EntityId(1);
+        var hotbar = auth.CreateContainer(ContainerSpec.Hotbar, player);
+        var inventory = auth.CreateContainer(ContainerSpec.BaseInventory, player);
+        Assert.IsType<Accepted>(auth.Apply(Actor.System, new Deposit(
+            hotbar,
+            MailStack.Single(MailKinds.Postcard, new AddressId(1, 1, 2, 0), new MailId(1)))));
+        Assert.IsType<Accepted>(auth.Apply(Actor.System, new Deposit(
+            hotbar,
+            MailStack.Single(MailKinds.SmallPackage, new AddressId(1, 1, 3, 0), new MailId(2)))));
+        Assert.IsType<Accepted>(auth.Apply(Actor.System, new Deposit(
+            inventory,
+            new ItemStack(new ItemDefId(1), 4))));
+
+        var replica = new InventorySystem(catalog);
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(hotbar)));
+        Assert.Equal(ReplicaResult.Applied, replica.ApplyDelta(auth.Snapshot(inventory)));
+        Assert.True(LiveOverlay.TryFrom(replica, out var live));
+
+        var frame = OverlayFrame.From(in live);
+        Assert.Equal(OverlayIcon.Hands, frame.Hotbar[0, 0].Icon);
+        Assert.Equal(OverlayIcon.Letter, frame.Hotbar[1, 0].Icon);
+        Assert.Equal("letter", frame.Hotbar[1, 0].IconKey);
+        Assert.Equal(OverlayIcon.Package, frame.Hotbar[2, 0].Icon);
+        Assert.Equal("package", frame.Hotbar[2, 0].IconKey);
+        Assert.Equal("1/1/3", frame.Hotbar[2, 0].AddressLabel);
+        Assert.Equal(OverlayIcon.Item, frame.Inventory[0, 0].Icon);
+        Assert.Equal("item", frame.Inventory[0, 0].IconKey);
+        Assert.Equal("4", frame.Inventory[0, 0].CountLabel);
+        Assert.Equal("", frame.Inventory[0, 0].AddressLabel);
     }
 
     private sealed class LetterOnlyCatalog : IStackCatalog

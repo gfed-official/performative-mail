@@ -187,7 +187,7 @@ public partial class Main : Node3D
                 _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing));
                 _world.Sync(playing.World);
                 BindHud(playing.Hud);
-                if (_overlay.IsOpen && playing.Overlay is OverlayReplica overlay)
+                if (playing.Overlay is OverlayReplica overlay)
                     BindOverlay(overlay);
                 break;
             case PlaySession.Failed failed:
@@ -440,8 +440,11 @@ public partial class Main : Node3D
             return;
         _boundOverlay = stamp;
         _overlayBound = true;
-        _overlay.Bind(OverlayFrame.From(in replica));
+        var frame = OverlayFrame.From(in replica);
+        _overlay.Bind(frame);
+        _hud.BindHotbar(frame.Hotbar, _hotbarSlot);
         _overlay.SelectCell("hotbar", (byte)_hotbarSlot, 0);
+        _hud.SelectHotbar(_hotbarSlot);
     }
 
     private void BuildPause()
@@ -617,6 +620,7 @@ public partial class Main : Node3D
     {
         var dump = new StringBuilder();
         BindHud(HudBoot.Placeholder());
+        BindOverlay(OverlayBootReplica.Build());
         dump.AppendLine(_hud.Dump("match"));
         BindHud(InspectMismatch());
         dump.AppendLine(_hud.Dump("mismatch"));
@@ -886,6 +890,7 @@ public partial class Main : Node3D
     {
         _hotbarSlot = InputSampler.WrapHotbarSlot(slot);
         _overlay.SelectCell("hotbar", (byte)_hotbarSlot, 0);
+        _hud.SelectHotbar(_hotbarSlot);
     }
 
     private void OnOverlayCellPicked(string grid, byte x, byte y)

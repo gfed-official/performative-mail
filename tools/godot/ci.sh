@@ -475,7 +475,9 @@ host_live_overlay_smoke() {
   grep -Fqx "visible=true" "$dump" || fail "live overlay dump is not open: $(cat "$dump")"
   grep -Fqx "hotbar cols=8 rows=1" "$dump" || fail "live overlay dump missing hotbar grid: $(cat "$dump")"
   grep -Fqx "inventory cols=8 rows=2" "$dump" || fail "live overlay dump missing inventory grid: $(cat "$dump")"
-  grep -Fqx "hotbar[1,0] count=1 address=1/1/1 pending=0 opacity=1.0" "$dump" \
+  grep -Fqx "hotbar[0,0] count= address= pending=0 opacity=1.0 icon=hands" "$dump" \
+    || fail "live overlay dump missing hands icon: $(cat "$dump")"
+  grep -Fqx "hotbar[1,0] count=1 address=1/1/1 pending=0 opacity=1.0 icon=letter" "$dump" \
     || fail "live overlay dump missing pickup mail cell: $(cat "$dump")"
   grep -Fqx "hotbar_1_0 text=1 1/1/1 opacity=1.0" "$dump" \
     || fail "live overlay dump missing pickup cell text: $(cat "$dump")"
@@ -539,6 +541,13 @@ host_live_hud_smoke() {
   grep -q 'HUD_DUMP_END' "$dump" || fail "missing HUD_DUMP_END: $(cat "$dump")"
   grep -Fqx "PhaseLabel=PREP" "$dump" || fail "live HUD dump is not PREP: $(cat "$dump")"
   grep -Fqx "ShiftLabel=Shift 1 / 5" "$dump" || fail "live HUD dump missing shift: $(cat "$dump")"
+  grep -Fqx "HotbarSelected=1" "$dump" || fail "live HUD dump missing hotbar selection: $(cat "$dump")"
+  grep -Fqx "HotbarSlot0 icon=hands count= address= selected=0" "$dump" \
+    || fail "live HUD dump missing hands slot: $(cat "$dump")"
+  grep -Fqx "HotbarSlot1 icon=empty count= address= selected=1" "$dump" \
+    || fail "live HUD dump missing selected empty slot: $(cat "$dump")"
+  grep -Fqx "HotbarSlot7 icon=empty count= address= selected=0" "$dump" \
+    || fail "live HUD dump missing slot 8: $(cat "$dump")"
   local timer
   timer="$(jq -r .hudTimer "$report")"
   test -n "$timer" || fail "host live-hud report missing hudTimer: $(cat "$report")"

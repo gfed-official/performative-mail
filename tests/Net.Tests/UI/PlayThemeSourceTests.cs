@@ -40,6 +40,10 @@ public sealed class PlayThemeSourceTests
     {
         string hud = ReadGame("Hud.cs");
         Assert.Contains("PlayTheme.Apply(this)", hud);
+        Assert.Contains("BindHotbar", hud);
+        Assert.Contains("SelectHotbar", hud);
+        Assert.Contains("HotbarStrip", hud);
+        Assert.Contains("HotbarChrome.SlotSelected", hud);
         Assert.DoesNotContain("Colors.Gray", hud);
         Assert.DoesNotContain("0.12f, 0.13f, 0.16f", hud);
     }
