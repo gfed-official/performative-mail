@@ -107,6 +107,8 @@ jobs:
         run: bash tools/godot/ci.sh shop
       - name: Debug menu Control text inspect
         run: bash tools/godot/ci.sh debug
+      - name: Build mode Control text inspect
+        run: bash tools/godot/ci.sh build
       - name: Headless host/join smoke
         run: bash tools/godot/ci.sh join
       - name: Headless Host play report
@@ -127,5 +129,7 @@ jobs:
         run: bash tools/godot/ci.sh live-map
       - name: Headless Host Prep shop buy dump
         run: bash tools/godot/ci.sh live-shop
+      - name: Headless Host build mode place
+        run: bash tools/godot/ci.sh live-build
       - name: Headless Host pause Leave returns to Menu
         run: bash tools/godot/ci.sh leave

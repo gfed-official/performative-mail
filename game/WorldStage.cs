@@ -1,6 +1,7 @@
 using System.Text;
 using Godot;
 using PerformativeMail.App;
+using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.World;
 
@@ -13,6 +14,7 @@ public partial class WorldStage : Node3D
     public const string HousePrefix = "House_";
     public const string MailboxPrefix = "Mailbox_";
     public const string ResourcePrefix = WorldResourcePlacement.NodePrefix;
+    public const string ConstructPrefix = "Construct_";
     public const int LabelOutlineSize = 8;
     public const float LabelPixelSize = 0.01f;
 
@@ -55,6 +57,8 @@ public partial class WorldStage : Node3D
     private readonly List<Node> _spawned = new();
     private readonly Dictionary<long, Node3D> _resourceMarkers = new();
     private readonly Dictionary<long, HarvestRemnant> _resourceRemnants = new();
+    private readonly List<Node> _constructs = new();
+    private int _constructHash;
 
     public void Sync(WorldTables? tables)
     {
@@ -103,6 +107,36 @@ public partial class WorldStage : Node3D
         }
     }
 
+    public void SyncConstructs(IReadOnlyList<ConstructRecord> rows, int tileCm)
+    {
+        int hash = rows.Count;
+        for (int i = 0; i < rows.Count; i++)
+            hash = hash * 31 + (int)rows[i].Id.Value;
+        if (hash == _constructHash && _constructs.Count == rows.Count)
+            return;
+
+        ClearConstructs();
+        _constructHash = hash;
+        if (rows.Count == 0 || tileCm <= 0)
+            return;
+
+        float tileM = tileCm / 100f;
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            var at = Vec(WorldTilePlacement.TileCenter(row.Tile, tileM));
+            var node = new MeshInstance3D
+            {
+                Name = ConstructPrefix + row.Id.Value,
+                Mesh = new BoxMesh { Size = new Vector3(tileM, 1f, tileM) },
+                MaterialOverride = HouseStuccoMat,
+                Position = at + new Vector3(0f, 0.5f, 0f),
+            };
+            AddChild(node);
+            _constructs.Add(node);
+        }
+    }
+
     public void Clear()
     {
         for (int i = 0; i < _spawned.Count; i++)
@@ -110,7 +144,16 @@ public partial class WorldStage : Node3D
         _spawned.Clear();
         _resourceMarkers.Clear();
         _resourceRemnants.Clear();
+        ClearConstructs();
         _bound = null;
+    }
+
+    private void ClearConstructs()
+    {
+        for (int i = 0; i < _constructs.Count; i++)
+            _constructs[i].QueueFree();
+        _constructs.Clear();
+        _constructHash = 0;
     }
 
     public string Dump()

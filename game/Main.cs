@@ -4,11 +4,14 @@ using PerformativeMail.App;
 using PerformativeMail.Client;
 using PerformativeMail.Client.UI;
 using PerformativeMail.Game.Net;
+using PerformativeMail.Sim.Building;
+using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Game;
 
@@ -61,7 +64,9 @@ public partial class Main : Node3D
     private DebugMenu? _debug;
     private bool _debugHeld;
     private bool _inspectDebug;
+    private bool _inspectBuild;
     private string? _debugDumpPath;
+    private string? _buildDumpPath;
     private string? _worldDumpPath;
     private string? _debugHelper;
     private bool _holdInteract;
@@ -77,6 +82,12 @@ public partial class Main : Node3D
     private bool _usingMenuCamera = true;
     private bool? _mouseCaptured;
     private int _hotbarSlot = InputSampler.DefaultHotbarSlot;
+    private BuildBar _buildBar = null!;
+    private BuildGhost _buildGhost = null!;
+    private bool _buildHeld;
+    private bool _rotateHeld;
+    private bool _pipetteHeld;
+    private bool _placeHeld;
 
     public override void _Ready()
     {
@@ -90,6 +101,7 @@ public partial class Main : Node3D
         BuildMap();
         BuildPhaseOverlays();
         BuildPause();
+        BuildBuildMode();
         ApplyArgs(OS.GetCmdlineUserArgs());
         if (_inspectHud)
         {
@@ -136,6 +148,12 @@ public partial class Main : Node3D
             return;
         }
 
+        if (_inspectBuild)
+        {
+            InspectBuild();
+            return;
+        }
+
         BindOverlay(OverlayBootReplica.Build());
         GD.Print("performative-mail boot ok");
     }
@@ -146,6 +164,24 @@ public partial class Main : Node3D
     {
         if (_pause.IsOpen || _menuChrome.Visible || _shop.IsOpen || _map.IsOpen)
             return;
+        if (_session.Build is { IsOpen: true })
+        {
+            if (InputSampler.TryHotbarSlot(@event, out int category))
+            {
+                _session.Build.SelectCategoryIndex(category);
+                GetViewport().SetInputAsHandled();
+                return;
+            }
+
+            if (InputSampler.TryHotbarWheel(@event, out int cycle))
+            {
+                _session.Build.Cycle(cycle);
+                GetViewport().SetInputAsHandled();
+            }
+
+            return;
+        }
+
         if (InputSampler.TryHotbarSlot(@event, out int slot))
         {
             SelectHotbar(slot);
@@ -187,6 +223,7 @@ public partial class Main : Node3D
         }
         PollPause(state);
         PollDebugToggle();
+        PollBuild(state);
         if (_debug is { IsOpen: true })
             BindDebug(_session.Inspect());
         MaybeApplyDebugHelper(state);
@@ -267,6 +304,9 @@ public partial class Main : Node3D
         _map.Close();
         _shop.Close();
         _shopPhaseSeen = default;
+        _session.CloseBuild();
+        _buildBar.Visible = false;
+        _buildGhost.Visible = false;
     }
 
     private void UseMenuCamera()
@@ -555,6 +595,117 @@ public partial class Main : Node3D
         _pauseMenu.Bind(_pause.Frame, _pause.IsOpen);
     }
 
+    private void BuildBuildMode()
+    {
+        _buildBar = new BuildBar();
+        var layer = new CanvasLayer { Layer = 13 };
+        AddChild(layer);
+        layer.AddChild(_buildBar);
+        _buildBar.CategoryPicked = category => _session.Build?.SetCategory(category);
+        _buildBar.ChoicePicked = id => _session.Build?.Select(id);
+        _buildGhost = new BuildGhost();
+        AddChild(_buildGhost);
+    }
+
+    private void PollBuild(PlaySession state)
+    {
+        if (state is not PlaySession.Playing playing)
+        {
+            _session.CloseBuild();
+            _buildBar.Visible = false;
+            _buildGhost.Visible = false;
+            _buildHeld = InputSampler.BuildHeld();
+            _rotateHeld = InputSampler.RotateHeld();
+            _pipetteHeld = InputSampler.PipetteHeld();
+            _placeHeld = InputSampler.PlaceHeld();
+            return;
+        }
+
+        bool build = InputSampler.BuildHeld();
+        if (build && !_buildHeld && !_pause.IsOpen)
+        {
+            _overlay.Close();
+            _map.Close();
+            _shop.Close();
+            _session.TryToggleBuild();
+        }
+
+        _buildHeld = build;
+        if (_session.Build is not { IsOpen: true } mode)
+        {
+            _buildBar.Visible = false;
+            _buildGhost.Visible = false;
+            _rotateHeld = InputSampler.RotateHeld();
+            _pipetteHeld = InputSampler.PipetteHeld();
+            _placeHeld = InputSampler.PlaceHeld();
+            return;
+        }
+
+        bool rotate = InputSampler.RotateHeld();
+        if (rotate && !_rotateHeld)
+            mode.Rotate();
+        _rotateHeld = rotate;
+
+        bool aim = TryAimTile(playing, out var tile);
+        bool pipette = InputSampler.PipetteHeld();
+        if (pipette && !_pipetteHeld && aim)
+            _session.TryPipetteAt(tile);
+        _pipetteHeld = pipette;
+
+        bool place = InputSampler.PlaceHeld();
+        if (place && !_placeHeld && aim && !_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen && !_shop.IsOpen)
+            _session.TryPlaceAt(tile);
+        _placeHeld = place;
+
+        bool valid = true;
+        string reason = "";
+        if (aim && _session.TryGhost(tile, out var hint))
+        {
+            valid = hint.Valid;
+            reason = hint.Reason;
+            var origin = WorldTilePlacement.TileCenter(tile, (playing.World?.TileCm ?? 200) / 100f);
+            _buildGhost.Bind(true, new Vector3(origin.X, origin.Y, origin.Z), (playing.World?.TileCm ?? 200) / 100f, valid);
+        }
+        else
+            _buildGhost.Visible = false;
+
+        _buildBar.Bind(mode.Frame(valid, reason));
+    }
+
+    private bool TryAimTile(PlaySession.Playing playing, out TileCoord tile)
+    {
+        tile = default;
+        for (int i = 0; i < playing.Pawns.Count; i++)
+        {
+            if (playing.Pawns[i].Role != PawnRole.Local)
+                continue;
+            return _session.TryAimTile(playing.Pawns[i].Pose, _look.PitchRadians, out tile);
+        }
+
+        return false;
+    }
+
+    private void InspectBuild()
+    {
+        var bundle = ContentBoot.Load(out _, out _);
+        var mode = new BuildModeState(bundle.Buildings);
+        mode.Open();
+        var dump = new StringBuilder();
+        _buildBar.Bind(mode.Frame(true, ""));
+        dump.AppendLine(_buildBar.Dump("open"));
+        _buildBar.Bind(mode.Frame(false, BuildRejectText.Of(PlaceReject.Street)));
+        dump.AppendLine(_buildBar.Dump("street"));
+        mode.Close();
+        _buildBar.Bind(mode.Frame(true, ""));
+        dump.AppendLine(_buildBar.Dump("closed"));
+        dump.AppendLine("BUILD_DUMP_END");
+        var text = dump.ToString();
+        GD.Print(text);
+        if (_buildDumpPath is not null)
+            File.WriteAllText(_buildDumpPath, text);
+        GetTree().Quit();
+    }
+
     private void PollOverlayToggle(PlaySession state)
     {
         bool held = Input.IsPhysicalKeyPressed(Key.Tab) || Input.IsPhysicalKeyPressed(Key.Y);
@@ -571,7 +722,10 @@ public partial class Main : Node3D
                 _map.Close();
             _overlay.Toggle();
             if (_overlay.IsOpen)
+            {
                 _shop.Close();
+                _session.CloseBuild();
+            }
         }
 
         _overlayHeld = held;
@@ -588,6 +742,7 @@ public partial class Main : Node3D
             {
                 _overlay.Close();
                 _shop.Close();
+                _session.CloseBuild();
                 _map.Open();
                 BindMap(playing);
             }
@@ -635,6 +790,7 @@ public partial class Main : Node3D
             return false;
         _overlay.Close();
         _map.Close();
+        _session.CloseBuild();
         BindShop(frame);
         _shop.Open();
         return true;
@@ -686,6 +842,7 @@ public partial class Main : Node3D
         _overlay.Close();
         _map.Close();
         _shop.Close();
+        _session.CloseBuild();
         _pause.Open(_session.TrySetClockPaused(true));
         BindPause(state);
     }
@@ -960,6 +1117,8 @@ public partial class Main : Node3D
                 _inspectShop = true;
             else if (arg == "--inspect-debug")
                 _inspectDebug = true;
+            else if (arg == "--inspect-build")
+                _inspectBuild = true;
             else if (arg.StartsWith("--hud-dump=", StringComparison.Ordinal))
                 _hudDumpPath = arg.Substring("--hud-dump=".Length);
             else if (arg.StartsWith("--overlay-dump=", StringComparison.Ordinal))
@@ -974,6 +1133,8 @@ public partial class Main : Node3D
                 _shopDumpPath = arg.Substring("--shop-dump=".Length);
             else if (arg.StartsWith("--debug-dump=", StringComparison.Ordinal))
                 _debugDumpPath = arg.Substring("--debug-dump=".Length);
+            else if (arg.StartsWith("--build-dump=", StringComparison.Ordinal))
+                _buildDumpPath = arg.Substring("--build-dump=".Length);
             else if (arg.StartsWith("--world-dump=", StringComparison.Ordinal))
                 _worldDumpPath = arg.Substring("--world-dump=".Length);
             else if (arg.StartsWith("--debug-helper=", StringComparison.Ordinal))
@@ -1039,6 +1200,15 @@ public partial class Main : Node3D
             dump.AppendLine("SHOP_DUMP_END");
             File.WriteAllText(_shopDumpPath, dump.ToString());
         }
+        if (_buildDumpPath is not null && state is PlaySession.Playing)
+        {
+            var dump = new StringBuilder();
+            dump.AppendLine(_buildBar.Dump("live"));
+            dump.Append("constructs=");
+            dump.AppendLine(_session.PlacedConstructs().Count.ToString());
+            dump.AppendLine("BUILD_DUMP_END");
+            File.WriteAllText(_buildDumpPath, dump.ToString());
+        }
         GetTree().Quit();
     }
 
@@ -1063,6 +1233,7 @@ public partial class Main : Node3D
             "live-overlay" => TryStepLiveOverlay(playing),
             "leave" => TryStepLeaveSmoke(playing),
             "shop" => TryStepShopSmoke(playing),
+            "build" => TryStepBuildSmoke(playing),
             _ => true,
         };
         if (done)
@@ -1122,6 +1293,18 @@ public partial class Main : Node3D
             _session.TryGiveWallet(new Cents(DebugFrame.WalletGrantCents));
         _session.TryBuy("bandage_x3");
         return TryOpenLiveShop(playing);
+    }
+
+    private bool TryStepBuildSmoke(PlaySession.Playing playing)
+    {
+        if (!_session.TryTeleportToIntake())
+            return false;
+        for (int i = 0; i < 3; i++)
+            _session.TrySpawn(new DebugSpawnId(DebugSpawnKind.Item, "log"));
+        if (!_session.TryOpenBuild())
+            return false;
+        _session.Build!.Select("wall_wood");
+        return _session.TryPlaceAt(new TileCoord(7, 2));
     }
 
     private bool HasHeldMail(PlaySession.Playing playing) =>
