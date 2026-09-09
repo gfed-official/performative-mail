@@ -12,4 +12,6 @@ public readonly record struct HudSnapshot(
     InteractPrompt Interact,
     Cents Earnings,
     Cents Quota,
-    int Complaint);
+    int Complaint,
+    byte HpPct,
+    int WeightPoints);

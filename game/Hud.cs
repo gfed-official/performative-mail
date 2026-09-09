@@ -21,6 +21,10 @@ public partial class Hud : Control
     public const string CompassPath = "CompassStrip";
     public const string CompassDistrictPath = "CompassDistrict";
     public const string CompassFacingPath = "CompassFacing";
+    public const string HpBarPath = "HpBar";
+    public const string HpPath = "HpLabel";
+    public const string WeightIconPath = "WeightIcon";
+    public const string WeightPath = "WeightLabel";
 
     private static readonly Color Amber = new(1f, 0.75f, 0.2f);
     private static readonly Color Red = new(0.9f, 0.2f, 0.2f);
@@ -37,6 +41,10 @@ public partial class Hud : Control
     private Label _held = null!;
     private Label _target = null!;
     private Label _match = null!;
+    private ProgressBar _hpBar = null!;
+    private Label _hp = null!;
+    private ColorRect _weightIcon = null!;
+    private Label _weight = null!;
     private HBoxContainer _hotbar = null!;
     private readonly ColorRect[] _hotbarSlots = new ColorRect[InputSampler.HotbarSlots];
     private readonly ColorRect[] _hotbarIcons = new ColorRect[InputSampler.HotbarSlots];
@@ -92,6 +100,23 @@ public partial class Hud : Control
             MatchMark.Cross => Red,
             _ => Colors.White,
         };
+        if (_hpBar.MinValue != 0)
+            _hpBar.MinValue = 0;
+        if (_hpBar.MaxValue != 100)
+            _hpBar.MaxValue = 100;
+        double hp = Math.Clamp((double)frame.HpPct, 0d, 100d);
+        if (_hpBar.Value != hp)
+            _hpBar.Value = hp;
+        _hpBar.Modulate = frame.HpPct switch
+        {
+            <= 15 => Red,
+            <= 60 => Amber,
+            _ => Green,
+        };
+        SetText(_hp, frame.HpLabel);
+        if (_weightIcon.Color != PlayTheme.Muted)
+            _weightIcon.Color = PlayTheme.Muted;
+        SetText(_weight, frame.WeightLabel);
     }
 
     public void BindCompass(in CompassFrame frame)
@@ -162,6 +187,8 @@ public partial class Hud : Control
             $"CompassFacing={_compassFrame.FacingLabel}\n" +
             $"CompassDistrict={_compassFrame.CurrentDistrict}\n" +
             $"CompassSlots={_compassFrame.SlotKey}\n" +
+            $"HpLabel={_hp.Text}\n" +
+            $"WeightLabel={_weight.Text}\n" +
             $"HotbarSelected={_hotbarSelected}\n";
         for (int i = 0; i < InputSampler.HotbarSlots; i++)
         {
@@ -332,5 +359,9 @@ public partial class Hud : Control
         _held = GetNode<Label>("%" + HeldPath);
         _target = GetNode<Label>("%" + TargetPath);
         _match = GetNode<Label>("%" + MatchPath);
+        _hpBar = GetNode<ProgressBar>("%" + HpBarPath);
+        _hp = GetNode<Label>("%" + HpPath);
+        _weightIcon = GetNode<ColorRect>("%" + WeightIconPath);
+        _weight = GetNode<Label>("%" + WeightPath);
     }
 }

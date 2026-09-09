@@ -141,6 +141,48 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 
+[node name="ExtrasDock" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -88
+offset_right = 260
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="ExtrasRow" type="HBoxContainer" parent="ExtrasDock"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="HpBar" type="ProgressBar" parent="ExtrasDock/ExtrasRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 16)
+layout_mode = 2
+mouse_filter = 2
+show_percentage = false
+max_value = 100.0
+
+[node name="HpLabel" type="Label" parent="ExtrasDock/ExtrasRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+
+[node name="WeightIcon" type="ColorRect" parent="ExtrasDock/ExtrasRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="WeightLabel" type="Label" parent="ExtrasDock/ExtrasRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+
 [node name="HotbarDock" type="MarginContainer" parent="."]
 layout_mode = 1
 anchors_preset = 12

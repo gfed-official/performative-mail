@@ -222,6 +222,9 @@ public sealed class DebugSessionTests
         Pump(host, ref now, MoveIntent.Idle, 4);
         after = Assert.IsType<PlaySession.Playing>(host.State);
         Assert.True(HasMail(after.Overlay!.Value.Hotbar));
+        Assert.Equal((byte)100, after.Hud.HpPct);
+        Assert.Equal(1, after.Hud.WeightPoints);
+        Assert.Equal("Wt 1", HudFrame.From(after.Hud).WeightLabel);
         Assert.True(host.TryStockIntake());
     }
 
@@ -242,6 +245,8 @@ public sealed class DebugSessionTests
         Assert.NotNull(held.Overlay);
         Assert.True(HasMail(held.Overlay.Value.Hotbar));
         Assert.Equal(new Cents(0), held.Hud.Wallet);
+        Assert.Equal((byte)100, held.Hud.HpPct);
+        Assert.Equal(1, held.Hud.WeightPoints);
 
         var frame = OverlayFrame.From(held.Overlay.Value);
         OverlayCell cell = frame.Hotbar[1, 0];
@@ -263,6 +268,7 @@ public sealed class DebugSessionTests
         Assert.NotNull(delivered.Overlay);
         Assert.False(HasMail(delivered.Overlay.Value.Hotbar));
         Assert.Equal(new Cents(MailKinds.LetterBaseValue), delivered.Hud.Wallet);
+        Assert.Equal(0, delivered.Hud.WeightPoints);
     }
 
     private static PlayerPose LocalPose(PlaySessionMachine machine)

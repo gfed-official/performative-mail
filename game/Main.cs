@@ -724,7 +724,7 @@ public partial class Main : Node3D
 
     private static HudSnapshot DeliveryStub(InteractPrompt interact) =>
         new(RunPhase.Delivery, 1, 0, 2700, new Cents(1820), interact,
-            new Cents(640), new Cents(2214), 23);
+            new Cents(640), new Cents(2214), 23, 100, 0);
 
     private void OnJoinPressed()
     {

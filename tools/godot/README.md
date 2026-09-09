@@ -23,7 +23,7 @@
 | `worldstage` | Solo Host `--debug-world` plus `--world-dump=`. Asserts SmokeReport mailbox count ≥ 2 and live Label3D text for Post Office, Mail, and `1 Debug Lane` / `2 Debug Lane`. |
 | `interact` | Solo Host `--debug-world --debug-helper=interact`. Stocks Intake, teleports, holds Interact through pickup and deliver, and asserts `wallet` is `8`. |
 | `live-overlay` | Solo Host `--debug-world --debug-helper=live-overlay` plus `--overlay-dump=`. Picks up Intake mail, opens the inventory overlay on the Playing replica, and asserts live hotbar cell text (`1 1/1/1`), not OverlayBootReplica `1 1/1/13`. |
-| `live-hud` | Solo Host `--debug-world` plus `--hud-dump=`. Asserts Control text from Playing / `HudSnapshot` (`PREP`, shift, timer matching the report replica), the district-band compass (`CompassFacing=N`, `CompassDistrict=1`), the persistent 1–8 hotbar strip (`HotbarSelected=1`, hands + empty icons), not `HudBoot.Placeholder` (`DELIVERY`, `13 Larch Lane`). |
+| `live-hud` | Solo Host `--debug-world` plus `--hud-dump=`. Asserts Control text from Playing / `HudSnapshot` (`PREP`, shift, timer matching the report replica), the district-band compass (`CompassFacing=N`, `CompassDistrict=1`), HP/weight extras (`HP 100`, `Wt 0`), the persistent 1–8 hotbar strip (`HotbarSelected=1`, hands + empty icons), not `HudBoot.Placeholder` (`DELIVERY`, `13 Larch Lane`). |
 | `leave` | Solo Host `--debug-world --debug-helper=leave`. Opens pause (`OpenPause`, same path as Esc), activates Leave then confirm, and asserts SmokeReport `state` is `Menu`. |
 | `all` | Every command above, in that order. `all` is the default. |
 | `-h`, `--help` | Print the command list. |

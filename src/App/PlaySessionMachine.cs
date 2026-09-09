@@ -671,7 +671,9 @@ public sealed class PlaySessionMachine : IDisposable
                 interact,
                 server.World.Wallet.Balance,
                 server.QuotaFor(shift),
-                server.World.Complaint.Points);
+                server.World.Complaint.Points,
+                LocalHpPct(client, local, server),
+                CarriedWeight(client.Inventory));
         }
 
         var join = client.AcceptedJoin;
@@ -684,7 +686,38 @@ public sealed class PlaySessionMachine : IDisposable
             InteractPrompt.None.Instance,
             default,
             default,
-            0);
+            0,
+            LocalHpPct(client, local, server: null),
+            CarriedWeight(client.Inventory));
+    }
+
+    private static byte LocalHpPct(ClientRuntime client, EntityId local, ServerRuntime? server)
+    {
+        if (server is not null && server.World.Players.TryGet(local, out var body))
+            return body.HpPct;
+
+        if (client.LastSnapshot is SnapshotPacket packet)
+        {
+            for (int i = 0; i < packet.Players.Count; i++)
+            {
+                var player = packet.Players[i];
+                if (player.Id == local)
+                    return player.HpPct;
+            }
+        }
+
+        return 100;
+    }
+
+    private static int CarriedWeight(InventorySystem? inventory)
+    {
+        if (inventory is null || !LiveOverlay.TryFrom(inventory, out var bags))
+            return 0;
+
+        int sum = bags.Hotbar.WeightPoints + bags.Inventory.WeightPoints;
+        if (bags.Backpack is not null)
+            sum += bags.Backpack.WeightPoints;
+        return sum;
     }
 
     private PlaySession Fail(FailReason reason)
