@@ -24,6 +24,7 @@ public sealed class PawnStageBootTests
         Assert.Contains("VehicleTransform", source);
         Assert.Contains("useModelFront: true", source);
         Assert.Contains("VehiclePrefix", source);
+        Assert.DoesNotContain("in view.Pose", source);
         Assert.Contains("ViewFrame.From", source);
         Assert.Contains("camera.Current = local", source);
         Assert.Contains("localPitchRadians", source);
