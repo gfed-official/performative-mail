@@ -28,13 +28,16 @@ public partial class Main : Node3D
     private bool _reported;
     private bool _inspectHud;
     private bool _inspectOverlay;
+    private bool _inspectMap;
     private bool _inspectLobby;
     private bool _inspectOverlays;
     private bool _overlayHeld;
+    private bool _mapHeld;
     private bool _pauseHeld;
     private string? _reportPath;
     private string? _hudDumpPath;
     private string? _overlayDumpPath;
+    private string? _mapDumpPath;
     private string? _lobbyDumpPath;
     private string? _overlaysDumpPath;
     private int _quitAfterMs;
@@ -42,6 +45,7 @@ public partial class Main : Node3D
     private Hud _hud = null!;
     private Lobby _lobby = null!;
     private InventoryOverlay _overlay = null!;
+    private MapOverlay _map = null!;
     private Payday _payday = null!;
     private Draft _draft = null!;
     private Results _results = null!;
@@ -72,6 +76,7 @@ public partial class Main : Node3D
         BuildHud();
         BuildLobby();
         BuildOverlay();
+        BuildMap();
         BuildPhaseOverlays();
         BuildPause();
         ApplyArgs(OS.GetCmdlineUserArgs());
@@ -84,6 +89,12 @@ public partial class Main : Node3D
         if (_inspectOverlay)
         {
             InspectOverlay();
+            return;
+        }
+
+        if (_inspectMap)
+        {
+            InspectMap();
             return;
         }
 
@@ -133,7 +144,7 @@ public partial class Main : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (_pause.IsOpen || _menuChrome.Visible || _overlay.IsOpen)
+        if (_pause.IsOpen || _menuChrome.Visible || _overlay.IsOpen || _map.IsOpen)
             return;
         if (@event is not InputEventMouseMotion motion)
             return;
@@ -152,14 +163,17 @@ public partial class Main : Node3D
         var state = _session.Pump(WallNow(), in intent);
         Render(state);
         if (!_pause.IsOpen)
+        {
             PollOverlayToggle(state);
+            PollMapToggle(state);
+        }
         PollPause(state);
         PollDebugToggle();
         if (_debug is { IsOpen: true })
             BindDebug(_session.Inspect());
         MaybeApplyDebugHelper(state);
         if (state is PlaySession.Playing)
-            SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen);
+            SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen);
         MaybeFinish(state);
     }
 
@@ -182,13 +196,14 @@ public partial class Main : Node3D
                 break;
             case PlaySession.Playing playing:
                 ShowMenuChrome(false);
-                SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen);
+                SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen);
                 _usingMenuCamera = false;
                 _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing), HeldMailDistrict(playing));
                 _world.Sync(playing.World);
                 BindHud(playing.Hud);
                 if (playing.Overlay is OverlayReplica overlay)
                     BindOverlay(overlay);
+                BindMap(playing);
                 break;
             case PlaySession.Failed failed:
                 ShowMenuChrome(true);
@@ -224,6 +239,7 @@ public partial class Main : Node3D
         _hud.Visible = false;
         _world.Clear();
         _overlay.Close();
+        _map.Close();
     }
 
     private void UseMenuCamera()
@@ -433,6 +449,22 @@ public partial class Main : Node3D
         _overlay.SelectCell("hotbar", (byte)_hotbarSlot, 0);
     }
 
+    private void BuildMap()
+    {
+        _map = new MapOverlay();
+        var layer = new CanvasLayer { Layer = 13 };
+        AddChild(layer);
+        layer.AddChild(_map);
+        _map.Bind(null, null, 0);
+    }
+
+    private void BindMap(PlaySession.Playing playing)
+    {
+        if (!_map.IsOpen)
+            return;
+        _map.Bind(playing.World, playing.Overlay, playing.Hud.Now);
+    }
+
     private void BindOverlay(in OverlayReplica replica)
     {
         var stamp = replica.Stamp();
@@ -469,10 +501,30 @@ public partial class Main : Node3D
                 BindOverlay(live);
             }
 
+            if (!_overlay.IsOpen)
+                _map.Close();
             _overlay.Toggle();
         }
 
         _overlayHeld = held;
+    }
+
+    private void PollMapToggle(PlaySession state)
+    {
+        bool held = InputSampler.MapHeld();
+        if (held && !_mapHeld)
+        {
+            if (_map.IsOpen)
+                _map.Close();
+            else if (state is PlaySession.Playing playing)
+            {
+                _overlay.Close();
+                _map.Open();
+                BindMap(playing);
+            }
+        }
+
+        _mapHeld = held;
     }
 
     private void PollPause(PlaySession state)
@@ -512,6 +564,7 @@ public partial class Main : Node3D
     private void OpenPause(PlaySession state)
     {
         _overlay.Close();
+        _map.Close();
         _pause.Open(_session.TrySetClockPaused(true));
         BindPause(state);
     }
@@ -653,6 +706,29 @@ public partial class Main : Node3D
         GetTree().Quit();
     }
 
+    private void InspectMap()
+    {
+        var dump = new StringBuilder();
+        _map.Bind(MapBoot.Tables(), MapBoot.Overlay(), 0);
+        _map.Open();
+        dump.Append(_map.Dump("open"));
+        _map.ToggleChip("mail");
+        dump.Append(_map.Dump("mail"));
+        _map.ToggleChip("routes");
+        _map.ToggleChip("resources");
+        dump.Append(_map.Dump("filters"));
+        _map.TryPlacePing(MapBoot.PingTile, 0);
+        dump.Append(_map.Dump("ping"));
+        _map.Close();
+        dump.Append(_map.Dump("closed"));
+        dump.AppendLine("MAP_DUMP_END");
+        var text = dump.ToString();
+        GD.Print(text);
+        if (_mapDumpPath is not null)
+            File.WriteAllText(_mapDumpPath, text);
+        GetTree().Quit();
+    }
+
     private void InspectLobby()
     {
         _lobby.Visible = true;
@@ -730,6 +806,8 @@ public partial class Main : Node3D
                 _inspectHud = true;
             else if (arg == "--inspect-overlay")
                 _inspectOverlay = true;
+            else if (arg == "--inspect-map")
+                _inspectMap = true;
             else if (arg == "--inspect-lobby")
                 _inspectLobby = true;
             else if (arg == "--inspect-overlays")
@@ -740,6 +818,8 @@ public partial class Main : Node3D
                 _hudDumpPath = arg.Substring("--hud-dump=".Length);
             else if (arg.StartsWith("--overlay-dump=", StringComparison.Ordinal))
                 _overlayDumpPath = arg.Substring("--overlay-dump=".Length);
+            else if (arg.StartsWith("--map-dump=", StringComparison.Ordinal))
+                _mapDumpPath = arg.Substring("--map-dump=".Length);
             else if (arg.StartsWith("--lobby-dump=", StringComparison.Ordinal))
                 _lobbyDumpPath = arg.Substring("--lobby-dump=".Length);
             else if (arg.StartsWith("--overlays-dump=", StringComparison.Ordinal))
@@ -797,6 +877,13 @@ public partial class Main : Node3D
             dump.AppendLine("HUD_DUMP_END");
             File.WriteAllText(_hudDumpPath, dump.ToString());
         }
+        if (_mapDumpPath is not null && state is PlaySession.Playing)
+        {
+            var dump = new StringBuilder();
+            dump.Append(_map.Dump("live"));
+            dump.AppendLine("MAP_DUMP_END");
+            File.WriteAllText(_mapDumpPath, dump.ToString());
+        }
         GetTree().Quit();
     }
 
@@ -816,6 +903,7 @@ public partial class Main : Node3D
             "mailbox" => _session.TryTeleportToMailbox(),
             "give-mail" => _session.TryGiveMail(),
             "overlay" => TryOpenLiveOverlay(playing),
+            "map" => TryOpenLiveMap(playing),
             "interact" => TryStepInteractSmoke(playing),
             "live-overlay" => TryStepLiveOverlay(playing),
             "leave" => TryStepLeaveSmoke(playing),
@@ -933,8 +1021,19 @@ public partial class Main : Node3D
     {
         if (playing.Overlay is not OverlayReplica live)
             return false;
+        _map.Close();
         BindOverlay(live);
         _overlay.Open();
+        return true;
+    }
+
+    private bool TryOpenLiveMap(PlaySession.Playing playing)
+    {
+        if (playing.World is null)
+            return false;
+        _overlay.Close();
+        _map.Open();
+        BindMap(playing);
         return true;
     }
 
