@@ -230,6 +230,7 @@ public partial class Main : Node3D
         var light = new DirectionalLight3D
         {
             RotationDegrees = new Vector3(-50f, -30f, 0f),
+            LightEnergy = 0.7f,
             ShadowEnabled = true,
             ShadowBlur = 2f,
         };

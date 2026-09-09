@@ -33,6 +33,7 @@ public sealed class MainPlayBootTests
         var build = MethodBody(ReadMain(), "BuildWorld");
         Assert.Contains("ShadowEnabled = true", build);
         Assert.Contains("ShadowBlur = 2f", build);
+        Assert.Contains("LightEnergy = 0.7f", build);
         Assert.Contains("new Vector3(-50f, -30f, 0f)", build);
         Assert.Contains("BGMode.Sky", build);
         Assert.Contains("ProceduralSkyMaterial", build);
