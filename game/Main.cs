@@ -186,6 +186,7 @@ public partial class Main : Node3D
                 _usingMenuCamera = false;
                 _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing), HeldMailDistrict(playing));
                 _world.Sync(playing.World);
+                _world.SyncHarvest(playing.Resources);
                 BindHud(playing.Hud);
                 if (playing.Overlay is OverlayReplica overlay)
                     BindOverlay(overlay);

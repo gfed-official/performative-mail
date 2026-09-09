@@ -45,6 +45,8 @@ public sealed class ServerRuntime
 
     public BalanceTable? Balance { get; }
 
+    public IReadOnlyDictionary<string, ItemDefId>? ItemIds { get; }
+
     public IReadOnlyList<ContainerDelta> LastFlushedDeltas { get; private set; } = Array.Empty<ContainerDelta>();
 
     public DisconnectGrace Grace { get; } = new();
@@ -94,7 +96,7 @@ public sealed class ServerRuntime
         WorldOffer? offeredWorld,
         RunSettings? offeredSettings,
         RunState? session)
-        : this(link, world, offeredWorld, offeredSettings, session, clock: null, tables: null, destinations: null, balance: null)
+        : this(link, world, offeredWorld, offeredSettings, session, clock: null, tables: null, destinations: null, balance: null, itemIds: null)
     {
     }
 
@@ -108,7 +110,8 @@ public sealed class ServerRuntime
             boot.Clock,
             boot.Tables,
             boot.Destinations,
-            boot.Balance)
+            boot.Balance,
+            boot.ItemIds)
     {
     }
 
@@ -121,7 +124,8 @@ public sealed class ServerRuntime
         ShiftClock? clock,
         WorldTables? tables,
         Destinations? destinations,
-        BalanceTable? balance)
+        BalanceTable? balance,
+        IReadOnlyDictionary<string, ItemDefId>? itemIds)
     {
         _link = link ?? throw new ArgumentNullException(nameof(link));
         World = world ?? throw new ArgumentNullException(nameof(world));
@@ -132,6 +136,7 @@ public sealed class ServerRuntime
         Tables = tables;
         Destinations = destinations;
         Balance = balance;
+        ItemIds = itemIds;
     }
 
     public bool TryAdvancePhase()
@@ -192,6 +197,18 @@ public sealed class ServerRuntime
         var streets = Tables?.Streets ?? Array.Empty<StreetRecord>();
         held = AddressText.Format(mail.Address, streets);
         target = AddressText.Format(house.Address, streets);
+        return true;
+    }
+
+    public bool TryHarvestPrompt(EntityId player, out string resource)
+    {
+        resource = "";
+        if (!World.Players.TryGet(player, out var body))
+            return false;
+        if (!TryNearestResource(body, liveOnly: true, out var node, out _))
+            return false;
+
+        resource = WorldResourceNames.Label(node.Kind);
         return true;
     }
 
@@ -539,6 +556,14 @@ public sealed class ServerRuntime
             return;
         }
 
+        if (TryNearestResource(body, liveOnly: true, out var node, out _))
+        {
+            if (bags.HoldTicks == 0)
+                TryHarvest(node, ToolFor(bags, node.Kind), bags.Inventory);
+            _bags[player.Value] = bags.WithHold(1);
+            return;
+        }
+
         if (!CanDeliver(body, bags.Hotbar))
         {
             _bags[player.Value] = bags.ResetHold();
@@ -658,12 +683,106 @@ public sealed class ServerRuntime
         return found;
     }
 
+    private bool TryHarvest(ResourceNodeRecord node, HarvestTool tool, ContainerId grantTo)
+    {
+        if (World.Harvest is not HarvestSession harvest)
+            return false;
+
+        return harvest.Hit(node.Tile, tool, grantTo) is Harvested;
+    }
+
+    private bool TryNearestResource(PlayerBody body, bool liveOnly, out ResourceNodeRecord node, out long distSq)
+    {
+        node = default;
+        distSq = long.MaxValue;
+        if (Tables is null)
+            return false;
+        if (World.Harvest is not HarvestSession harvest)
+            return false;
+
+        int tileCm = Tables.TileCm;
+        var nodes = Tables.ResourceNodes;
+        bool found = false;
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            var candidate = nodes[i];
+            if (!NearTile(body, candidate.Tile, tileCm))
+                continue;
+            if (!harvest.TryGet(candidate.Tile, out var state))
+                continue;
+            if (liveOnly && state.HitsLeft < 1)
+                continue;
+
+            long dist = TileDistSq(body, candidate.Tile, tileCm);
+            if (dist >= distSq)
+                continue;
+            distSq = dist;
+            node = candidate;
+            found = true;
+        }
+
+        return found;
+    }
+
+    private HarvestTool ToolFor(PlayerBags bags, ResourceKind kind)
+    {
+        var spec = HarvestTable.Of(kind);
+        var tool = HarvestTool.Hand;
+        if (World.Inventory is not InventorySystem inv || ItemIds is null)
+            return tool;
+
+        Prefer(bags.Hotbar);
+        Prefer(bags.Inventory);
+        return tool;
+
+        void Prefer(ContainerId container)
+        {
+            if (!inv.TryGetContainer(container, out var grid))
+                return;
+            foreach (var entry in grid.Entries)
+            {
+                if (entry.Stack is not ItemStack item)
+                    continue;
+                if (!TryTool(item.Item, out var held))
+                    continue;
+                if (!spec.Allows(held))
+                    continue;
+                if (held == HarvestTool.Hand)
+                    continue;
+                tool = held;
+                return;
+            }
+        }
+    }
+
+    private bool TryTool(ItemDefId id, out HarvestTool tool)
+    {
+        tool = HarvestTool.Hand;
+        if (ItemIds is null)
+            return false;
+
+        foreach (var pair in ItemIds)
+        {
+            if (!pair.Value.Equals(id))
+                continue;
+            return HarvestTable.TryToolForItem(pair.Key, out tool);
+        }
+
+        return false;
+    }
+
     private static bool NearTile(PlayerBody body, TileCoord tile, int tileCm)
+    {
+        return TileDistSq(body, tile, tileCm)
+            <= (long)WorldAtlasLoader.InteractRangeCm * WorldAtlasLoader.InteractRangeCm;
+    }
+
+    private static long TileDistSq(PlayerBody body, TileCoord tile, int tileCm)
     {
         int half = tileCm / 2;
         int x = tile.X * tileCm + half;
         int y = tile.Y * tileCm + half;
-        return DistSq(body.Xcm, body.Ycm, x, y) <= (long)WorldAtlasLoader.InteractRangeCm * WorldAtlasLoader.InteractRangeCm;
+        return DistSq(body.Xcm, body.Ycm, x, y);
     }
 
     private static long DistSq(int ax, int ay, int bx, int by)

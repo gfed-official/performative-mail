@@ -18,6 +18,9 @@ public sealed class DebugWorldSessionTests
         Assert.Equal(0x821670054873680EUL, boot.Offer.WorldHash);
         Assert.Equal(50, boot.Tables.Houses.Length);
         Assert.Equal(0x821670054873680EUL, WorldHash.Compute(boot.Tables));
+        Assert.NotEmpty(boot.Tables.ResourceNodes);
+        Assert.NotNull(boot.World.Harvest);
+        Assert.True(boot.World.Harvest.TryGet(boot.Tables.ResourceNodes[0].Tile, out _));
     }
 
     [Fact]

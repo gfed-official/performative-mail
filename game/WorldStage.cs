@@ -12,6 +12,7 @@ public partial class WorldStage : Node3D
     public const string MailIntakeName = "MailIntake";
     public const string HousePrefix = "House_";
     public const string MailboxPrefix = "Mailbox_";
+    public const string ResourcePrefix = WorldResourcePlacement.NodePrefix;
     public const int LabelOutlineSize = 8;
     public const float LabelPixelSize = 0.01f;
 
@@ -25,6 +26,13 @@ public partial class WorldStage : Node3D
     private static readonly Color HouseRoof = new(0.42f, 0.31f, 0.43f); // #6B4E6E
     private static readonly Color MailboxBlue = new(0.18f, 0.23f, 0.55f); // #2F3A8C
     private static readonly Color MailboxFlag = new(0.91f, 0.36f, 0.23f); // #E85D3A
+    private static readonly Color ResourceWood = Rgb(WorldResourcePlacement.ColorRgb(ResourceKind.Wood, HarvestRemnant.Live)); // #3D6B2E 0.24f, 0.42f, 0.18f
+    private static readonly Color ResourceWoodStump = Rgb(WorldResourcePlacement.ColorRgb(ResourceKind.Wood, HarvestRemnant.Stump)); // #593D24 0.35f, 0.24f, 0.14f
+    private static readonly Color ResourceFiber = Rgb(WorldResourcePlacement.ColorRgb(ResourceKind.Fiber, HarvestRemnant.Live)); // #7A8F3A
+    private static readonly Color ResourceStone = Rgb(WorldResourcePlacement.ColorRgb(ResourceKind.Stone, HarvestRemnant.Live)); // #8A8680
+    private static readonly Color ResourceIronOre = Rgb(WorldResourcePlacement.ColorRgb(ResourceKind.IronOre, HarvestRemnant.Live)); // #6B3A32
+    private static readonly Color ResourceSand = Rgb(WorldResourcePlacement.ColorRgb(ResourceKind.Sand, HarvestRemnant.Live)); // #C4A66B
+    private static readonly Color ResourceBerries = Rgb(WorldResourcePlacement.ColorRgb(ResourceKind.Berries, HarvestRemnant.Live)); // #8C2F4A
 
     private static readonly StandardMaterial3D PostOfficeBrickMat = Solid(PostOfficeBrick);
     private static readonly StandardMaterial3D SpawnPadGoldMat = Solid(SpawnPadGold);
@@ -35,9 +43,18 @@ public partial class WorldStage : Node3D
     private static readonly StandardMaterial3D HouseRoofMat = Solid(HouseRoof);
     private static readonly StandardMaterial3D MailboxBlueMat = Solid(MailboxBlue);
     private static readonly StandardMaterial3D MailboxFlagMat = Solid(MailboxFlag);
+    private static readonly StandardMaterial3D ResourceWoodMat = Solid(ResourceWood);
+    private static readonly StandardMaterial3D ResourceWoodStumpMat = Solid(ResourceWoodStump);
+    private static readonly StandardMaterial3D ResourceFiberMat = Solid(ResourceFiber);
+    private static readonly StandardMaterial3D ResourceStoneMat = Solid(ResourceStone);
+    private static readonly StandardMaterial3D ResourceIronOreMat = Solid(ResourceIronOre);
+    private static readonly StandardMaterial3D ResourceSandMat = Solid(ResourceSand);
+    private static readonly StandardMaterial3D ResourceBerriesMat = Solid(ResourceBerries);
 
     private WorldTables? _bound;
     private readonly List<Node> _spawned = new();
+    private readonly Dictionary<long, Node3D> _resourceMarkers = new();
+    private readonly Dictionary<long, HarvestRemnant> _resourceRemnants = new();
 
     public void Sync(WorldTables? tables)
     {
@@ -57,6 +74,33 @@ public partial class WorldStage : Node3D
         SpawnMailboxes(tables.Houses, tables.Streets, tileM);
         SpawnIntake(tables.PostOffice, tables.Streets, tileM);
         SpawnPostalClutter(tables.PostOffice, tables.Streets, tileM);
+        SpawnResourceNodes(tables.ResourceNodes, tables.Streets, tileM);
+    }
+
+    public void SyncHarvest(IReadOnlyList<ResourceNodeView> nodes)
+    {
+        if (_bound is null || nodes is null)
+            return;
+
+        float tileM = _bound.TileCm / 100f;
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            var view = nodes[i];
+            long key = ResourceKey(view.Tile);
+            if (!WorldResourcePlacement.IsMarkerVisible(view.Remnant))
+            {
+                RemoveResourceMarker(key);
+                continue;
+            }
+
+            if (_resourceMarkers.TryGetValue(key, out _)
+                && _resourceRemnants.TryGetValue(key, out var remnant)
+                && remnant == view.Remnant)
+                continue;
+
+            RemoveResourceMarker(key);
+            SpawnResource(view.Kind, view.Tile, view.Remnant, _bound.Streets, tileM);
+        }
     }
 
     public void Clear()
@@ -64,6 +108,8 @@ public partial class WorldStage : Node3D
         for (int i = 0; i < _spawned.Count; i++)
             _spawned[i].QueueFree();
         _spawned.Clear();
+        _resourceMarkers.Clear();
+        _resourceRemnants.Clear();
         _bound = null;
     }
 
@@ -228,6 +274,77 @@ public partial class WorldStage : Node3D
             _spawned.Add(visual);
         }
     }
+
+    private void SpawnResourceNodes(ResourceNodeRecord[] nodes, StreetRecord[] streets, float tileM)
+    {
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            var node = nodes[i];
+            SpawnResource(node.Kind, node.Tile, HarvestRemnant.Live, streets, tileM);
+        }
+    }
+
+    private void SpawnResource(
+        ResourceKind kind,
+        TileCoord tile,
+        HarvestRemnant remnant,
+        StreetRecord[] streets,
+        float tileM)
+    {
+        var origin = Vec(WorldTilePlacement.TileCenter(tile, tileM));
+        var toward = WorldTilePlacement.TowardNearestStreet(origin.X, origin.Z, streets, tileM);
+        byte district = DistrictNear(origin.X, origin.Z, streets, tileM);
+        var box = WorldResourcePlacement.BoxSize(kind, remnant);
+        var size = new Vector3(box.X, box.Y, box.Z);
+        string name = WorldResourcePlacement.NodeName(tile);
+        string label = WorldResourcePlacement.Label(kind, remnant);
+        var visual = ArtMesh.TryInstantiate(ArtMesh.PathForResource(kind, remnant));
+        Node3D root;
+        if (visual is not null)
+        {
+            var visSize = VisualSize(visual, size);
+            root = AddLabeled(
+                name,
+                origin,
+                visSize,
+                visSize.Y * 0.5f,
+                label,
+                district,
+                toward.X,
+                toward.Z,
+                visual: visual);
+        }
+        else
+        {
+            root = AddLabeledBox(
+                name,
+                origin,
+                size,
+                ResourceColor(kind, remnant),
+                size.Y * 0.5f,
+                label,
+                district,
+                toward.X,
+                toward.Z);
+        }
+
+        long key = ResourceKey(tile);
+        _resourceMarkers[key] = root;
+        _resourceRemnants[key] = remnant;
+    }
+
+    private void RemoveResourceMarker(long key)
+    {
+        if (!_resourceMarkers.TryGetValue(key, out var marker))
+            return;
+
+        _spawned.Remove(marker);
+        _resourceMarkers.Remove(key);
+        _resourceRemnants.Remove(key);
+        marker.QueueFree();
+    }
+
+    private static long ResourceKey(TileCoord tile) => ((long)tile.X << 32) | (uint)tile.Y;
 
     private void SpawnHouses(HouseRecord[] houses, StreetRecord[] streets, float tileM)
     {
@@ -504,6 +621,50 @@ public partial class WorldStage : Node3D
         return 1;
     }
 
+    private static byte DistrictNear(float originX, float originZ, StreetRecord[] streets, float tileM)
+    {
+        float best = float.MaxValue;
+        byte district = 0;
+        for (int s = 0; s < streets.Length; s++)
+        {
+            var street = streets[s];
+            var tiles = street.Tiles;
+            if (tiles is null)
+                continue;
+            for (int t = 0; t < tiles.Length; t++)
+            {
+                var at = WorldTilePlacement.TileCenter(tiles[t], tileM);
+                float ex = at.X - originX;
+                float ez = at.Z - originZ;
+                float d = ex * ex + ez * ez;
+                if (d >= best)
+                    continue;
+                best = d;
+                district = street.District;
+            }
+        }
+
+        return district == 0 ? PoDistrict(streets) : district;
+    }
+
+    private static Color ResourceColor(ResourceKind kind, HarvestRemnant remnant)
+    {
+        if (remnant == HarvestRemnant.Stump)
+            return ResourceWoodStump;
+        return kind switch
+        {
+            ResourceKind.Wood => ResourceWood,
+            ResourceKind.Fiber => ResourceFiber,
+            ResourceKind.Stone => ResourceStone,
+            ResourceKind.IronOre => ResourceIronOre,
+            ResourceKind.Sand => ResourceSand,
+            ResourceKind.Berries => ResourceBerries,
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+        };
+    }
+
+    private static Color Rgb((float R, float G, float B) rgb) => new(rgb.R, rgb.G, rgb.B);
+
     private static StandardMaterial3D SolidFor(Color color)
     {
         if (color == PostOfficeBrick)
@@ -524,6 +685,20 @@ public partial class WorldStage : Node3D
             return MailboxBlueMat;
         if (color == MailboxFlag)
             return MailboxFlagMat;
+        if (color == ResourceWood)
+            return ResourceWoodMat;
+        if (color == ResourceWoodStump)
+            return ResourceWoodStumpMat;
+        if (color == ResourceFiber)
+            return ResourceFiberMat;
+        if (color == ResourceStone)
+            return ResourceStoneMat;
+        if (color == ResourceIronOre)
+            return ResourceIronOreMat;
+        if (color == ResourceSand)
+            return ResourceSandMat;
+        if (color == ResourceBerries)
+            return ResourceBerriesMat;
         return Solid(color);
     }
 

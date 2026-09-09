@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using PerformativeMail.Sim;
+using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.Run;
@@ -15,7 +17,8 @@ public sealed class ArcadeBoot
         WorldTables tables,
         BalanceTable balance,
         Destinations destinations,
-        ShiftClock clock)
+        ShiftClock clock,
+        IReadOnlyDictionary<string, ItemDefId>? itemIds = null)
     {
         World = world ?? throw new ArgumentNullException(nameof(world));
         Offer = offer;
@@ -24,6 +27,7 @@ public sealed class ArcadeBoot
         Balance = balance ?? throw new ArgumentNullException(nameof(balance));
         Destinations = destinations ?? throw new ArgumentNullException(nameof(destinations));
         Clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        ItemIds = itemIds;
     }
 
     public SimWorld World { get; }
@@ -39,4 +43,6 @@ public sealed class ArcadeBoot
     public Destinations Destinations { get; }
 
     public ShiftClock Clock { get; }
+
+    public IReadOnlyDictionary<string, ItemDefId>? ItemIds { get; }
 }

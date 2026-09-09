@@ -93,6 +93,8 @@ public readonly record struct HudFrame(
             case InteractPrompt.Deliver deliver:
                 bool match = string.Equals(deliver.HeldAddress, deliver.TargetAddress, StringComparison.Ordinal);
                 return (deliver.HeldAddress ?? "", deliver.TargetAddress ?? "", match ? MatchMark.Tick : MatchMark.Cross);
+            case InteractPrompt.Harvest harvest:
+                return (harvest.Resource ?? "", "", MatchMark.None);
             default:
                 throw new ArgumentOutOfRangeException(nameof(interact), interact, null);
         }

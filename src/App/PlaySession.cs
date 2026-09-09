@@ -51,7 +51,8 @@ public abstract record PlaySession
             IReadOnlyList<PawnView> pawns,
             in HudSnapshot hud,
             WorldTables? world,
-            OverlayReplica? overlay)
+            OverlayReplica? overlay,
+            IReadOnlyList<ResourceNodeView>? resources = null)
         {
             Role = role;
             LocalPlayer = localPlayer;
@@ -62,6 +63,17 @@ public abstract record PlaySession
             Hud = hud;
             World = world;
             Overlay = overlay;
+            if (resources is null || resources.Count == 0)
+            {
+                Resources = Array.Empty<ResourceNodeView>();
+            }
+            else
+            {
+                var harvested = new ResourceNodeView[resources.Count];
+                for (int i = 0; i < harvested.Length; i++)
+                    harvested[i] = resources[i];
+                Resources = harvested;
+            }
         }
 
         public SessionRole Role { get; }
@@ -75,6 +87,8 @@ public abstract record PlaySession
         public WorldTables? World { get; }
 
         public OverlayReplica? Overlay { get; }
+
+        public IReadOnlyList<ResourceNodeView> Resources { get; }
     }
 
     public sealed record Failed(FailReason Reason) : PlaySession;

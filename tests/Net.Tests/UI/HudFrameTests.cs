@@ -55,6 +55,17 @@ public sealed class HudFrameTests
     }
 
     [Fact]
+    public void From_Harvest_ShowsResourceWithoutMatch()
+    {
+        var frame = HudFrame.From(Snapshot(new InteractPrompt.Harvest("Wood")));
+
+        Assert.Equal("Wood", frame.HeldAddress);
+        Assert.Equal("", frame.TargetAddress);
+        Assert.Equal(MatchMark.None, frame.Match);
+        Assert.Equal("", frame.MatchLabel);
+    }
+
+    [Fact]
     public void From_None_ClearsInteract()
     {
         var frame = HudFrame.From(Snapshot(InteractPrompt.None.Instance));

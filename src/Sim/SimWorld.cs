@@ -25,6 +25,8 @@ public sealed class SimWorld
 
     public ConstructRegistry? Constructs { get; set; }
 
+    public HarvestSession? Harvest { get; set; }
+
     public BeltNetwork Belts { get; } = new BeltNetwork();
 
     public MailRegistry? Mail { get; }
