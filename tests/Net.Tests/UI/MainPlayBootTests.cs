@@ -263,6 +263,7 @@ public sealed class MainPlayBootTests
         Assert.Contains(
             "_pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing), HeldMailDistrict(playing))",
             render);
+        Assert.Contains("_pawns.SyncVehicles(playing.Vehicles)", render);
         Assert.Contains("HeldMailDistrict", ReadMain());
         Assert.Contains("HeldMailStack", ReadMain());
         Assert.Contains("Address.District", ReadMain());
@@ -437,6 +438,8 @@ public sealed class MainPlayBootTests
         Assert.Contains("TryStepShopSmoke", helper);
         Assert.Contains("\"build\"", helper);
         Assert.Contains("TryStepBuildSmoke", helper);
+        Assert.Contains("\"bike\"", helper);
+        Assert.Contains("DebugSpawnKind.Bike", helper);
         var main = ReadMain();
         Assert.Contains("TryStockIntake", main);
         Assert.Contains("HasHeldMail", main);

@@ -12,6 +12,7 @@ public sealed class PawnStageBootTests
         Assert.Contains("PawnPalette.Rgb", source);
         Assert.Contains("ArtMesh.PawnRemote", source);
         Assert.Contains("ArtMesh.ApplyPawnKitColor", source);
+        Assert.Contains("ArtMesh.PathForVehicle", source);
         Assert.Contains("ArtMesh.PathForMail", source);
         Assert.Contains("ArtMesh.ApplyDistrictColor", source);
         Assert.Contains("DistrictSwatch.Of", source);
@@ -19,6 +20,11 @@ public sealed class PawnStageBootTests
         Assert.Contains("SetMeta(\"district\"", source);
         Assert.Contains("sameArt && sameDistrict", source);
         Assert.Contains("HeldMailName", source);
+        Assert.Contains("SyncVehicles", source);
+        Assert.Contains("VehicleTransform", source);
+        Assert.Contains("useModelFront: true", source);
+        Assert.Contains("VehiclePrefix", source);
+        Assert.DoesNotContain("in view.Pose", source);
         Assert.Contains("ViewFrame.From", source);
         Assert.Contains("camera.Current = local", source);
         Assert.Contains("localPitchRadians", source);

@@ -89,6 +89,10 @@ public sealed class DebugWorldSessionTests
         int create = start.IndexOf("create();", StringComparison.Ordinal);
         Assert.True(leave >= 0 && tryAt > leave && create > tryAt);
         Assert.Contains("BootFailed", start);
+        Assert.Contains("_vehicles.Refresh", source);
+        Assert.Contains("GrantPurchasedVehicle", source);
+        Assert.Contains("_vehicles.Visible", source);
+        Assert.Contains("TrySpawnBike", source);
     }
 
     private static string ReadPlaySessionMachine()

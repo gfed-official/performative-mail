@@ -4,6 +4,7 @@ using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
+using PerformativeMail.Sim.Vehicles;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Net.Tests.App;
@@ -51,6 +52,62 @@ public sealed class DebugSpawnTests
         Assert.Equal(1, world.Vehicles.Count);
         Assert.True(world.Players.TryGet(local, out var body));
         Assert.NotEqual(0u, body.VehicleId.Value);
+    }
+
+    [Fact]
+    public void HostTrySpawn_Bike_ProjectsVehicleViewOnPlaying()
+    {
+        using var host = Play(out var now);
+
+        Assert.True(host.TrySpawn(new DebugSpawnId(DebugSpawnKind.Bike, "bike")));
+        Pump(host, ref now, 4);
+
+        var play = Assert.IsType<PlaySession.Playing>(host.State);
+        var bike = Assert.Single(play.Vehicles);
+        Assert.Equal(VehicleKind.Bike, bike.Kind);
+        var local = Assert.Single(play.Pawns, pawn => pawn.Id == play.LocalPlayer);
+        Assert.Equal(local.Pose, bike.Pose);
+    }
+
+    [Fact]
+    public void HostMountedBike_VehicleViewFollowsPredictedPose()
+    {
+        using var host = Play(out var now);
+
+        Assert.True(host.TrySpawn(new DebugSpawnId(DebugSpawnKind.Bike, "bike")));
+        Pump(host, ref now, 2);
+        var before = Assert.IsType<PlaySession.Playing>(host.State);
+        var start = Assert.Single(before.Vehicles).Pose;
+
+        var forward = new MoveIntent(0, sbyte.MaxValue, 0, InputButtons.None);
+        for (int i = 0; i < 8; i++)
+        {
+            now += Tick;
+            host.Pump(now, forward);
+        }
+
+        var play = Assert.IsType<PlaySession.Playing>(host.State);
+        var bike = Assert.Single(play.Vehicles);
+        var local = Assert.Single(play.Pawns, pawn => pawn.Id == play.LocalPlayer);
+        Assert.Equal(local.Pose, bike.Pose);
+        Assert.NotEqual(start, bike.Pose);
+    }
+
+    [Fact]
+    public void HostDismount_KeepsParkedBikeVisible()
+    {
+        using var host = Play(out var now);
+
+        Assert.True(host.TrySpawn(new DebugSpawnId(DebugSpawnKind.Bike, "bike")));
+        Assert.True(host.TryHostWorld(out var world, out var local));
+        Assert.True(world.TryDismount(local));
+        Pump(host, ref now, 4);
+
+        Assert.True(world.Players.TryGet(local, out var body));
+        Assert.Equal(0u, body.VehicleId.Value);
+        Assert.Equal(1, world.Vehicles.Count);
+        var play = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.Single(play.Vehicles);
     }
 
     [Fact]

@@ -53,7 +53,8 @@ public abstract record PlaySession
             WorldTables? world,
             OverlayReplica? overlay,
             IReadOnlyList<ResourceNodeView>? resources = null,
-            ConstructFrame? constructs = null)
+            ConstructFrame? constructs = null,
+            IReadOnlyList<VehicleView>? vehicles = null)
         {
             Role = role;
             LocalPlayer = localPlayer;
@@ -76,6 +77,17 @@ public abstract record PlaySession
                 Resources = harvested;
             }
             Constructs = constructs ?? ConstructFrame.Empty;
+            if (vehicles is null || vehicles.Count == 0)
+            {
+                Vehicles = Array.Empty<VehicleView>();
+            }
+            else
+            {
+                var spawned = new VehicleView[vehicles.Count];
+                for (int i = 0; i < spawned.Length; i++)
+                    spawned[i] = vehicles[i];
+                Vehicles = spawned;
+            }
         }
 
         public SessionRole Role { get; }
@@ -93,6 +105,8 @@ public abstract record PlaySession
         public IReadOnlyList<ResourceNodeView> Resources { get; }
 
         public ConstructFrame Constructs { get; }
+
+        public IReadOnlyList<VehicleView> Vehicles { get; }
     }
 
     public sealed record Failed(FailReason Reason) : PlaySession;

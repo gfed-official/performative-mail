@@ -2,6 +2,7 @@ using Godot;
 using PerformativeMail.App;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.Vehicles;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Game;
@@ -25,6 +26,7 @@ public static class ArtMesh
     public const string GrassTile = "res://art/world/grass_tile_01.glb";
     public const string Crate = "res://art/props/crate_01.glb";
     public const string Cart = "res://art/props/cart_01.glb";
+    public const string Bike = "res://art/props/bike_01.glb";
     public const string ResourceWood = "res://art/world/resource_wood_01.glb";
     public const string ResourceWoodStump = "res://art/world/resource_wood_stump_01.glb";
     public const string ResourceFiber = "res://art/world/resource_fiber_01.glb";
@@ -104,6 +106,17 @@ public static class ArtMesh
 
         Meshes[path] = mesh;
         return mesh;
+    }
+
+    public static string PathForVehicle(VehicleKind kind)
+    {
+        switch (kind)
+        {
+            case VehicleKind.Bike:
+                return Bike;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+        }
     }
 
     public static string PathForProp(EnvPropKind kind)

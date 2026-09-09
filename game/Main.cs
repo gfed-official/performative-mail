@@ -254,6 +254,7 @@ public partial class Main : Node3D
                 SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen && !_shop.IsOpen);
                 _usingMenuCamera = false;
                 _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing), HeldMailDistrict(playing));
+                _pawns.SyncVehicles(playing.Vehicles);
                 _world.Sync(playing.World);
                 _world.SyncHarvest(playing.Resources);
                 _constructs.Sync(playing.Constructs);
@@ -1234,6 +1235,7 @@ public partial class Main : Node3D
             "leave" => TryStepLeaveSmoke(playing),
             "shop" => TryStepShopSmoke(playing),
             "build" => TryStepBuildSmoke(playing),
+            "bike" => _session.TrySpawn(new DebugSpawnId(DebugSpawnKind.Bike, "bike")),
             _ => true,
         };
         if (done)

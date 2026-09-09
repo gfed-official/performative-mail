@@ -19,6 +19,7 @@ public sealed class PlaySessionMachine : IDisposable
     private readonly INetworkStack _stack;
     private readonly SessionOptions _options;
     private readonly PawnViewTable _pawns = new();
+    private readonly VehicleViewTable _vehicles = new();
     private readonly RenderClock _clock = new();
     private TickPacer _pacer = TickPacer.AtTickRate();
     private PlaySession _state = PlaySession.Menu.Instance;
@@ -190,7 +191,11 @@ public sealed class PlaySessionMachine : IDisposable
             return false;
         if (!ShopFrame.PhaseOpen(phase))
             return false;
-        return shop.TryBuy(shopItemId) is ShopBought;
+        if (shop.TryBuy(shopItemId) is not ShopBought bought)
+            return false;
+        if (bought.Vehicle is { } vehicle)
+            GrantPurchasedVehicle(vehicle);
+        return true;
     }
 
     public bool TryShop(out ShopFrame frame)
@@ -574,6 +579,19 @@ public sealed class PlaySessionMachine : IDisposable
         return false;
     }
 
+    private void GrantPurchasedVehicle(string vehicle)
+    {
+        switch (vehicle)
+        {
+            case "bike":
+                if (TryHostPlaying(out var server, out var local))
+                    TrySpawnBike(server, local);
+                return;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(vehicle), vehicle, null);
+        }
+    }
+
     private bool TrySpawnBike(ServerRuntime server, EntityId local)
     {
         if (!server.World.Players.TryGet(local, out var body))
@@ -884,10 +902,16 @@ public sealed class PlaySessionMachine : IDisposable
             _clock.Anchor(snapshot.ServerTick, wallNow);
 
         if (_clock.TryNow(wallNow, out var serverTime))
+        {
             _pawns.Refresh(client, serverTime);
+            _vehicles.Refresh(client, _live.Server?.World.Vehicles, serverTime);
+        }
         else if (client.LocalPlayer is EntityId localOnly &&
                  client.TryPresent(localOnly, TimeSpan.Zero, out _))
+        {
             _pawns.Refresh(client, TimeSpan.Zero);
+            _vehicles.Refresh(client, _live.Server?.World.Vehicles, TimeSpan.Zero);
+        }
 
         if (client.LocalPlayer is not EntityId local)
             return Fail(new FailReason.HostLost());
@@ -914,7 +938,8 @@ public sealed class PlaySessionMachine : IDisposable
             world,
             overlay,
             ProjectResources(_live.Server, world),
-            constructs);
+            constructs,
+            _vehicles.Visible);
     }
 
     private void BindClientConstructs(ClientRuntime client)
