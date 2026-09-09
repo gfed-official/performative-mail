@@ -34,6 +34,22 @@ public sealed class HotbarChromeSourceTests
         Assert.Contains("anchors_preset = 12", scene);
     }
 
+    [Fact]
+    public void ExtrasDock_SitsBottomLeft_AwayFromTimerQuotaAndHotbar()
+    {
+        string scene = ReadGame(Path.Combine("scenes", "hud.tscn"));
+        Assert.Contains("name=\"ExtrasDock\"", scene);
+        Assert.Contains("name=\"HpBar\"", scene);
+        Assert.Contains("name=\"HpLabel\"", scene);
+        Assert.Contains("name=\"WeightIcon\"", scene);
+        Assert.Contains("name=\"WeightLabel\"", scene);
+        Assert.Contains("anchors_preset = 2", scene);
+        int extras = scene.IndexOf("name=\"ExtrasDock\"", StringComparison.Ordinal);
+        int hotbar = scene.IndexOf("name=\"HotbarDock\"", StringComparison.Ordinal);
+        int top = scene.IndexOf("name=\"TopRow\"", StringComparison.Ordinal);
+        Assert.True(extras > top && extras < hotbar);
+    }
+
     private static string ReadGame(string file)
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })

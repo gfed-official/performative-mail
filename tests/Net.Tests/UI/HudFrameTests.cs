@@ -40,6 +40,10 @@ public sealed class HudFrameTests
         Assert.Equal("", frame.SurplusLabel);
         Assert.Equal("23", frame.ComplaintLabel);
         Assert.False(frame.QuotaMet);
+        Assert.Equal("HP 100", frame.HpLabel);
+        Assert.Equal(100, frame.HpPct);
+        Assert.Equal("Wt 0", frame.WeightLabel);
+        Assert.Equal(0, frame.WeightPoints);
     }
 
     [Fact]
@@ -107,7 +111,9 @@ public sealed class HudFrameTests
             InteractPrompt.None.Instance,
             new Cents(640),
             new Cents(2214),
-            23);
+            23,
+            100,
+            0);
         Assert.Equal(expected, HudFrame.From(in snap).WalletLabel);
     }
 
@@ -165,13 +171,37 @@ public sealed class HudFrameTests
     }
 
     [Fact]
+    public void From_HpAndWeight_FormatsReplicaFields()
+    {
+        var snap = Snapshot(InteractPrompt.None.Instance, hpPct: 64, weightPoints: 12);
+        var frame = HudFrame.From(in snap);
+
+        Assert.Equal("HP 64", frame.HpLabel);
+        Assert.Equal(64, frame.HpPct);
+        Assert.Equal("Wt 12", frame.WeightLabel);
+        Assert.Equal(12, frame.WeightPoints);
+    }
+
+    [Fact]
+    public void SameDisplay_FalseWhenHpOrWeightChanges()
+    {
+        var none = Snapshot(InteractPrompt.None.Instance);
+        var hurt = Snapshot(InteractPrompt.None.Instance, hpPct: 40);
+        var laden = Snapshot(InteractPrompt.None.Instance, weightPoints: 8);
+
+        Assert.False(HudFrame.SameDisplay(in none, in hurt));
+        Assert.False(HudFrame.SameDisplay(in none, in laden));
+        Assert.True(HudFrame.SameDisplay(in none, Snapshot(InteractPrompt.None.Instance)));
+    }
+
+    [Fact]
     public void SameDisplay_FalseWhenWalletOrInteractChanges()
     {
         var none = Snapshot(InteractPrompt.None.Instance);
         var pickup = Snapshot(new InteractPrompt.Pickup(Held));
         var wallet = new HudSnapshot(
             RunPhase.Delivery, 1, 0, 2700, new Cents(1),
-            InteractPrompt.None.Instance, new Cents(640), new Cents(2214), 23);
+            InteractPrompt.None.Instance, new Cents(640), new Cents(2214), 23, 100, 0);
 
         Assert.True(HudFrame.SameDisplay(in none, Snapshot(InteractPrompt.None.Instance)));
         Assert.False(HudFrame.SameDisplay(in none, in pickup));
@@ -197,6 +227,8 @@ public sealed class HudFrameTests
             InteractPrompt.None.Instance,
             new Cents(1820),
             new Cents(640),
+            0,
+            100,
             0);
         var frame = HudFrame.From(in live);
         var placeholder = HudFrame.From(HudBoot.Placeholder());
@@ -224,7 +256,9 @@ public sealed class HudFrameTests
         byte shift = 1,
         int earnings = 640,
         int quota = 2214,
-        int complaint = 23) =>
+        int complaint = 23,
+        byte hpPct = 100,
+        int weightPoints = 0) =>
         new(RunPhase.Delivery, shift, now, deadline, new Cents(1820), interact,
-            new Cents(earnings), new Cents(quota), complaint);
+            new Cents(earnings), new Cents(quota), complaint, hpPct, weightPoints);
 }

@@ -31,7 +31,11 @@ public sealed class LiveLoopTests
         Assert.Equal(GoldenWorldHash, host.Inspect().WorldHash);
         Assert.Equal(RunPhase.Prep, play.Hud.Phase);
         Assert.Equal((byte)1, play.Hud.Shift);
+        Assert.Equal((byte)100, play.Hud.HpPct);
+        Assert.Equal(0, play.Hud.WeightPoints);
         Assert.Equal("PREP", HudFrame.From(play.Hud).PhaseLabel);
+        Assert.Equal("HP 100", HudFrame.From(play.Hud).HpLabel);
+        Assert.Equal("Wt 0", HudFrame.From(play.Hud).WeightLabel);
         Assert.NotEqual(PlayerPose.Origin, play.Pawns[0].Pose);
         Assert.Equal(SpawnRing.CentreOf(WorldAtlas.FromTables(play.World)), play.Pawns[0].Pose);
     }

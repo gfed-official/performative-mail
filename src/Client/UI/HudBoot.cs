@@ -9,5 +9,5 @@ public static class HudBoot
     public static HudSnapshot Placeholder() =>
         new(RunPhase.Delivery, 1, 0, 2700, new Cents(1820),
             new InteractPrompt.Deliver("13 Larch Lane", "13 Larch Lane"),
-            new Cents(640), new Cents(2214), 23);
+            new Cents(640), new Cents(2214), 23, 100, 0);
 }

@@ -136,6 +136,8 @@ public sealed class DebugWorldSessionTests
             InteractPrompt.None.Instance,
             new Cents(640),
             new Cents(640),
+            0,
+            100,
             0);
         return new PlaySession.Playing(
             new SessionRole.Listening(new HostAdvertisement("127.0.0.1", 7777)),
