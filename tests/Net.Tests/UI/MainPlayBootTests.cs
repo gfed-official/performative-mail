@@ -228,6 +228,7 @@ public sealed class MainPlayBootTests
         var body = MethodBody(ReadMain(), "_PhysicsProcess");
         Assert.Contains("PollPause", body);
         Assert.Contains("PollMapToggle", body);
+        Assert.Contains("PollShopToggle", body);
         Assert.Contains("InputSampler.Sample", body);
     }
 
