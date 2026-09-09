@@ -120,6 +120,11 @@ overlay_inspect() {
   SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-overlay.sh" "$(mktemp)"
 }
 
+map_inspect() {
+  echo "==> map Control text inspect"
+  SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-map.sh" "$(mktemp)"
+}
+
 lobby_inspect() {
   echo "==> lobby Control text inspect"
   SKIP_BUILD=1 bash "$ROOT/tools/godot/inspect-lobby.sh" "$(mktemp)"
@@ -568,6 +573,66 @@ host_live_hud_smoke() {
   fi
 }
 
+host_live_map_smoke() {
+  echo "==> headless host live map Control dump"
+  local reports report dump log
+  reports="$(mktemp -d)"
+  report="$reports/report.json"
+  dump="$reports/map-dump.txt"
+  log="$(mktemp)"
+  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+    --host --debug-world --debug-helper=map --quit-after-ms=8000 \
+    --report="$report" --map-dump="$dump" \
+    >"$log" 2>&1; then
+    cat "$log"
+    fail "host live-map process exited non-zero"
+  fi
+  if [[ ! -f "$report" ]]; then
+    cat "$log"
+    fail "host live-map did not write a report"
+  fi
+  if [[ ! -f "$dump" ]]; then
+    cat "$log"
+    fail "host live-map did not write a map dump"
+  fi
+  cat "$report"
+  echo
+  echo "---- $dump ----"
+  cat "$dump"
+  echo
+  grep -q '"state":"Playing"' "$report" || fail "host live-map report is not Playing: $(cat "$report")"
+  grep -q '"worldHash":"0x4CF184F2FA4D4EEE"' "$report" \
+    || fail "host live-map report missing debug worldHash: $(cat "$report")"
+  need_jq
+  jq -e '
+    .state == "Playing"
+    and .phase == "Prep"
+    and .shift == 1
+    and .worldHash == "0x4CF184F2FA4D4EEE"
+    and (.pawns | length) >= 1
+    and .worldEntityCounts.postOffices == 1
+    and .worldEntityCounts.houses == 2
+    and .overlayOpen == false
+    and .debugOpen == false
+  ' "$report" >/dev/null \
+    || fail "host live-map report failed jq schema: $(cat "$report")"
+  grep -q 'MAP_DUMP case=live' "$dump" || fail "missing live map dump: $(cat "$dump")"
+  grep -q 'MAP_DUMP_END' "$dump" || fail "missing MAP_DUMP_END: $(cat "$dump")"
+  grep -Fqx "visible=true" "$dump" || fail "live map dump is not open: $(cat "$dump")"
+  grep -Fqx "layers=districts,streets" "$dump" || fail "live map dump missing district/street layers: $(cat "$dump")"
+  grep -Fqx "chip.districts=on" "$dump" || fail "live map dump missing districts chip: $(cat "$dump")"
+  grep -Fqx "chip.streets=on" "$dump" || fail "live map dump missing streets chip: $(cat "$dump")"
+  grep -Fqx "chip.mail=off" "$dump" || fail "live map dump missing mail chip: $(cat "$dump")"
+  grep -Fqx "street.1=Debug Lane d=1 hex=#3D7EFF" "$dump" \
+    || fail "live map dump missing Debug Lane: $(cat "$dump")"
+  grep -Fqx "house.1/1/1 mail=0" "$dump" || fail "live map dump missing house 1/1/1: $(cat "$dump")"
+  grep -Fqx "house.1/1/2 mail=0" "$dump" || fail "live map dump missing house 1/1/2: $(cat "$dump")"
+  grep -Fqx "district.1 hex=#3D7EFF" "$dump" || fail "live map dump missing district swatch: $(cat "$dump")"
+  if grep -Fq "Oak Street" "$dump"; then
+    fail "live map dump still has MapBoot Oak Street: $(cat "$dump")"
+  fi
+}
+
 host_leave_smoke() {
   echo "==> headless host pause Leave returns to Menu"
   local report log
@@ -599,13 +664,14 @@ host_leave_smoke() {
 
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debug|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay|live-hud|leave]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|debug|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay|live-hud|live-map|leave]
 
   verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import   godot --import + dotnet build of game/
   boot     headless main-scene smoke (C# _Ready marker)
   hud      bind HudFrame and read Control text (match then mismatch)
   overlay  open InventoryOverlay from a U2 replica and read cell text
+  map      open Map overlay from MapBoot WorldTables and read layer/chip/ping text
   lobby    bind LobbyFrame and read Control text (seed and ready)
   overlays bind payday, draft, and results frames and read Control text
   debug    open DebugMenu from DebugBoot and read inspect/cheat labels
@@ -617,6 +683,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|lobby|overlays|debu
   interact solo Host --debug-world --debug-helper=interact; pickup Intake mail, deliver, wallet 8
   live-overlay solo Host --debug-world --debug-helper=live-overlay; pickup, open overlay, dump live cell text
   live-hud solo Host --debug-world report plus live HUD dump (Playing / HudSnapshot, not Placeholder)
+  live-map solo Host --debug-world --debug-helper=map plus --map-dump=; M-path map Control from WorldTables
   leave    solo Host --debug-world --debug-helper=leave; Esc pause Leave confirm; SmokeReport state Menu
   all      all of the above (default)
 EOF
@@ -639,6 +706,9 @@ case "$cmd" in
     ;;
   overlay)
     overlay_inspect
+    ;;
+  map)
+    map_inspect
     ;;
   lobby)
     lobby_inspect
@@ -673,6 +743,9 @@ case "$cmd" in
   live-hud)
     host_live_hud_smoke
     ;;
+  live-map)
+    host_live_map_smoke
+    ;;
   leave)
     host_leave_smoke
     ;;
@@ -683,6 +756,7 @@ case "$cmd" in
     boot_smoke
     hud_inspect
     overlay_inspect
+    map_inspect
     lobby_inspect
     overlays_inspect
     debug_inspect
@@ -694,6 +768,7 @@ case "$cmd" in
     host_interact_smoke
     host_live_overlay_smoke
     host_live_hud_smoke
+    host_live_map_smoke
     host_leave_smoke
     echo "==> Godot 4.7.2 .NET integration checks passed"
     ;;

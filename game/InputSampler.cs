@@ -42,6 +42,20 @@ public static class InputSampler
         return false;
     }
 
+    public static bool MapHeld()
+    {
+        if (Input.IsPhysicalKeyPressed(Key.M))
+            return true;
+
+        for (int id = 0; id < 8; id++)
+        {
+            if (Input.IsJoyButtonPressed(id, JoyButton.Back))
+                return true;
+        }
+
+        return false;
+    }
+
     public static bool TryHotbarSlot(InputEvent @event, out int slot)
     {
         slot = -1;

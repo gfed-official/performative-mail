@@ -15,6 +15,9 @@ public sealed class InputSamplerSourceTests
         Assert.Contains("MouseButton.WheelUp", source);
         Assert.Contains("MouseButton.WheelDown", source);
         Assert.Contains("WrapHotbarSlot", source);
+        Assert.Contains("MapHeld", source);
+        Assert.Contains("Key.M", source);
+        Assert.Contains("JoyButton.Back", source);
     }
 
     private static string ReadGame(string file)
