@@ -41,5 +41,12 @@
     "grid": [20, 16],
     "view": "manifest",
     "beltAccess": "any_side"
+  },
+  {
+    "id": "mail_truck_cargo",
+    "grid": [8, 10],
+    "view": "grid",
+    "beltAccess": "loading_face",
+    "allowedCategories": ["mail"]
   }
 ]
