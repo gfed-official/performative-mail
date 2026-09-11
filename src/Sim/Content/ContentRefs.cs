@@ -108,6 +108,8 @@ public static class ContentRefs
             var row = shop[i];
             if (row.GrantItem is string item && !itemIds.Contains(item))
                 throw new InvalidOperationException($"shop: '{row.Id}' grants unknown item '{item}'.");
+            if (row.RequiresBlueprint is string required && (!shopById.TryGetValue(required, out var requiredRow) || requiredRow.Kind != ShopKind.Blueprint))
+                throw new InvalidOperationException($"shop: '{row.Id}' requires unknown blueprint '{required}'.");
         }
 
         for (int i = 0; i < items.Length; i++)

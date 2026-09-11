@@ -1,0 +1,13 @@
+[
+  {
+    "id": "mail_truck",
+    "name": "Mail Truck",
+    "kind": "vehicle",
+    "price": 900,
+    "grants": { "vehicle": "mail_truck" },
+    "requires": { "blueprint": "bp_truck" },
+    "availability": { "fromShift": 2, "slot": "fixed" },
+    "oncePerRun": false,
+    "tags": ["transport"]
+  }
+]

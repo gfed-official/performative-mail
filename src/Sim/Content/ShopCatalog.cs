@@ -32,7 +32,8 @@ public sealed class ShopItemDef
         int fromShift,
         ShopSlot slot,
         bool oncePerRun,
-        string[] tags)
+        string[] tags,
+        string? requiresBlueprint = null)
     {
         Id = id;
         Name = name;
@@ -46,6 +47,7 @@ public sealed class ShopItemDef
         Slot = slot;
         OncePerRun = oncePerRun;
         Tags = tags;
+        RequiresBlueprint = requiresBlueprint;
     }
 
     public string Id { get; }
@@ -71,6 +73,8 @@ public sealed class ShopItemDef
     public bool OncePerRun { get; }
 
     public string[] Tags { get; }
+
+    public string? RequiresBlueprint { get; }
 }
 
 public static class ShopCatalog
@@ -121,6 +125,7 @@ public static class ShopCatalog
         string? grantItem = ContentIds.OptionalContentId(doc.Grants?.Item, source);
         string? grantBlueprint = ContentIds.OptionalContentId(doc.Grants?.Blueprint, source);
         string? grantVehicle = ContentIds.OptionalContentId(doc.Grants?.Vehicle, source);
+        string? requiresBlueprint = ContentIds.OptionalContentId(doc.Requires?.Blueprint, source);
         int? grantCount = null;
 
         if (kind == ShopKind.Item)
@@ -140,10 +145,11 @@ public static class ShopCatalog
         {
             if (grantVehicle is null)
                 throw new InvalidOperationException($"{source}: '{id}' kind vehicle requires grants.vehicle.");
-            if (!string.Equals(grantVehicle, "bike", StringComparison.Ordinal))
+            if (!string.Equals(grantVehicle, "bike", StringComparison.Ordinal) &&
+                !string.Equals(grantVehicle, "mail_truck", StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(
-                    $"{source}: '{id}' grants.vehicle '{grantVehicle}' is not bike.");
+                    $"{source}: '{id}' grants.vehicle '{grantVehicle}' is not bike or mail_truck.");
             }
         }
         else if (doc.Grants?.Count is int listed)
@@ -165,7 +171,8 @@ public static class ShopCatalog
             doc.Availability.FromShift,
             ParseSlot(doc.Availability.Slot, source, id),
             doc.OncePerRun,
-            ContentIds.ReadTags(doc.Tags, source, id));
+            ContentIds.ReadTags(doc.Tags, source, id),
+            requiresBlueprint);
     }
 
     private static ShopKind ParseKind(string? raw, string source, string id)
@@ -203,6 +210,7 @@ public static class ShopCatalog
         public string? Kind { get; set; }
         public int Price { get; set; }
         public GrantsDocument? Grants { get; set; }
+        public RequiresDocument? Requires { get; set; }
         public AvailabilityDocument? Availability { get; set; }
         public bool OncePerRun { get; set; }
         public string[]? Tags { get; set; }
@@ -214,6 +222,11 @@ public static class ShopCatalog
         public int? Count { get; set; }
         public string? Blueprint { get; set; }
         public string? Vehicle { get; set; }
+    }
+
+    private sealed class RequiresDocument
+    {
+        public string? Blueprint { get; set; }
     }
 
     private sealed class AvailabilityDocument
