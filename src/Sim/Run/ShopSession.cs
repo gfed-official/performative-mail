@@ -119,11 +119,14 @@ public sealed class ShopSession
         if (offer.Remaining is 0)
             return new ShopRejected(ShopReject.SoldOut);
 
-        if (!CanAfford(offer.Price))
-            return new ShopRejected(ShopReject.InsufficientFunds);
-
         if (!_byId.TryGetValue(shopItemId, out var def))
             return new ShopRejected(ShopReject.NotOffered);
+
+        if (def.RequiresBlueprint is string required && !_blueprints.Contains(required))
+            return new ShopRejected(ShopReject.MissingBlueprint);
+
+        if (!CanAfford(offer.Price))
+            return new ShopRejected(ShopReject.InsufficientFunds);
 
         string? grantItem = def.GrantItem;
         string? grantBlueprint = def.GrantBlueprint;

@@ -46,21 +46,21 @@ public sealed class ShopBikeTests
     }
 
     [Fact]
-    public void ShopCatalog_TruckGrant_Rejected()
+    public void ShopCatalog_UnknownVehicleGrant_Rejected()
     {
         var ex = Assert.Throws<InvalidOperationException>(() => ShopCatalog.Parse(
             """
             {
-              "id": "mail_truck",
-              "name": "Mail Truck",
+              "id": "flying_car",
+              "name": "Flying Car",
               "kind": "vehicle",
               "price": 900,
-              "grants": { "vehicle": "mail_truck" },
+              "grants": { "vehicle": "flying_car" },
               "availability": { "fromShift": 2, "slot": "fixed" }
             }
             """,
-            "truck"));
-        Assert.Contains("bike", ex.Message);
+            "unknown-vehicle"));
+        Assert.Contains("flying_car", ex.Message);
     }
 
     private static string FindContentRoot()

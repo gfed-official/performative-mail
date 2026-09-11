@@ -13,7 +13,8 @@ public enum ShopReject : byte
     InsufficientFunds,
     Closed,
     NoRoom,
-    UnknownGrant
+    UnknownGrant,
+    MissingBlueprint
 }
 
 public abstract record ShopBuyResult;

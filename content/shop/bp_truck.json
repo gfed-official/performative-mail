@@ -1,0 +1,10 @@
+{
+  "id": "bp_truck",
+  "name": "Blueprint: Motor Pool",
+  "kind": "blueprint",
+  "price": 500,
+  "grants": { "blueprint": "bp_truck" },
+  "availability": { "fromShift": 2, "slot": "fixed" },
+  "oncePerRun": true,
+  "tags": ["automation"]
+}
