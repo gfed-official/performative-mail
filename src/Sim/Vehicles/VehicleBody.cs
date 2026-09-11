@@ -33,14 +33,49 @@ public sealed class VehicleBody
 
     public Facing Facing => NearestCardinal(Pose.Yaw);
 
+    public const double FuelSecondsPerOilCan = 300.0;
+
+    public bool IsOutOfFuel { get; private set; }
+
+    private double _driveSecondsSinceRefuel;
+
     public void SetPose(in PlayerPose pose) => Pose = pose;
 
     public void SetDriver(EntityId driver) => Driver = driver;
 
     public void ClearDriver() => Driver = default;
 
+    public bool StepFuel(double dtSeconds, Func<bool> tryConsumeOilCan)
+    {
+        if (tryConsumeOilCan is null) throw new ArgumentNullException(nameof(tryConsumeOilCan));
+        if (dtSeconds < 0) throw new ArgumentOutOfRangeException(nameof(dtSeconds), dtSeconds, null);
+        if (IsOutOfFuel) return false;
+        if (SpeedMetersPerSecond <= 0f) return true;
+
+        _driveSecondsSinceRefuel += dtSeconds;
+        while (_driveSecondsSinceRefuel >= FuelSecondsPerOilCan)
+        {
+            if (!tryConsumeOilCan())
+            {
+                IsOutOfFuel = true;
+                return false;
+            }
+
+            _driveSecondsSinceRefuel -= FuelSecondsPerOilCan;
+        }
+
+        return true;
+    }
+
     public void Apply(in InputCmd cmd, in VehicleContext context)
     {
+        if (IsOutOfFuel)
+        {
+            Pose = new PlayerPose(Pose.Xcm, Pose.Ycm, Pose.Zcm, cmd.Yaw);
+            SpeedMetersPerSecond = 0f;
+            return;
+        }
+
         var next = VehicleStep.ApplyTick(Pose, in cmd, in context);
         var dx = (next.Xcm - Pose.Xcm) / 100.0;
         var dy = (next.Ycm - Pose.Ycm) / 100.0;
