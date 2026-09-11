@@ -10,6 +10,7 @@ using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.Vehicles;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.App;
@@ -599,7 +600,7 @@ public sealed class PlaySessionMachine : IDisposable
 
         var bike = server.World.Vehicles.SpawnBike(body.Pose);
         if (server.World.TryMount(local, bike.Id))
-            _live.Client.Prediction.Mount(bike.Id);
+            _live.Client.Prediction.Mount(bike.Id, VehicleContext.BikeOnRoad);
         return true;
     }
 

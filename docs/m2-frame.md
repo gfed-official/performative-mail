@@ -136,6 +136,8 @@ Verify:
 | U6.3 | NPC driver 3-stop route, matching mail only, takeover | Integration: no misdelivery; takeover and hand-back in one tick | U6.2 |
 | U6.4 | Flee stub (enemies within 20 m → return to depot) | Route aborts to depot; no combat AI | U6.3 |
 
+U6.1 split further into U6.1.1 to U6.1.4, one PR each. See `docs/u6-1-frame.md`.
+
 ### U7 children (sea, oil)
 
 | Unit | Landable change | Verify | Depends on |
@@ -203,7 +205,7 @@ Parent: [#14](https://github.com/gfed-official/performative-mail/issues/14).
 | U5.1 | [#222](https://github.com/gfed-official/performative-mail/issues/222) |
 | U5.2 | [#223](https://github.com/gfed-official/performative-mail/issues/223) |
 | U6 | [#203](https://github.com/gfed-official/performative-mail/issues/203) |
-| U6.1 | [#224](https://github.com/gfed-official/performative-mail/issues/224) |
+| U6.1 | [#224](https://github.com/gfed-official/performative-mail/issues/224), split into [#310](https://github.com/gfed-official/performative-mail/issues/310), [#313](https://github.com/gfed-official/performative-mail/issues/313), [#312](https://github.com/gfed-official/performative-mail/issues/312), [#311](https://github.com/gfed-official/performative-mail/issues/311) |
 | U6.2 | [#225](https://github.com/gfed-official/performative-mail/issues/225) |
 | U6.3 | [#226](https://github.com/gfed-official/performative-mail/issues/226) |
 | U6.4 | [#227](https://github.com/gfed-official/performative-mail/issues/227) |

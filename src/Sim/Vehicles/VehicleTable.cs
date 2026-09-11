@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Movement;
 
 namespace PerformativeMail.Sim.Vehicles;
@@ -20,6 +22,20 @@ public sealed class VehicleTable
             EntityId.FromClassAndCounter(EntityClass.Vehicle, _nextCounter++),
             VehicleKind.Bike,
             in pose);
+        _byId.Add(body.Id.Value, body);
+        _order.Add(body);
+        return body;
+    }
+
+    public VehicleBody SpawnMailTruck(in PlayerPose pose, InventorySystem inventory)
+    {
+        inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+        var cargo = inventory.CreateContainer(VehicleCargo.Spec);
+        var body = new VehicleBody(
+            EntityId.FromClassAndCounter(EntityClass.Vehicle, _nextCounter++),
+            VehicleKind.MailTruck,
+            in pose,
+            cargo);
         _byId.Add(body.Id.Value, body);
         _order.Add(body);
         return body;
