@@ -4,6 +4,7 @@ using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Run;
+using PerformativeMail.Sim.Vehicles;
 using PerformativeMail.Sim.World;
 using InventoryAccepted = PerformativeMail.Sim.Inventory.Accepted;
 
@@ -20,6 +21,8 @@ public sealed class BeltEndpoints
     private readonly List<WorldItem> _worldItems = new List<WorldItem>();
     private InventorySystem? _inventory;
     private MailRegistry? _mail;
+    private VehicleTable? _vehicles;
+    private int _tileCm = SegmentInterest.DefaultTileCm;
     private ContainerId _intake;
     private TileCoord _intakeTile;
     private Facing _intakeFace;
@@ -36,6 +39,12 @@ public sealed class BeltEndpoints
     }
 
     public void BindChest(TileCoord tile, ContainerId chest) => _chests[tile] = chest;
+
+    public void BindVehicles(VehicleTable vehicles, int tileCm = SegmentInterest.DefaultTileCm)
+    {
+        _vehicles = vehicles ?? throw new ArgumentNullException(nameof(vehicles));
+        _tileCm = tileCm;
+    }
 
     public void BindTiles(ContainerId container, params TileCoord[] tiles)
     {
@@ -132,6 +141,8 @@ public sealed class BeltEndpoints
             return new BeltSink(SinkKind.Mailbox, destination, default, tile);
         if (_chests.TryGetValue(tile, out var chest))
             return new BeltSink(SinkKind.Chest, default, chest, tile);
+        if (VehicleSinks.TryFindParkedCargo(_vehicles, _tileCm, tile, out var cargo))
+            return new BeltSink(SinkKind.Vehicle, default, cargo, tile);
         return new BeltSink(SinkKind.Air, default, default, tile);
     }
 
@@ -150,6 +161,8 @@ public sealed class BeltEndpoints
                 var result = dests.TryDeliver(new MailId(unchecked((uint)item.ItemId)), sink.Destination, shift, wallet, complaint);
                 return result is Delivered || result is Misdelivered;
             case SinkKind.Chest:
+                return TryDepositChest(sink.Chest, item);
+            case SinkKind.Vehicle:
                 return TryDepositChest(sink.Chest, item);
             case SinkKind.Air:
                 uint despawn = tick + (uint)TickClock.TicksFromSeconds(WorldItemDespawnSeconds);
@@ -217,7 +230,7 @@ public sealed class BeltEndpoints
         return false;
     }
 
-    private enum SinkKind : byte { Mailbox, Chest, Air }
+    private enum SinkKind : byte { Mailbox, Chest, Vehicle, Air }
 
     private readonly record struct BeltSink(SinkKind Kind, DestinationId Destination, ContainerId Chest, TileCoord Tile);
 }

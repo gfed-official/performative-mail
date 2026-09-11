@@ -4,6 +4,7 @@ using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.Vehicles;
 using PerformativeMail.Sim.World;
 using InventoryAccepted = PerformativeMail.Sim.Inventory.Accepted;
 
@@ -75,6 +76,8 @@ public sealed class InserterNetwork
     private readonly Dictionary<TileCoord, ContainerId> _chests = new Dictionary<TileCoord, ContainerId>();
     private InventorySystem? _inventory;
     private MailRegistry? _mail;
+    private VehicleTable? _vehicles;
+    private int _tileCm = SegmentInterest.DefaultTileCm;
 
     public IReadOnlyList<Inserter> Inserters
     {
@@ -94,6 +97,12 @@ public sealed class InserterNetwork
     }
 
     public void BindChest(TileCoord tile, ContainerId chest) => _chests[tile] = chest;
+
+    public void BindVehicles(VehicleTable vehicles, int tileCm = SegmentInterest.DefaultTileCm)
+    {
+        _vehicles = vehicles ?? throw new ArgumentNullException(nameof(vehicles));
+        _tileCm = tileCm;
+    }
 
     public void BindTiles(ContainerId container, params TileCoord[] tiles)
     {
@@ -143,7 +152,7 @@ public sealed class InserterNetwork
     {
         if (belts is null) throw new ArgumentNullException(nameof(belts));
         for (int i = 0; i < _inserters.Count; i++)
-            _inserters[i].Step(_chests, _inventory, _mail);
+            _inserters[i].Step(_chests, _inventory, _mail, _vehicles, _tileCm);
     }
 
     public void StepTicks(BeltNetwork belts, int ticks)
@@ -215,12 +224,14 @@ public sealed class InserterNetwork
         public void Step(
             Dictionary<TileCoord, ContainerId> chests,
             InventorySystem? inventory,
-            MailRegistry? mail)
+            MailRegistry? mail,
+            VehicleTable? vehicles,
+            int tileCm)
         {
             if (!TryPeek(chests, inventory, out var head)) return;
             if (!Machine.TryReady(head)) return;
             if (!TryTake(inventory, out var taken)) return;
-            if (!TryEmit(chests, inventory, mail, taken))
+            if (!TryEmit(chests, inventory, mail, vehicles, tileCm, taken))
             {
                 Restore(inventory, taken);
                 return;
@@ -345,10 +356,14 @@ public sealed class InserterNetwork
             Dictionary<TileCoord, ContainerId> chests,
             InventorySystem? inventory,
             MailRegistry? mail,
+            VehicleTable? vehicles,
+            int tileCm,
             in BeltItem item)
         {
             if (chests.TryGetValue(Machine.Ahead, out var chest))
                 return TryDepositChest(inventory, mail, chest, item);
+            if (VehicleSinks.TryFindParkedCargo(vehicles, tileCm, Machine.Ahead, out var cargo))
+                return TryDepositChest(inventory, mail, cargo, item);
             if (_output is null) return false;
             if (_output.TryInsert(0, item.ItemId, 0f, item.Kind, item.Address))
                 return true;
