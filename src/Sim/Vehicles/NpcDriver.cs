@@ -29,6 +29,7 @@ public enum NpcRoutePhase : byte
     Hired,
     Driving,
     Delivering,
+    Fleeing,
     Done,
 }
 
@@ -36,6 +37,7 @@ public sealed class NpcDriver
 {
     public const int HireCents = 150;
     public const float SpeedRatio = 0.6f;
+    public const double FleeRangeMetres = 20;
 
     public static int InsertPeriodTicks => TickClock.TickHz / 2;
 
@@ -43,6 +45,9 @@ public sealed class NpcDriver
     private readonly VehicleBody _vehicle;
     private readonly int _tileCm;
     private PathHop[] _hops = Array.Empty<PathHop>();
+    private TileCoord[] _routeTiles = Array.Empty<TileCoord>();
+    private PlantedEnemy[] _enemies = Array.Empty<PlantedEnemy>();
+    private RoutingGraph? _graph;
     private int _hop;
     private double _metresAlong;
     private int _insertWait;
@@ -111,6 +116,14 @@ public sealed class NpcDriver
             _mailboxes[pair.Key] = pair.Value;
     }
 
+    public void BindEnemies(IReadOnlyList<PlantedEnemy> enemies)
+    {
+        if (enemies is null) throw new ArgumentNullException(nameof(enemies));
+        _enemies = new PlantedEnemy[enemies.Count];
+        for (int i = 0; i < enemies.Count; i++)
+            _enemies[i] = enemies[i];
+    }
+
     public bool TryBegin(RoutingGraph graph, RouteAnchors anchors)
     {
         if (graph is null) throw new ArgumentNullException(nameof(graph));
@@ -133,7 +146,9 @@ public sealed class NpcDriver
                 _tileCm);
         }
 
+        _graph = graph;
         _hops = hops;
+        _routeTiles = FlattenTiles(hops);
         _hop = 0;
         _metresAlong = 0;
         _insertWait = 0;
@@ -148,9 +163,13 @@ public sealed class NpcDriver
         if (_vehicle.NpcInPassengerSeat)
             return;
 
+        if (Phase == NpcRoutePhase.Driving || Phase == NpcRoutePhase.Delivering)
+            TryFlee();
+
         switch (Phase)
         {
             case NpcRoutePhase.Driving:
+            case NpcRoutePhase.Fleeing:
                 Drive();
                 return;
             case NpcRoutePhase.Delivering:
@@ -165,6 +184,101 @@ public sealed class NpcDriver
                 throw new ArgumentOutOfRangeException(nameof(Phase), unseen, null);
             }
         }
+    }
+
+    private void TryFlee()
+    {
+        if (!ThreatOnRoute())
+            return;
+        Flee();
+    }
+
+    private void Flee()
+    {
+        _insertWait = 0;
+        _metresAlong = 0;
+        _hop = 0;
+        if (_graph is null
+            || !_graph.TryPath(_vehicle.Tile(_tileCm), _site.ParkingZone, out var path)
+            || path.Tiles.Count == 0)
+        {
+            Park();
+            Phase = NpcRoutePhase.Done;
+            return;
+        }
+
+        var tiles = CopyTiles(path.Tiles);
+        _hops = new[] { new PathHop(tiles, MetresOf(tiles, _tileCm), null, _tileCm) };
+        Phase = NpcRoutePhase.Fleeing;
+        SnapTo(tiles[0], yaw: 0, speed: 0f);
+    }
+
+    private bool ThreatOnRoute()
+    {
+        if (_enemies.Length == 0 || _routeTiles.Length == 0)
+            return false;
+        for (int i = 0; i < _enemies.Length; i++)
+        {
+            if (DistanceToRoute(_enemies[i], _routeTiles, _tileCm) <= FleeRangeMetres)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static double DistanceToRoute(in PlantedEnemy enemy, TileCoord[] tiles, int tileCm)
+    {
+        double x = enemy.Xcm / 100.0;
+        double y = enemy.Ycm / 100.0;
+        double tileM = tileCm / 100.0;
+        var first = Center(tiles[0], tileM);
+        if (tiles.Length == 1)
+            return Hypot(x - first.X, y - first.Y);
+
+        double best = double.PositiveInfinity;
+        for (int i = 0; i < tiles.Length - 1; i++)
+        {
+            var a = Center(tiles[i], tileM);
+            var b = Center(tiles[i + 1], tileM);
+            double d = PointToSegment(x, y, a.X, a.Y, b.X, b.Y);
+            if (d < best) best = d;
+        }
+
+        return best;
+    }
+
+    private static double PointToSegment(double px, double py, double ax, double ay, double bx, double by)
+    {
+        double abx = bx - ax;
+        double aby = by - ay;
+        double apx = px - ax;
+        double apy = py - ay;
+        double ab2 = abx * abx + aby * aby;
+        if (ab2 <= 0)
+            return Hypot(apx, apy);
+        double t = (apx * abx + apy * aby) / ab2;
+        if (t < 0) t = 0;
+        else if (t > 1) t = 1;
+        return Hypot(px - (ax + abx * t), py - (ay + aby * t));
+    }
+
+    private static double Hypot(double dx, double dy) => Math.Sqrt(dx * dx + dy * dy);
+
+    private static TileCoord[] FlattenTiles(PathHop[] hops)
+    {
+        int count = 0;
+        for (int i = 0; i < hops.Length; i++)
+            count += hops[i].Tiles.Length;
+        var tiles = new TileCoord[count];
+        int n = 0;
+        for (int i = 0; i < hops.Length; i++)
+        {
+            var hop = hops[i].Tiles;
+            for (int t = 0; t < hop.Length; t++)
+                tiles[n++] = hop[t];
+        }
+
+        return tiles;
     }
 
     private void Drive()

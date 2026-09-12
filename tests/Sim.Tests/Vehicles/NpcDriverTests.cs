@@ -139,6 +139,87 @@ public sealed class NpcDriverTests
     }
 
     [Fact]
+    public void EnemyWithin20mOfRoute_AbortsToDepot_WithoutDamage()
+    {
+        var world = new SimWorld(TestStackCatalog.Default);
+        var fx = RouteWorld(world);
+        fx.Site.Route.ReplaceStops(new[]
+        {
+            RouteStop.ForAddress(Oak),
+            RouteStop.ForDistrict(Elm.District),
+            RouteStop.ForAddress(Pine)
+        });
+        var oak = fx.LoadLetter(Oak);
+        var elm = fx.LoadLetter(Elm);
+        var pine = fx.LoadLetter(Pine);
+        var stray = fx.LoadLetter(Stray);
+        var startWallet = fx.Wallet.Balance;
+        var enemy = PlantedEnemy.AtMeters(21, 1);
+        var rider = world.Players.Spawn(PlayerPose.FromMeters(21, 1, 0, 0));
+        Assert.Equal(20, NpcDriver.FleeRangeMetres);
+
+        var hired = Assert.IsType<NpcHired>(NpcDriver.TryHire(fx.Wallet, fx.Site, fx.Truck, TileCm));
+        hired.Driver.BindDelivery(fx.Inventory, fx.Destinations, fx.Mailboxes, fx.Wallet, fx.Complaint);
+        Assert.True(hired.Driver.TryBegin(fx.Graph, fx.Anchors));
+        DriveOffDepot(hired.Driver, fx);
+        Assert.Equal(NpcRoutePhase.Driving, hired.Driver.Phase);
+        Assert.False(VehicleDepot.HoldsParked(fx.Site.Origin, fx.Truck, TileCm));
+
+        hired.Driver.BindEnemies(new[] { enemy });
+        hired.Driver.Step();
+        Assert.Equal(NpcRoutePhase.Fleeing, hired.Driver.Phase);
+
+        RunUntilDone(hired.Driver);
+
+        Assert.Equal(NpcRoutePhase.Done, hired.Driver.Phase);
+        Assert.True(VehicleDepot.HoldsParked(fx.Site.Origin, fx.Truck, TileCm));
+        Assert.True(fx.Truck.IsParked);
+        Assert.Equal(new[] { oak, elm, pine, stray }, CargoIds(fx));
+        Assert.True(fx.Mail.Contains(oak));
+        Assert.True(fx.Mail.Contains(elm));
+        Assert.True(fx.Mail.Contains(pine));
+        Assert.True(fx.Mail.Contains(stray));
+        Assert.Equal(PlantedEnemy.StubHp, enemy.Hp);
+        Assert.Equal((byte)100, rider.HpPct);
+        Assert.Equal(0, fx.Complaint.Points);
+        Assert.Equal(startWallet.Value - NpcDriver.HireCents, fx.Wallet.Balance.Value);
+    }
+
+    [Fact]
+    public void EnemyBeyond20mOfRoute_DoesNotAbort()
+    {
+        var fx = RouteWorld();
+        fx.Site.Route.ReplaceStops(new[]
+        {
+            RouteStop.ForAddress(Oak),
+            RouteStop.ForDistrict(Elm.District),
+            RouteStop.ForAddress(Pine)
+        });
+        var oak = fx.LoadLetter(Oak);
+        var elm = fx.LoadLetter(Elm);
+        var pine = fx.LoadLetter(Pine);
+        var stray = fx.LoadLetter(Stray);
+        var enemy = PlantedEnemy.AtMeters(50, 50);
+
+        var hired = Assert.IsType<NpcHired>(NpcDriver.TryHire(fx.Wallet, fx.Site, fx.Truck, TileCm));
+        hired.Driver.BindDelivery(fx.Inventory, fx.Destinations, fx.Mailboxes, fx.Wallet, fx.Complaint);
+        hired.Driver.BindEnemies(new[] { enemy });
+        Assert.True(hired.Driver.TryBegin(fx.Graph, fx.Anchors));
+
+        RunUntilDone(hired.Driver);
+
+        Assert.Equal(NpcRoutePhase.Done, hired.Driver.Phase);
+        Assert.True(VehicleDepot.HoldsParked(fx.Site.Origin, fx.Truck, TileCm));
+        Assert.False(fx.Mail.Contains(oak));
+        Assert.False(fx.Mail.Contains(elm));
+        Assert.False(fx.Mail.Contains(pine));
+        Assert.True(fx.Mail.Contains(stray));
+        Assert.Equal(new[] { stray }, CargoIds(fx));
+        Assert.Equal(PlantedEnemy.StubHp, enemy.Hp);
+        Assert.Equal(0, fx.Complaint.Points);
+    }
+
+    [Fact]
     public void TakeoverAndHandBack_FinishInOneTick()
     {
         var world = new SimWorld(TestStackCatalog.Default);
@@ -197,6 +278,16 @@ public sealed class NpcDriverTests
         }
 
         Assert.Fail("NPC route did not finish.");
+    }
+
+    private static void DriveOffDepot(NpcDriver driver, Fixture fx)
+    {
+        for (int i = 0; i < 40; i++)
+            driver.Step();
+
+        Assert.Equal(NpcRoutePhase.Driving, driver.Phase);
+        Assert.False(VehicleDepot.HoldsParked(fx.Site.Origin, fx.Truck, TileCm));
+        Assert.False(fx.Truck.Tile(TileCm).Equals(fx.Site.ParkingZone));
     }
 
     private static MailId[] CargoIds(Fixture fx)
