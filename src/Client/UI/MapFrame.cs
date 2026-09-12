@@ -123,23 +123,70 @@ public readonly record struct MapFrame(
         var marks = new List<MapDistrictMark>();
         var streets = world.Streets;
         for (int i = 0; i < streets.Length; i++)
-            AddDistrict(seen, marks, streets[i].District);
+            AddDistrict(world, seen, marks, streets[i].District);
         var lots = world.Lots;
         for (int i = 0; i < lots.Length; i++)
-            AddDistrict(seen, marks, lots[i].District);
+            AddDistrict(world, seen, marks, lots[i].District);
         var houses = world.Houses;
         for (int i = 0; i < houses.Length; i++)
-            AddDistrict(seen, marks, houses[i].Address.District);
+            AddDistrict(world, seen, marks, houses[i].Address.District);
         marks.Sort((a, b) => a.District.CompareTo(b.District));
         return marks.ToArray();
     }
 
-    private static void AddDistrict(HashSet<byte> seen, List<MapDistrictMark> marks, byte district)
+    public static TileCoord DistrictLabelTile(WorldTables world, byte district)
+    {
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        int sx = 0;
+        int sy = 0;
+        int n = 0;
+        var streets = world.Streets;
+        for (int i = 0; i < streets.Length; i++)
+        {
+            if (streets[i].District != district)
+                continue;
+            var tiles = streets[i].Tiles;
+            if (tiles is null)
+                continue;
+            for (int t = 0; t < tiles.Length; t++)
+            {
+                sx += tiles[t].X;
+                sy += tiles[t].Y;
+                n++;
+            }
+        }
+
+        if (n == 0)
+        {
+            var houses = world.Houses;
+            for (int i = 0; i < houses.Length; i++)
+            {
+                if (houses[i].Address.District != district)
+                    continue;
+                sx += houses[i].LotTile.X;
+                sy += houses[i].LotTile.Y;
+                n++;
+            }
+        }
+
+        return n == 0 ? default : new TileCoord(sx / n, sy / n);
+    }
+
+    private static void AddDistrict(
+        WorldTables world,
+        HashSet<byte> seen,
+        List<MapDistrictMark> marks,
+        byte district)
     {
         if (!DistrictPalette.HasSwatch(district) || !seen.Add(district))
             return;
         byte index = DistrictPalette.IndexOf(district);
-        marks.Add(new MapDistrictMark(district, DistrictPalette.Hex(index), DistrictPalette.Pattern(index)));
+        marks.Add(new MapDistrictMark(
+            district,
+            DistrictPalette.Hex(index),
+            DistrictPalette.Pattern(index),
+            DistrictLabelTile(world, district),
+            "D" + district.ToString()));
     }
 
     private static MapStreetMark[] StreetsOf(WorldTables world)

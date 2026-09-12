@@ -26,6 +26,14 @@ public sealed class MapOverlaySourceTests
         Assert.Contains("MouseButton.Left", source);
         Assert.Contains("DistrictSwatch.Of", source);
         Assert.Contains("Callable.From(() => ToggleChip(captured)).CallDeferred()", source);
+        Assert.Contains("OpenRouteEditor", source);
+        Assert.Contains("TryClickStop", source);
+        Assert.Contains("MoveStop", source);
+        Assert.Contains("Route editor", source);
+        Assert.Contains("StopRow", source);
+        Assert.Contains("DrawDistrictLabels", source);
+        Assert.Contains("DrawStops", source);
+        Assert.Contains("editor=", source);
     }
 
     [Fact]

@@ -32,7 +32,12 @@ public enum MapPingKind : byte
 
 public readonly record struct MapChip(string Id, string Label, bool On);
 
-public readonly record struct MapDistrictMark(byte District, string Hex, DistrictPattern Pattern);
+public readonly record struct MapDistrictMark(
+    byte District,
+    string Hex,
+    DistrictPattern Pattern,
+    TileCoord Label,
+    string Name);
 
 public readonly record struct MapStreetMark(
     byte Id,

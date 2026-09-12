@@ -18,6 +18,10 @@ public sealed class MapFrameTests
         Assert.Equal(2, frame.Districts.Count);
         Assert.Equal("#3D7EFF", frame.Districts[0].Hex);
         Assert.Equal("#E85D3A", frame.Districts[1].Hex);
+        Assert.Equal("D1", frame.Districts[0].Name);
+        Assert.Equal("D2", frame.Districts[1].Name);
+        Assert.Equal(MapFrame.DistrictLabelTile(MapBoot.Tables(), 1), frame.Districts[0].Label);
+        Assert.Equal(new TileCoord(11, 6), frame.Districts[0].Label);
         Assert.Equal(2, frame.Streets.Count);
         Assert.Equal(MapBoot.StreetA, frame.Streets[0].Name);
         Assert.Equal(MapBoot.StreetB, frame.Streets[1].Name);
