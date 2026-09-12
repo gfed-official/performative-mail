@@ -28,6 +28,7 @@ public partial class WorldStage : Node3D
     private static readonly Color HouseRoof = new(0.42f, 0.31f, 0.43f); // #6B4E6E
     private static readonly Color MailboxBlue = new(0.18f, 0.23f, 0.55f); // #2F3A8C
     private static readonly Color MailboxFlag = new(0.91f, 0.36f, 0.23f); // #E85D3A
+    private static readonly Color DistrictBlue = new(0.239f, 0.494f, 1f); // #3D7EFF
     private static readonly Color ResourceWood = Rgb(WorldResourcePlacement.ColorRgb(ResourceKind.Wood, HarvestRemnant.Live)); // #3D6B2E 0.24f, 0.42f, 0.18f
     private static readonly Color ResourceWoodStump = Rgb(WorldResourcePlacement.ColorRgb(ResourceKind.Wood, HarvestRemnant.Stump)); // #593D24 0.35f, 0.24f, 0.14f
     private static readonly Color ResourceFiber = Rgb(WorldResourcePlacement.ColorRgb(ResourceKind.Fiber, HarvestRemnant.Live)); // #7A8F3A
@@ -182,13 +183,21 @@ public partial class WorldStage : Node3D
         dump.AppendLine("WORLD_DUMP");
         foreach (var child in GetChildren())
         {
-            if (child.GetNodeOrNull<Label3D>("Label") is not { } label)
+            if (child.GetNodeOrNull<Label3D>("Label") is { } label)
+            {
+                dump.Append(child.Name);
+                dump.Append(" Label=");
+                dump.Append(label.Text);
+                dump.Append(" district=");
+                dump.AppendLine(DistrictSwatch.Hex(label.Modulate));
                 continue;
-            dump.Append(child.Name);
-            dump.Append(" Label=");
-            dump.Append(label.Text);
-            dump.Append(" district=");
-            dump.AppendLine(DistrictSwatch.Hex(label.Modulate));
+            }
+
+            string name = child.Name;
+            if (name.StartsWith("Crate_", StringComparison.Ordinal)
+                || name.StartsWith("Cart_", StringComparison.Ordinal)
+                || name.StartsWith("StreetPole_", StringComparison.Ordinal))
+                dump.AppendLine(name);
         }
         dump.Append("WORLD_DUMP_END");
         return dump.ToString();
@@ -328,14 +337,50 @@ public partial class WorldStage : Node3D
         for (int i = 0; i < props.Length; i++)
         {
             var prop = props[i];
-            var visual = TryLod(ArtMesh.PathForProp(prop.Kind));
+            var visual = TryLod(ArtMesh.PathForProp(prop.Kind))
+                ?? FallbackClutter(prop.Kind);
             if (visual is null)
                 continue;
+            visual.Name = prop.Kind.ToString() + "_" + i;
             visual.Position = new Vector3(prop.X, prop.Y, prop.Z);
             visual.Rotation = new Vector3(0f, prop.YawRadians, 0f);
             AddChild(visual);
             _spawned.Add(visual);
         }
+    }
+
+    private static Node3D? FallbackClutter(EnvPropKind kind)
+    {
+        switch (kind)
+        {
+            case EnvPropKind.Crate:
+            case EnvPropKind.Cart:
+                return null;
+            case EnvPropKind.StreetPole:
+                return FallbackStreetPole();
+            default:
+                throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+        }
+    }
+
+    private static Node3D FallbackStreetPole()
+    {
+        var root = new Node3D();
+        root.AddChild(new MeshInstance3D
+        {
+            Name = "Post",
+            Mesh = new BoxMesh { Size = new Vector3(0.12f, 2.4f, 0.12f) },
+            MaterialOverride = StreetAsphaltMat,
+            Position = new Vector3(0f, 1.2f, 0f),
+        });
+        root.AddChild(new MeshInstance3D
+        {
+            Name = "Blade",
+            Mesh = new BoxMesh { Size = new Vector3(0.55f, 0.28f, 0.04f) },
+            MaterialOverride = Solid(DistrictBlue),
+            Position = new Vector3(0f, 2.0f, 0.08f),
+        });
+        return root;
     }
 
     private void SpawnResourceNodes(ResourceNodeRecord[] nodes, StreetRecord[] streets, float tileM)

@@ -27,6 +27,7 @@ public static class ArtMesh
     public const string GrassTile = "res://art/world/grass_tile_01.glb";
     public const string Crate = "res://art/props/crate_01.glb";
     public const string Cart = "res://art/props/cart_01.glb";
+    public const string StreetPole = "res://art/world/street_pole_01.glb";
     public const string Bike = "res://art/props/bike_01.glb";
     public const string MailTruck = "res://art/props/truck_01.glb";
     public const string ResourceWood = "res://art/world/resource_wood_01.glb";
@@ -161,6 +162,8 @@ public static class ArtMesh
                 return Crate;
             case EnvPropKind.Cart:
                 return Cart;
+            case EnvPropKind.StreetPole:
+                return StreetPole;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }
