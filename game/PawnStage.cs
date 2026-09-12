@@ -3,6 +3,7 @@ using PerformativeMail.App;
 using PerformativeMail.Client;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Movement;
+using PerformativeMail.Sim.Vehicles;
 
 namespace PerformativeMail.Game;
 
@@ -262,21 +263,28 @@ public partial class PawnStage : Node3D
         if (mesh is not null)
             root.AddChild(mesh);
         else
-        {
-            root.AddChild(new MeshInstance3D
-            {
-                Mesh = new BoxMesh { Size = new Vector3(0.45f, 1.05f, 1.7f) },
-                MaterialOverride = new StandardMaterial3D
-                {
-                    AlbedoColor = new Color(0.18f, 0.23f, 0.55f), // #2F3A8C
-                },
-                Position = new Vector3(0f, 0.525f, 0f),
-            });
-        }
+            root.AddChild(PlaceholderVehicle(view.Kind));
 
         var pose = view.Pose;
         root.Transform = VehicleTransform.Of(in pose);
         return new VehicleVisual(root, pose);
+    }
+
+    private static MeshInstance3D PlaceholderVehicle(VehicleKind kind)
+    {
+        var spec = VehicleArt.PlaceholderFor(kind);
+        return new MeshInstance3D
+        {
+            Mesh = new BoxMesh
+            {
+                Size = new Vector3(spec.WidthMeters, spec.HeightMeters, spec.LengthMeters),
+            },
+            MaterialOverride = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(spec.ColorR, spec.ColorG, spec.ColorB),
+            },
+            Position = new Vector3(0f, spec.HeightMeters * 0.5f, 0f),
+        };
     }
 
     private sealed class PawnVisual

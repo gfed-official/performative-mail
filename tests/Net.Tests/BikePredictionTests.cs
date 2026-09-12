@@ -27,6 +27,18 @@ public sealed class BikePredictionTests
         Assert.Equal(bike, prediction.Pose);
         Assert.NotEqual(walk, prediction.Pose);
         Assert.Equal(bikeId, prediction.VehicleId);
+        Assert.Equal(VehicleKind.Bike, prediction.VehicleKind);
+    }
+
+    [Fact]
+    public void Mount_MailTruck_ExposesTruckKind()
+    {
+        var prediction = new PredictionState();
+        var truckId = EntityId.FromClassAndCounter(EntityClass.Vehicle, 2);
+        prediction.Mount(truckId, VehicleContext.MailTruckOnRoad);
+
+        Assert.Equal(truckId, prediction.VehicleId);
+        Assert.Equal(VehicleKind.MailTruck, prediction.VehicleKind);
     }
 
     [Fact]

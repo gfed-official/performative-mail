@@ -32,8 +32,8 @@ public sealed class VehicleViewTable
         var all = vehicles.All;
         for (int i = 0; i < all.Count; i++)
         {
-            var bike = all[i];
-            _visible.Add(new VehicleView(bike.Id, bike.Kind, PresentPose(client, bike, serverTime)));
+            var body = all[i];
+            _visible.Add(new VehicleView(body.Id, body.Kind, PresentPose(client, body, serverTime)));
         }
     }
 
@@ -46,17 +46,17 @@ public sealed class VehicleViewTable
         if (!client.TryPresent(local, serverTime, out var pose))
             return;
 
-        _visible.Add(new VehicleView(client.Prediction.VehicleId, VehicleKind.Bike, pose));
+        _visible.Add(new VehicleView(client.Prediction.VehicleId, client.Prediction.VehicleKind, pose));
     }
 
-    private static PlayerPose PresentPose(ClientRuntime client, VehicleBody bike, TimeSpan serverTime)
+    private static PlayerPose PresentPose(ClientRuntime client, VehicleBody body, TimeSpan serverTime)
     {
-        if (bike.Driver.Value != 0 && client.TryPresent(bike.Driver, serverTime, out var driven))
+        if (body.Driver.Value != 0 && client.TryPresent(body.Driver, serverTime, out var driven))
             return driven;
-        if (client.Prediction.VehicleId == bike.Id &&
+        if (client.Prediction.VehicleId == body.Id &&
             client.LocalPlayer is EntityId local &&
             client.TryPresent(local, serverTime, out var predicted))
             return predicted;
-        return bike.Pose;
+        return body.Pose;
     }
 }
