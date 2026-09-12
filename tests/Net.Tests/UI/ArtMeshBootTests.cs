@@ -26,6 +26,9 @@ public sealed class ArtMeshBootTests
         Assert.Contains("res://art/world/street_pole_01.glb", source);
         Assert.Contains("res://art/props/bike_01.glb", source);
         Assert.Contains("res://art/props/truck_01.glb", source);
+        Assert.Contains("res://art/props/rowboat_01.glb", source);
+        Assert.Contains("res://art/world/pier_01.glb", source);
+        Assert.Contains("TryPathForConstruct", source);
         Assert.Contains("res://art/world/resource_wood_01.glb", source);
         Assert.Contains("res://art/world/resource_wood_stump_01.glb", source);
         Assert.Contains("res://art/world/resource_fiber_01.glb", source);

@@ -13,6 +13,8 @@ public sealed class ConstructStageBootTests
         Assert.Contains("ConstructPlacement.Toward", source);
         Assert.Contains("ConstructPlacement.LaneItem", source);
         Assert.Contains("BoxMesh", source);
+        Assert.Contains("ArtMesh.TryPathForConstruct", source);
+        Assert.Contains("ArtMesh.TryInstantiate", source);
         Assert.Contains("#C4A84A", source);
         Assert.Contains("#8B5A2B", source);
         Assert.Contains("#A67C52", source);

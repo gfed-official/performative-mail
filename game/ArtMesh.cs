@@ -30,6 +30,8 @@ public static class ArtMesh
     public const string StreetPole = "res://art/world/street_pole_01.glb";
     public const string Bike = "res://art/props/bike_01.glb";
     public const string MailTruck = "res://art/props/truck_01.glb";
+    public const string Rowboat = "res://art/props/rowboat_01.glb";
+    public const string Pier = "res://art/world/pier_01.glb";
     public const string ResourceWood = "res://art/world/resource_wood_01.glb";
     public const string ResourceWoodStump = "res://art/world/resource_wood_stump_01.glb";
     public const string ResourceFiber = "res://art/world/resource_fiber_01.glb";
@@ -153,6 +155,18 @@ public static class ArtMesh
     }
 
     public static string PathForVehicle(VehicleKind kind) => VehicleArt.PathForVehicle(kind);
+
+    public static bool TryPathForConstruct(string defId, out string path)
+    {
+        if (string.Equals(defId, "pier", StringComparison.Ordinal))
+        {
+            path = Pier;
+            return true;
+        }
+
+        path = "";
+        return false;
+    }
 
     public static string PathForProp(EnvPropKind kind)
     {

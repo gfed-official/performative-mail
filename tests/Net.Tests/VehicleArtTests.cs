@@ -24,6 +24,7 @@ public sealed class VehicleArtTests
     {
         string path = VehicleArt.PathForVehicle(VehicleKind.Rowboat);
         Assert.Equal("res://art/props/rowboat_01.glb", path);
+        Assert.Equal(VehicleArt.Rowboat, path);
         Assert.NotEqual(VehicleArt.PathForVehicle(VehicleKind.Bike), path);
         var placeholder = VehicleArt.PlaceholderFor(VehicleKind.Rowboat);
         Assert.True(placeholder.LengthMeters > VehicleArt.PlaceholderFor(VehicleKind.Bike).WidthMeters);
