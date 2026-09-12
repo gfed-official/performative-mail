@@ -139,6 +139,75 @@ public sealed class NpcDriverTests
     }
 
     [Fact]
+    public void EnemyWithin20m_AbortsRouteToDepot_WithoutDamage()
+    {
+        var fx = RouteWorld();
+        fx.Site.Route.ReplaceStops(new[]
+        {
+            RouteStop.ForAddress(Oak),
+            RouteStop.ForDistrict(Elm.District),
+            RouteStop.ForAddress(Pine)
+        });
+        var oak = fx.LoadLetter(Oak);
+        var elm = fx.LoadLetter(Elm);
+        var pine = fx.LoadLetter(Pine);
+        var startWallet = fx.Wallet.Balance;
+        var enemy = RouteEnemy.AtMeters(21.0, 11.0, hp: 60);
+
+        var hired = Assert.IsType<NpcHired>(NpcDriver.TryHire(fx.Wallet, fx.Site, fx.Truck, TileCm));
+        hired.Driver.BindDelivery(fx.Inventory, fx.Destinations, fx.Mailboxes, fx.Wallet, fx.Complaint);
+        Assert.True(hired.Driver.TryBegin(fx.Graph, fx.Anchors));
+        for (int i = 0; i < 8; i++)
+            hired.Driver.Step();
+        Assert.Equal(NpcRoutePhase.Driving, hired.Driver.Phase);
+        Assert.False(VehicleDepot.HoldsParked(fx.Site.Origin, fx.Truck, TileCm));
+
+        hired.Driver.NoticeEnemies(new[] { enemy });
+
+        Assert.Equal(NpcRoutePhase.Fleeing, hired.Driver.Phase);
+        Assert.Equal(60, enemy.Hp);
+        RunUntilDone(hired.Driver);
+
+        Assert.Equal(NpcRoutePhase.Done, hired.Driver.Phase);
+        Assert.True(VehicleDepot.HoldsParked(fx.Site.Origin, fx.Truck, TileCm));
+        Assert.True(fx.Mail.Contains(oak));
+        Assert.True(fx.Mail.Contains(elm));
+        Assert.True(fx.Mail.Contains(pine));
+        Assert.Equal(new[] { oak, elm, pine }, CargoIds(fx));
+        Assert.Equal(60, enemy.Hp);
+        Assert.Equal(0, fx.Complaint.Points);
+        Assert.Equal(startWallet.Value - NpcDriver.HireCents, fx.Wallet.Balance.Value);
+    }
+
+    [Fact]
+    public void EnemyBeyond20m_ContinuesRoute()
+    {
+        var fx = RouteWorld();
+        fx.Site.Route.ReplaceStops(new[]
+        {
+            RouteStop.ForAddress(Oak),
+            RouteStop.ForDistrict(Elm.District),
+            RouteStop.ForAddress(Pine)
+        });
+        var oak = fx.LoadLetter(Oak);
+        var enemy = RouteEnemy.AtMeters(80.0, 80.0, hp: 60);
+
+        var hired = Assert.IsType<NpcHired>(NpcDriver.TryHire(fx.Wallet, fx.Site, fx.Truck, TileCm));
+        hired.Driver.BindDelivery(fx.Inventory, fx.Destinations, fx.Mailboxes, fx.Wallet, fx.Complaint);
+        Assert.True(hired.Driver.TryBegin(fx.Graph, fx.Anchors));
+        hired.Driver.NoticeEnemies(new[] { enemy });
+
+        Assert.Equal(NpcRoutePhase.Driving, hired.Driver.Phase);
+        RunUntilDone(hired.Driver);
+
+        Assert.Equal(NpcRoutePhase.Done, hired.Driver.Phase);
+        Assert.True(VehicleDepot.HoldsParked(fx.Site.Origin, fx.Truck, TileCm));
+        Assert.False(fx.Mail.Contains(oak));
+        Assert.Equal(60, enemy.Hp);
+        Assert.Equal(0, fx.Complaint.Points);
+    }
+
+    [Fact]
     public void TakeoverAndHandBack_FinishInOneTick()
     {
         var world = new SimWorld(TestStackCatalog.Default);

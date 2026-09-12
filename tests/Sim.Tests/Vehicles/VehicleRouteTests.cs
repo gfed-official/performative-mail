@@ -101,6 +101,20 @@ public sealed class VehicleRouteTests
     }
 
     [Fact]
+    public void EnemyWithin_TrueAt20m_FalseBeyond()
+    {
+        var tiles = new[] { new TileCoord(0, 0) };
+        var atLimit = RouteEnemy.AtMeters(1.0, 21.0, hp: 60);
+        var beyond = RouteEnemy.AtMeters(1.0, 21.01, hp: 60);
+
+        Assert.Equal(20, NpcDriver.FleeRadiusMetres);
+        Assert.True(VehicleRoute.EnemyWithin(tiles, 200, new[] { atLimit }, NpcDriver.FleeRadiusMetres));
+        Assert.False(VehicleRoute.EnemyWithin(tiles, 200, new[] { beyond }, NpcDriver.FleeRadiusMetres));
+        Assert.Equal(60, atLimit.Hp);
+        Assert.Equal(60, beyond.Hp);
+    }
+
+    [Fact]
     public void RoundTrip_UnknownAnchor_Fails()
     {
         var graph = LineGraph();
