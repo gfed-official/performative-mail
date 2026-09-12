@@ -126,10 +126,10 @@ public sealed class MotorboatTests
     public void ParkedMotorboat_OffPortBelt_DoesNotLoad()
     {
         var fx = PortWorld();
-        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.BuildingId, new TileCoord(6, 2), Facing.East, Owner));
+        Assert.IsType<Placed>(fx.Registry.TryPlace(BeltNetwork.BuildingId, new TileCoord(8, 2), Facing.East, Owner));
 
-        var boat = fx.Vehicles.SpawnMotorboat(TileCenter(new TileCoord(8, 2), 16384), fx.Inv);
-        Assert.Equal(new TileCoord(7, 2), boat.LoadingFaceTile(TileCm));
+        var boat = fx.Vehicles.SpawnMotorboat(TileCenter(new TileCoord(10, 2), 16384), fx.Inv);
+        Assert.Equal(new TileCoord(9, 2), boat.LoadingFaceTile(TileCm));
         Assert.True(boat.IsParked);
         Assert.False(SmallPort.HoldsParked(PortOrigin, Facing.East, boat, TileCm));
 

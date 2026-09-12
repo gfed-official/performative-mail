@@ -1,6 +1,7 @@
 using PerformativeMail.Sim.Automation;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
+using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Movement;
 using PerformativeMail.Sim.Run;
 using PerformativeMail.Sim.Tests.Inventory;
