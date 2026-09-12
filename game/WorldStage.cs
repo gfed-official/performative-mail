@@ -55,6 +55,7 @@ public partial class WorldStage : Node3D
 
     private WorldTables? _bound;
     private readonly List<Node> _spawned = new();
+    private readonly List<Node3D> _lods = new();
     private readonly Dictionary<long, Node3D> _resourceMarkers = new();
     private readonly Dictionary<long, HarvestRemnant> _resourceRemnants = new();
     private readonly List<Node> _constructs = new();
@@ -79,6 +80,24 @@ public partial class WorldStage : Node3D
         SpawnIntake(tables.PostOffice, tables.Streets, tileM);
         SpawnPostalClutter(tables.PostOffice, tables.Streets, tileM);
         SpawnResourceNodes(tables.ResourceNodes, tables.Streets, tileM);
+        ApplyCameraLod();
+    }
+
+    public override void _Process(double delta)
+    {
+        _ = delta;
+        ApplyCameraLod();
+    }
+
+    // Style-guide bands: LO0 default, LO1 past ArtLod.Lo1Meters (30), LO2 past ArtLod.Lo2Meters (60).
+    public void ApplyCameraLod()
+    {
+        if (_lods.Count == 0)
+            return;
+        var cam = GetViewport()?.GetCamera3D();
+        if (cam is null)
+            return;
+        ArtMesh.ApplyLod(_lods, cam.GlobalPosition.X, cam.GlobalPosition.Z);
     }
 
     public void SyncHarvest(IReadOnlyList<ResourceNodeView> nodes)
@@ -142,6 +161,7 @@ public partial class WorldStage : Node3D
         for (int i = 0; i < _spawned.Count; i++)
             _spawned[i].QueueFree();
         _spawned.Clear();
+        _lods.Clear();
         _resourceMarkers.Clear();
         _resourceRemnants.Clear();
         ClearConstructs();
@@ -182,7 +202,7 @@ public partial class WorldStage : Node3D
             po.SizeTiles.X * tileM,
             ArtMesh.PostOfficeHeightMeters,
             po.SizeTiles.Y * tileM);
-        var visual = ArtMesh.TryInstantiate(ArtMesh.PostOffice);
+        var visual = TryLod(ArtMesh.PostOffice);
         if (visual is not null)
         {
             ArtMesh.FitFootprint(visual, footprint, toward.X, toward.Z, modelFrontIsPlusZ: true, scaleY: true);
@@ -236,7 +256,7 @@ public partial class WorldStage : Node3D
     {
         var origin = Vec(WorldTilePlacement.TileCenter(po.IntakeTile, tileM));
         var toward = WorldTilePlacement.TowardNearestStreet(origin.X, origin.Z, streets, tileM);
-        var visual = ArtMesh.TryInstantiate(ArtMesh.Intake);
+        var visual = TryLod(ArtMesh.Intake);
         if (visual is not null)
         {
             ArtMesh.Orient(visual, toward.X, toward.Z, modelFrontIsPlusZ: false);
@@ -308,7 +328,7 @@ public partial class WorldStage : Node3D
         for (int i = 0; i < props.Length; i++)
         {
             var prop = props[i];
-            var visual = ArtMesh.TryInstantiate(ArtMesh.PathForProp(prop.Kind));
+            var visual = TryLod(ArtMesh.PathForProp(prop.Kind));
             if (visual is null)
                 continue;
             visual.Position = new Vector3(prop.X, prop.Y, prop.Z);
@@ -401,7 +421,7 @@ public partial class WorldStage : Node3D
                 1.8f,
                 house.LotSizeTiles.Y * tileM * 0.7f);
             var toward = WorldTilePlacement.TowardNearestStreet(origin.X, origin.Z, streets, tileM);
-            var visual = ArtMesh.TryInstantiate(ArtMesh.HouseVariant(i));
+            var visual = TryLod(ArtMesh.HouseVariant(i));
             if (visual is not null)
             {
                 ArtMesh.FitFootprint(visual, size, toward.X, toward.Z, modelFrontIsPlusZ: true, scaleY: false);
@@ -444,7 +464,7 @@ public partial class WorldStage : Node3D
             string address = AddressText.Format(house.Address, streets);
             var toward = WorldTilePlacement.TowardNearestStreet(view.X, view.Z, streets, tileM);
             var origin = new Vector3(view.X, 0f, view.Z);
-            var visual = ArtMesh.TryInstantiate(ArtMesh.Mailbox);
+            var visual = TryLod(ArtMesh.Mailbox);
             if (visual is not null)
             {
                 ArtMesh.Orient(visual, toward.X, toward.Z, modelFrontIsPlusZ: false);
@@ -643,6 +663,14 @@ public partial class WorldStage : Node3D
         };
         AddChild(node);
         _spawned.Add(node);
+    }
+
+    private Node3D? TryLod(string path)
+    {
+        var visual = ArtMesh.TryInstantiateLod(path);
+        if (visual is not null)
+            _lods.Add(visual);
+        return visual;
     }
 
     private static Vector3 VisualSize(Node3D visual, Vector3 fallback)
