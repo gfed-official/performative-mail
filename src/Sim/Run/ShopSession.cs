@@ -58,6 +58,13 @@ public sealed class ShopSession
 
     public IReadOnlyCollection<string> OwnedBlueprints => _blueprints;
 
+    public void GrantBlueprint(string id)
+    {
+        if (string.IsNullOrEmpty(id))
+            throw new ArgumentException("Blueprint id is required.", nameof(id));
+        _blueprints.Add(id);
+    }
+
     public void RollOffers(byte shift, RunPhase phase = RunPhase.Prep)
     {
         _phase = phase;
@@ -68,6 +75,7 @@ public sealed class ShopSession
         {
             var def = _catalog[i];
             if (def.Slot != ShopSlot.Fixed || def.FromShift > shift) continue;
+            if (IsKitOnly(def)) continue;
             if (def.OncePerRun && _bought.Contains(def.Id)) continue;
             _offers.Add(ToOffer(def, RemainingOf(def)));
             offered.Add(def.Id);
@@ -78,6 +86,7 @@ public sealed class ShopSession
         {
             var def = _catalog[i];
             if (def.FromShift > shift) continue;
+            if (IsKitOnly(def)) continue;
             if (def.OncePerRun && _bought.Contains(def.Id)) continue;
             if (offered.Contains(def.Id)) continue;
             if (!IsSpecial(def)) continue;
@@ -171,11 +180,18 @@ public sealed class ShopSession
     private static bool IsSpecial(ShopItemDef def)
     {
         if (def.Slot == ShopSlot.Rotating) return true;
+        return HasTag(def, SpecialTag);
+    }
+
+    private static bool IsKitOnly(ShopItemDef def) => HasTag(def, "kit");
+
+    private static bool HasTag(ShopItemDef def, string tag)
+    {
         var tags = def.Tags;
         if (tags is null) return false;
         for (int i = 0; i < tags.Length; i++)
         {
-            if (string.Equals(tags[i], SpecialTag, StringComparison.Ordinal))
+            if (string.Equals(tags[i], tag, StringComparison.Ordinal))
                 return true;
         }
 

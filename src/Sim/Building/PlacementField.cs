@@ -92,6 +92,12 @@ public sealed class PlacementField
     public bool IsWater(TileCoord tile) =>
         InBounds(tile) && _heights[Idx(tile, Width)] <= HeightmapStage.SeaLevelCm;
 
+    public bool IsShallowWater(TileCoord tile) =>
+        InBounds(tile) && IsWater(tile) && _heights[Idx(tile, Width)] > BiomeStage.DeepCm;
+
+    public bool IsDeepWater(TileCoord tile) =>
+        InBounds(tile) && _heights[Idx(tile, Width)] <= BiomeStage.DeepCm;
+
     public short HeightAt(TileCoord tile)
     {
         RequireInBounds(tile);

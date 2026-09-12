@@ -14,6 +14,7 @@ public static class VehicleArt
 {
     public const string Bike = "res://art/props/bike_01.glb";
     public const string MailTruck = "res://art/props/truck_01.glb";
+    public const string Rowboat = "res://art/props/rowboat_01.glb";
 
     public static readonly VehiclePlaceholder BikePlaceholder = new(
         0.45f,
@@ -31,6 +32,14 @@ public static class VehicleArt
         0.29f,
         0.12f);
 
+    public static readonly VehiclePlaceholder RowboatPlaceholder = new(
+        0.85f,
+        0.45f,
+        2.4f,
+        0.42f,
+        0.28f,
+        0.16f);
+
     public static string PathForVehicle(VehicleKind kind)
     {
         switch (kind)
@@ -39,6 +48,8 @@ public static class VehicleArt
                 return Bike;
             case VehicleKind.MailTruck:
                 return MailTruck;
+            case VehicleKind.Rowboat:
+                return Rowboat;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }
@@ -52,6 +63,8 @@ public static class VehicleArt
                 return BikePlaceholder;
             case VehicleKind.MailTruck:
                 return MailTruckPlaceholder;
+            case VehicleKind.Rowboat:
+                return RowboatPlaceholder;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }

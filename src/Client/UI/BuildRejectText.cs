@@ -13,6 +13,7 @@ public static class BuildRejectText
         PlaceReject.UnknownRecipe => "Unknown recipe",
         PlaceReject.OutOfBounds => "Out of bounds",
         PlaceReject.Water => "Needs deep water",
+        PlaceReject.DryLand => "Needs shallow water",
         PlaceReject.Street => "On street",
         PlaceReject.Slope => "Too steep",
         PlaceReject.Occupied => "Occupied",

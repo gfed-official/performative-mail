@@ -20,6 +20,16 @@ public sealed class VehicleArtTests
     }
 
     [Fact]
+    public void PathForVehicle_Rowboat_ReturnsDedicatedPath()
+    {
+        string path = VehicleArt.PathForVehicle(VehicleKind.Rowboat);
+        Assert.Equal("res://art/props/rowboat_01.glb", path);
+        Assert.NotEqual(VehicleArt.PathForVehicle(VehicleKind.Bike), path);
+        var placeholder = VehicleArt.PlaceholderFor(VehicleKind.Rowboat);
+        Assert.True(placeholder.LengthMeters > VehicleArt.PlaceholderFor(VehicleKind.Bike).WidthMeters);
+    }
+
+    [Fact]
     public void PathForVehicle_UnknownKind_Throws()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => VehicleArt.PathForVehicle((VehicleKind)0));
