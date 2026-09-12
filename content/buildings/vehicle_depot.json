@@ -1,0 +1,23 @@
+{
+  "id": "vehicle_depot",
+  "name": "Vehicle Depot",
+  "footprint": [3, 3],
+  "rotations": 4,
+  "hp": 1000,
+  "placement": {
+    "onStreet": false,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": false
+  },
+  "behaviour": "vehicle_depot",
+  "params": {
+    "vehicleClass": "land",
+    "parkingOffset": [1, 1],
+    "loadingFace": "forward",
+    "npcHireCost": 150
+  },
+  "recipe": "recipe_vehicle_depot",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["automation", "vehicles"]
+}
