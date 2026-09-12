@@ -25,6 +25,10 @@ public sealed class VehicleBody
 
     public EntityId Driver { get; private set; }
 
+    public bool NpcInDriverSeat { get; private set; }
+
+    public bool NpcInPassengerSeat { get; private set; }
+
     public ContainerId? Cargo { get; private set; }
 
     public float SpeedMetersPerSecond { get; private set; }
@@ -41,9 +45,35 @@ public sealed class VehicleBody
 
     public void SetPose(in PlayerPose pose) => Pose = pose;
 
+    public void SetKinematics(in PlayerPose pose, float speedMetersPerSecond)
+    {
+        if (speedMetersPerSecond < 0f || float.IsNaN(speedMetersPerSecond) || float.IsInfinity(speedMetersPerSecond))
+            throw new ArgumentOutOfRangeException(nameof(speedMetersPerSecond), speedMetersPerSecond, null);
+        Pose = pose;
+        SpeedMetersPerSecond = speedMetersPerSecond;
+    }
+
     public void SetDriver(EntityId driver) => Driver = driver;
 
     public void ClearDriver() => Driver = default;
+
+    public void SeatNpcDriver()
+    {
+        NpcInDriverSeat = true;
+        NpcInPassengerSeat = false;
+    }
+
+    public void SeatNpcPassenger()
+    {
+        NpcInDriverSeat = false;
+        NpcInPassengerSeat = true;
+    }
+
+    public void ClearNpc()
+    {
+        NpcInDriverSeat = false;
+        NpcInPassengerSeat = false;
+    }
 
     public bool StepFuel(double dtSeconds, Func<bool> tryConsumeOilCan)
     {
