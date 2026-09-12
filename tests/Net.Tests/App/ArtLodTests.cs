@@ -58,6 +58,18 @@ public sealed class ArtLodTests
     }
 
     [Fact]
+    public void Fallback_KeepsLo0WhenHigherMeshesAreMissing()
+    {
+        Assert.Equal(ArtLodLevel.Lo0, ArtLod.Fallback(ArtLodLevel.Lo0, hasLo1: false, hasLo2: false));
+        Assert.Equal(ArtLodLevel.Lo0, ArtLod.Fallback(ArtLodLevel.Lo1, hasLo1: false, hasLo2: false));
+        Assert.Equal(ArtLodLevel.Lo0, ArtLod.Fallback(ArtLodLevel.Lo2, hasLo1: false, hasLo2: false));
+        Assert.Equal(ArtLodLevel.Lo1, ArtLod.Fallback(ArtLodLevel.Lo1, hasLo1: true, hasLo2: false));
+        Assert.Equal(ArtLodLevel.Lo1, ArtLod.Fallback(ArtLodLevel.Lo2, hasLo1: true, hasLo2: false));
+        Assert.Equal(ArtLodLevel.Lo2, ArtLod.Fallback(ArtLodLevel.Lo2, hasLo1: true, hasLo2: true));
+        Assert.Equal(ArtLodLevel.Lo0, ArtLod.Fallback(ArtLodLevel.Lo1, hasLo1: false, hasLo2: true));
+    }
+
+    [Fact]
     public void HorizontalMeters_IgnoresHeight()
     {
         Assert.Equal(30f, ArtLod.HorizontalMeters(0f, 0f, 30f, 0f));

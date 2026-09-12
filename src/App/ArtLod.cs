@@ -56,6 +56,27 @@ public static class ArtLod
         return wanted > max ? max : wanted;
     }
 
+    // Missing LO1/LO2 files stay on the next available coarser mesh (LO0 if both absent).
+    public static ArtLodLevel Fallback(ArtLodLevel wanted, bool hasLo1, bool hasLo2)
+    {
+        switch (wanted)
+        {
+            case ArtLodLevel.Lo0:
+                return ArtLodLevel.Lo0;
+            case ArtLodLevel.Lo1:
+                return hasLo1 ? ArtLodLevel.Lo1 : ArtLodLevel.Lo0;
+            case ArtLodLevel.Lo2:
+                if (hasLo2)
+                    return ArtLodLevel.Lo2;
+                return hasLo1 ? ArtLodLevel.Lo1 : ArtLodLevel.Lo0;
+            default:
+            {
+                ArtLodLevel exhausted = wanted;
+                throw new ArgumentOutOfRangeException(nameof(wanted), exhausted, null);
+            }
+        }
+    }
+
     public static float HorizontalMeters(float ax, float az, float bx, float bz)
     {
         float dx = ax - bx;

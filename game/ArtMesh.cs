@@ -38,6 +38,12 @@ public static class ArtMesh
     public const string PawnVestMaterial = "mat_pawn_vest";
     public const string PawnHatMaterial = "mat_pawn_hat";
     public const string DistrictMaterial = "mat_district";
+    public const string LodRootName = "ArtLod";
+    public const string Lod0Name = "LO0";
+    public const string Lod1Name = "LO1";
+    public const string Lod2Name = "LO2";
+    public const string LodPathMeta = "lod_path";
+    public const string LodLevelMeta = "lod_level";
     public const float PostOfficeHeightMeters = 4.5f;
 
     private static readonly Dictionary<string, PackedScene> Packed = new();
@@ -88,6 +94,41 @@ public static class ArtMesh
         var wrap = new Node3D();
         wrap.AddChild(node);
         return wrap;
+    }
+
+    public static Node3D? TryInstantiateLod(string lo0Path)
+    {
+        var lo0 = TryInstantiate(lo0Path);
+        if (lo0 is null)
+            return null;
+
+        var root = new Node3D { Name = LodRootName };
+        lo0.Name = Lod0Name;
+        root.AddChild(lo0);
+
+        var max = ArtLod.MaxLevel(lo0Path);
+        if (max >= ArtLodLevel.Lo1)
+            TryAddLodChild(root, ArtLod.Path(lo0Path, ArtLodLevel.Lo1), Lod1Name);
+        if (max >= ArtLodLevel.Lo2)
+            TryAddLodChild(root, ArtLod.Path(lo0Path, ArtLodLevel.Lo2), Lod2Name);
+
+        ShowLod(root, ArtLodLevel.Lo0);
+        root.SetMeta(LodPathMeta, lo0Path);
+        root.SetMeta(LodLevelMeta, (int)ArtLodLevel.Lo0);
+        return root;
+    }
+
+    public static void ApplyLod(Node3D root, float cameraX, float cameraZ)
+    {
+        string lo0Path = root.HasMeta(LodPathMeta) ? root.GetMeta(LodPathMeta).AsString() : string.Empty;
+        float meters = ArtLod.HorizontalMeters(root.GlobalPosition.X, root.GlobalPosition.Z, cameraX, cameraZ);
+        ApplyLodLevel(root, ArtLod.Resolve(meters, lo0Path));
+    }
+
+    public static void ApplyLod(IReadOnlyList<Node3D> roots, float cameraX, float cameraZ)
+    {
+        for (int i = 0; i < roots.Count; i++)
+            ApplyLod(roots[i], cameraX, cameraZ);
     }
 
     public static Mesh? TryMesh(string path)
@@ -202,7 +243,11 @@ public static class ArtMesh
         {
             var next = xf;
             if (!isRoot && node is Node3D n3)
+            {
+                if (!n3.Visible)
+                    return;
                 next = xf * n3.Transform;
+            }
 
             if (node is VisualInstance3D vis)
             {
@@ -227,6 +272,42 @@ public static class ArtMesh
     {
         int applied = 0;
         TintNamed(root, DistrictMaterial, color, ref applied);
+    }
+
+    private static void TryAddLodChild(Node3D root, string path, string name)
+    {
+        var child = TryInstantiate(path);
+        if (child is null)
+            return;
+        child.Name = name;
+        child.Visible = false;
+        root.AddChild(child);
+    }
+
+    private static void ApplyLodLevel(Node3D root, ArtLodLevel level)
+    {
+        var shown = ArtLod.Fallback(
+            level,
+            root.GetNodeOrNull<Node3D>(Lod1Name) is not null,
+            root.GetNodeOrNull<Node3D>(Lod2Name) is not null);
+        if (root.HasMeta(LodLevelMeta) && (ArtLodLevel)root.GetMeta(LodLevelMeta).AsInt32() == shown)
+            return;
+        ShowLod(root, shown);
+        root.SetMeta(LodLevelMeta, (int)shown);
+    }
+
+    private static void ShowLod(Node3D root, ArtLodLevel level)
+    {
+        var lo0 = root.GetNodeOrNull<Node3D>(Lod0Name);
+        var lo1 = root.GetNodeOrNull<Node3D>(Lod1Name);
+        var lo2 = root.GetNodeOrNull<Node3D>(Lod2Name);
+        var shown = ArtLod.Fallback(level, lo1 is not null, lo2 is not null);
+        if (lo0 is not null)
+            lo0.Visible = shown == ArtLodLevel.Lo0;
+        if (lo1 is not null)
+            lo1.Visible = shown == ArtLodLevel.Lo1;
+        if (lo2 is not null)
+            lo2.Visible = shown == ArtLodLevel.Lo2;
     }
 
     private static MeshInstance3D? FindMeshInstance(Node node)
