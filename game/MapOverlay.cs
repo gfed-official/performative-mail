@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Godot;
 using PerformativeMail.Client.UI;
+using PerformativeMail.Sim.Vehicles;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Game;
@@ -12,6 +13,7 @@ public partial class MapOverlay : Control
     public const string TitlePath = "TitleLabel";
     public const string ChipRowPath = "ChipRow";
     public const string PingRowPath = "PingRow";
+    public const string StopRowPath = "StopRow";
     public const string CanvasPath = "MapCanvas";
     public const string StatusPath = "StatusLabel";
 
@@ -25,18 +27,29 @@ public partial class MapOverlay : Control
 
     public Action<TileCoord>? LivePingRequested;
 
+    public RouteEditor? Editor { get; private set; }
+
+    public bool IsEditing => Editor is not null;
+
     private readonly Dictionary<string, Button> _chips = new();
     private readonly Dictionary<string, Button> _kinds = new();
+    private readonly List<Button> _stopChips = new();
     private Label _title = null!;
     private Label _status = null!;
+    private HBoxContainer _kindsRow = null!;
+    private HBoxContainer _stopRow = null!;
     private MapCanvas _canvas = null!;
     private WorldTables? _world;
     private OverlayReplica? _overlay;
+    private IRouteConsole? _console;
+    private WorldTables? _editorWorld;
     private MapFrame _frame;
     private bool _open;
     private bool _bound;
     private bool _painting;
     private uint _now;
+    private int _dragStop = -1;
+    private int _paintedStopCount = -1;
 
     public bool IsOpen => _open && Visible;
 
@@ -82,13 +95,47 @@ public partial class MapOverlay : Control
         _overlay = overlay;
         _now = now;
         Pings.Expire(now);
+        RebindEditor();
         var visible = livePings ?? Pings.Visible;
         var frame = MapFrame.From(world, overlay, Layers, Filters, visible);
-        if (_bound && MapFrame.SameDisplay(in _frame, in frame))
+        if (_bound && MapFrame.SameDisplay(in _frame, in frame) && SamePaintedStops())
             return;
         _frame = frame;
         _bound = true;
         Paint();
+    }
+
+    public void OpenRouteEditor(IRouteConsole console)
+    {
+        _console = console ?? throw new ArgumentNullException(nameof(console));
+        RebindEditor();
+        Open();
+        Refresh();
+    }
+
+    public void CloseRouteEditor()
+    {
+        _console = null;
+        Editor = null;
+        Refresh();
+    }
+
+    public bool TryClickStop(TileCoord tile)
+    {
+        if (Editor is not { } editor)
+            return false;
+        if (!editor.TryClickTile(tile))
+            return false;
+        Refresh();
+        return true;
+    }
+
+    public void MoveStop(int from, int to)
+    {
+        if (Editor is not { } editor)
+            return;
+        editor.MoveStop(from, to);
+        Refresh();
     }
 
     public void ToggleChip(string id)
@@ -180,6 +227,18 @@ public partial class MapOverlay : Control
             dump.Append(" hex=");
             dump.Append(district.Hex);
             dump.Append('\n');
+            dump.Append("district.");
+            dump.Append(district.District);
+            dump.Append(".label=");
+            dump.Append(district.Label.X);
+            dump.Append(',');
+            dump.Append(district.Label.Y);
+            dump.Append('\n');
+            dump.Append("district.");
+            dump.Append(district.District);
+            dump.Append(".name=");
+            dump.Append(district.Name);
+            dump.Append('\n');
         }
 
         dump.Append("streets=");
@@ -255,6 +314,30 @@ public partial class MapOverlay : Control
         dump.Append("pingKind=");
         dump.Append(MapPingText.Key(PingKind));
         dump.Append('\n');
+        dump.Append("editor=");
+        dump.Append(IsEditing ? "on" : "off");
+        dump.Append('\n');
+        dump.Append("stops=");
+        dump.Append(Editor is { } live ? live.Stops.Count : 0);
+        dump.Append('\n');
+        if (Editor is { } editing)
+        {
+            foreach (var mark in editing.Marks())
+            {
+                dump.Append("stop.");
+                dump.Append(mark.Index);
+                dump.Append('=');
+                dump.Append(mark.Label);
+                dump.Append('\n');
+            }
+
+            dump.Append("estimate=");
+            dump.Append(editing.TryEstimate(out _, out int seconds)
+                ? seconds.ToString(CultureInfo.InvariantCulture) + "s"
+                : "");
+            dump.Append('\n');
+        }
+
         dump.Append("status=");
         dump.Append(_status.Text);
         dump.Append('\n');
@@ -270,10 +353,15 @@ public partial class MapOverlay : Control
     private void Paint()
     {
         _painting = true;
+        _title.Text = IsEditing ? "Route editor" : "Map";
         PaintChips();
         PaintKinds();
-        _canvas.Bind(_frame);
+        PaintStops();
+        _kindsRow.Visible = !IsEditing;
+        _stopRow.Visible = IsEditing;
+        _canvas.Bind(_frame, Editor?.Marks(), IsEditing);
         PaintStatus();
+        _paintedStopCount = Editor?.Stops.Count ?? -1;
         Visible = _open;
         _painting = false;
     }
@@ -299,12 +387,83 @@ public partial class MapOverlay : Control
 
     private void PaintStatus()
     {
+        if (Editor is { } editor)
+        {
+            int count = editor.Stops.Count;
+            string stops = count == 0
+                ? "Click houses or a district label"
+                : count.ToString(CultureInfo.InvariantCulture) + (count == 1 ? " stop" : " stops");
+            _status.Text = editor.TryEstimate(out _, out int seconds)
+                ? stops + " · " + seconds.ToString(CultureInfo.InvariantCulture) + "s round-trip"
+                : stops;
+            return;
+        }
+
         string ping = MapPingText.Label(PingKind);
-        int count = _frame.Pings.Count;
-        _status.Text = count == 0
+        int pings = _frame.Pings.Count;
+        _status.Text = pings == 0
             ? "Click the map to ping · " + ping
-            : count.ToString(CultureInfo.InvariantCulture) + " ping · " + ping;
+            : pings.ToString(CultureInfo.InvariantCulture) + " ping · " + ping;
     }
+
+    private void PaintStops()
+    {
+        foreach (var chip in _stopChips)
+            chip.QueueFree();
+        _stopChips.Clear();
+        if (Editor is not { } editor)
+            return;
+        foreach (var mark in editor.Marks())
+        {
+            var button = new Button
+            {
+                Name = "Stop_" + mark.Index.ToString(CultureInfo.InvariantCulture),
+                Text = (mark.Index + 1).ToString(CultureInfo.InvariantCulture) + " " + mark.Label,
+            };
+            int captured = mark.Index;
+            button.GuiInput += @event => OnStopChipInput(captured, @event);
+            _stopRow.AddChild(button);
+            _stopChips.Add(button);
+        }
+    }
+
+    private void OnStopChipInput(int index, InputEvent @event)
+    {
+        if (@event is not InputEventMouseButton { ButtonIndex: MouseButton.Left } mouse)
+            return;
+        if (mouse.Pressed)
+        {
+            _dragStop = index;
+            return;
+        }
+
+        if (_dragStop >= 0 && _dragStop != index)
+            MoveStop(_dragStop, index);
+        _dragStop = -1;
+    }
+
+    private void RebindEditor()
+    {
+        if (_console is null)
+        {
+            Editor = null;
+            _editorWorld = null;
+            return;
+        }
+
+        if (_world is null)
+            return;
+        if (Editor is not null
+            && ReferenceEquals(Editor.Console, _console)
+            && ReferenceEquals(_editorWorld, _world))
+            return;
+
+        Editor = new RouteEditor(_console, _world);
+        _editorWorld = _world;
+    }
+
+    private bool SamePaintedStops() =>
+        (Editor?.Stops.Count ?? -1) == _paintedStopCount;
 
     private bool ChipOn(string id) =>
         _chips.TryGetValue(id, out var button) && button.ButtonPressed;
@@ -363,9 +522,15 @@ public partial class MapOverlay : Control
         AddKind(kinds, MapPingKind.BuildHere);
         AddKind(kinds, MapPingKind.Danger);
         AddKind(kinds, MapPingKind.NeedMaterials);
+        _kindsRow = kinds;
+
+        _stopRow = new HBoxContainer { Name = StopRowPath, Visible = false };
+        _stopRow.AddThemeConstantOverride("separation", 8);
+        column.AddChild(_stopRow);
 
         _canvas = new MapCanvas { Name = CanvasPath };
         _canvas.PingPicked = OnCanvasPing;
+        _canvas.StopMoved = MoveStop;
         column.AddChild(_canvas);
 
         _status = new Label { Name = StatusPath };
@@ -406,6 +571,12 @@ public partial class MapOverlay : Control
 
     private void OnCanvasPing(TileCoord tile)
     {
+        if (IsEditing)
+        {
+            TryClickStop(tile);
+            return;
+        }
+
         if (LivePingRequested is { } live)
             live(tile);
         else
@@ -442,7 +613,12 @@ public partial class MapOverlay : Control
     {
         public Action<TileCoord>? PingPicked;
 
+        public Action<int, int>? StopMoved;
+
         private MapFrame _frame;
+        private IReadOnlyList<RouteEditorStop> _stops = Array.Empty<RouteEditorStop>();
+        private bool _editing;
+        private int _dragStop = -1;
 
         public override void _Ready()
         {
@@ -452,25 +628,77 @@ public partial class MapOverlay : Control
             MouseFilter = MouseFilterEnum.Stop;
         }
 
-        public void Bind(in MapFrame frame)
+        public void Bind(in MapFrame frame, IReadOnlyList<RouteEditorStop>? stops = null, bool editing = false)
         {
             _frame = frame;
+            _stops = stops ?? Array.Empty<RouteEditorStop>();
+            _editing = editing;
             QueueRedraw();
         }
 
         public override void _GuiInput(InputEvent @event)
         {
-            if (@event is not InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } mouse)
+            if (@event is not InputEventMouseButton { ButtonIndex: MouseButton.Left } mouse)
                 return;
             if (_frame.Width <= 0 || _frame.Height <= 0)
                 return;
             var size = Size;
             if (size.X <= 0f || size.Y <= 0f)
                 return;
-            int x = Math.Clamp((int)(mouse.Position.X * _frame.Width / size.X), 0, _frame.Width - 1);
-            int y = Math.Clamp((int)(mouse.Position.Y * _frame.Height / size.Y), 0, _frame.Height - 1);
-            PingPicked?.Invoke(new TileCoord(x, y));
+            if (!TryTileAt(mouse.Position, out var tile))
+                return;
+
+            if (_editing && TryHitStop(tile, out int index))
+            {
+                if (mouse.Pressed)
+                    _dragStop = index;
+                else if (_dragStop >= 0 && _dragStop != index)
+                {
+                    StopMoved?.Invoke(_dragStop, index);
+                    _dragStop = -1;
+                }
+                else
+                    _dragStop = -1;
+                AcceptEvent();
+                return;
+            }
+
+            if (!mouse.Pressed)
+            {
+                _dragStop = -1;
+                return;
+            }
+
+            PingPicked?.Invoke(tile);
             AcceptEvent();
+        }
+
+        private bool TryTileAt(Vector2 position, out TileCoord tile)
+        {
+            var size = Size;
+            int x = Math.Clamp((int)(position.X * _frame.Width / size.X), 0, _frame.Width - 1);
+            int y = Math.Clamp((int)(position.Y * _frame.Height / size.Y), 0, _frame.Height - 1);
+            tile = new TileCoord(x, y);
+            return true;
+        }
+
+        private bool TryHitStop(TileCoord tile, out int index)
+        {
+            for (int i = 0; i < _stops.Count; i++)
+            {
+                int dx = tile.X - _stops[i].Tile.X;
+                if (dx < 0) dx = -dx;
+                int dy = tile.Y - _stops[i].Tile.Y;
+                if (dy < 0) dy = -dy;
+                if (dx <= 1 && dy <= 1)
+                {
+                    index = _stops[i].Index;
+                    return true;
+                }
+            }
+
+            index = -1;
+            return false;
         }
 
         public override void _Draw()
@@ -489,9 +717,11 @@ public partial class MapOverlay : Control
             DrawHouses(sx, sy);
             if (_frame.Filters.HasFlag(MapFilter.Resources))
                 DrawResources(sx, sy);
-            if (_frame.Filters.HasFlag(MapFilter.Routes))
+            if (_frame.Filters.HasFlag(MapFilter.Routes) || _editing)
                 DrawRoutes(sx, sy);
             DrawPings(sx, sy);
+            DrawDistrictLabels(sx, sy);
+            DrawStops(sx, sy);
         }
 
         private void DrawDistricts(float sx, float sy)
@@ -572,6 +802,44 @@ public partial class MapOverlay : Control
                 float x = (ping.Tile.X + 0.5f) * sx;
                 float y = (ping.Tile.Y + 0.5f) * sy;
                 DrawCircle(new Vector2(x, y), MathF.Max(6f, MathF.Min(sx, sy) * 0.55f), PingColor(ping.Kind));
+            }
+        }
+
+        private void DrawDistrictLabels(float sx, float sy)
+        {
+            if (!_frame.Layers.HasFlag(MapLayer.Districts) && !_editing)
+                return;
+            var font = ThemeDB.FallbackFont;
+            int size = Math.Max(12, (int)MathF.Min(sx, sy) * 2);
+            foreach (var district in _frame.Districts)
+            {
+                var color = DistrictSwatch.Of(district.District);
+                var pos = new Vector2(district.Label.X * sx, district.Label.Y * sy);
+                DrawRect(new Rect2(pos, new Vector2(MathF.Max(sx * 2f, 16f), MathF.Max(sy, 12f))), new Color(0.06f, 0.07f, 0.09f, 0.72f));
+                DrawString(font, pos, district.Name, HorizontalAlignment.Left, -1, size, color);
+            }
+        }
+
+        private void DrawStops(float sx, float sy)
+        {
+            if (_stops.Count == 0)
+                return;
+            var font = ThemeDB.FallbackFont;
+            int size = Math.Max(12, (int)MathF.Min(sx, sy) * 2);
+            for (int i = 0; i < _stops.Count; i++)
+            {
+                var stop = _stops[i];
+                float x = (stop.Tile.X + 0.5f) * sx;
+                float y = (stop.Tile.Y + 0.5f) * sy;
+                DrawCircle(new Vector2(x, y), MathF.Max(8f, MathF.Min(sx, sy) * 0.65f), PlayTheme.Primary);
+                DrawString(
+                    font,
+                    new Vector2(x - 4f, y - size * 0.4f),
+                    (stop.Index + 1).ToString(CultureInfo.InvariantCulture),
+                    HorizontalAlignment.Left,
+                    -1,
+                    size,
+                    PlayTheme.Body);
             }
         }
 

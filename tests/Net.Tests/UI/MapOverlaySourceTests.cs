@@ -9,6 +9,9 @@ public sealed class MapOverlaySourceTests
         Assert.Contains("MAP_DUMP case=", source);
         Assert.Contains("chip.", source);
         Assert.Contains("districts=", source);
+        Assert.Contains("district.", source);
+        Assert.Contains(".label=", source);
+        Assert.Contains(".name=", source);
         Assert.Contains("streets=", source);
         Assert.Contains("houses=", source);
         Assert.Contains("resources=", source);
@@ -26,6 +29,14 @@ public sealed class MapOverlaySourceTests
         Assert.Contains("MouseButton.Left", source);
         Assert.Contains("DistrictSwatch.Of", source);
         Assert.Contains("Callable.From(() => ToggleChip(captured)).CallDeferred()", source);
+        Assert.Contains("OpenRouteEditor", source);
+        Assert.Contains("TryClickStop", source);
+        Assert.Contains("MoveStop", source);
+        Assert.Contains("Route editor", source);
+        Assert.Contains("StopRow", source);
+        Assert.Contains("DrawDistrictLabels", source);
+        Assert.Contains("DrawStops", source);
+        Assert.Contains("editor=", source);
     }
 
     [Fact]
