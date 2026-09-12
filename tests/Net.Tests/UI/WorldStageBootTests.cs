@@ -27,6 +27,9 @@ public sealed class WorldStageBootTests
         Assert.Contains("ArtMesh.SpawnPad", source);
         Assert.Contains("ArtMesh.GrassTile", source);
         Assert.Contains("ArtMesh.PathForProp", source);
+        Assert.Contains("FallbackClutter", source);
+        Assert.Contains("EnvPropKind.StreetPole", source);
+        Assert.Contains("0.12f, 2.4f, 0.12f", source);
         Assert.Contains("WorldEnvPlacement.StreetTiles", source);
         Assert.Contains("WorldEnvPlacement.StreetCurbs", source);
         Assert.Contains("WorldEnvPlacement.LotGrass", source);
@@ -112,6 +115,9 @@ public sealed class WorldStageBootTests
         Assert.Contains("WORLD_DUMP", source);
         Assert.Contains("GetNodeOrNull<Label3D>(\"Label\")", source);
         Assert.Contains("Label=", source);
+        Assert.Contains("StreetPole_", source);
+        Assert.Contains("Crate_", source);
+        Assert.Contains("Cart_", source);
         Assert.Contains("district=", source);
         Assert.Contains("DistrictSwatch.Hex(label.Modulate)", source);
         Assert.Contains("WORLD_DUMP_END", source);

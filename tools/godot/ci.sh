@@ -397,6 +397,12 @@ host_worldstage_smoke() {
     || fail "WorldStage dump missing mailbox 1 Debug Lane: $(cat "$dump")"
   grep -Fqx "Mailbox_2 Label=2 Debug Lane district=#3D7EFF" "$dump" \
     || fail "WorldStage dump missing mailbox 2 Debug Lane: $(cat "$dump")"
+  grep -q '^Crate_' "$dump" \
+    || fail "WorldStage dump missing crate clutter: $(cat "$dump")"
+  grep -q '^Cart_' "$dump" \
+    || fail "WorldStage dump missing cart clutter: $(cat "$dump")"
+  test "$(grep -c '^StreetPole_' "$dump")" -eq 2 \
+    || fail "WorldStage dump expected 2 street poles: $(cat "$dump")"
   local boxes
   boxes="$(grep -c '^Mailbox_' "$dump" || true)"
   boxes="${boxes// /}"
