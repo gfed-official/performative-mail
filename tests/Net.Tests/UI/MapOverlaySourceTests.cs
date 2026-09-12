@@ -18,6 +18,8 @@ public sealed class MapOverlaySourceTests
         Assert.Contains("PlayTheme.Apply(this)", source);
         Assert.Contains("ToggleChip", source);
         Assert.Contains("TryPlacePing", source);
+        Assert.Contains("LivePingRequested", source);
+        Assert.Contains("livePings", source);
         Assert.Contains("MapPingBoard", source);
         Assert.Contains("MapCanvas", source);
         Assert.Contains("_GuiInput", source);
@@ -40,6 +42,9 @@ public sealed class MapOverlaySourceTests
         Assert.Contains("\"--map-dump=\"", main);
         Assert.Contains("\"map\"", main);
         Assert.Contains("TryOpenLiveMap", main);
+        Assert.Contains("playing.Pings", main);
+        Assert.Contains("TryPlacePing", main);
+        Assert.Contains("OnLivePingRequested", main);
         Assert.Contains("!_map.IsOpen", main);
     }
 

@@ -562,6 +562,7 @@ public partial class Main : Node3D
         var layer = new CanvasLayer { Layer = 13 };
         AddChild(layer);
         layer.AddChild(_map);
+        _map.LivePingRequested = OnLivePingRequested;
         _map.Bind(null, null, 0);
     }
 
@@ -569,7 +570,15 @@ public partial class Main : Node3D
     {
         if (!_map.IsOpen)
             return;
-        _map.Bind(playing.World, playing.Overlay, playing.Hud.Now);
+        _map.Bind(playing.World, playing.Overlay, playing.Hud.Now, playing.Pings);
+    }
+
+    private void OnLivePingRequested(TileCoord tile)
+    {
+        if (_session.State is PlaySession.Playing)
+            _session.TryPlacePing(tile, _map.PingKind);
+        else
+            _map.TryPlacePing(tile);
     }
 
     private void BindOverlay(in OverlayReplica replica)

@@ -50,4 +50,26 @@ public sealed class MapPingBoardTests
         Assert.Equal(300, MapPingBoard.LifetimeTicks);
         Assert.Equal(30, MapPingBoard.RateLimitTicks);
     }
+
+    [Fact]
+    public void Observe_AddsRemotePingWithoutConsumingRateLimit()
+    {
+        var board = new MapPingBoard();
+        board.Observe(new MapPing(7, new TileCoord(1, 2), MapPingKind.Danger, 0));
+        Assert.True(board.TryPlace(MapBoot.PingTile, MapPingKind.Default, 0, out var local));
+        Assert.Equal(2, board.Visible.Count);
+        Assert.Equal(7, board.Visible[0].Id);
+        Assert.Equal(8, local.Id);
+        Assert.Equal(MapBoot.PingTile, local.Tile);
+    }
+
+    [Fact]
+    public void Observe_IgnoresDuplicateId()
+    {
+        var board = new MapPingBoard();
+        var ping = new MapPing(1, MapBoot.PingTile, MapPingKind.BuildHere, 4);
+        board.Observe(ping);
+        board.Observe(ping);
+        Assert.Single(board.Visible);
+    }
 }

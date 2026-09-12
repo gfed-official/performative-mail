@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PerformativeMail.Client.UI;
 using PerformativeMail.Sim.Automation;
 using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Core;
@@ -59,6 +60,8 @@ public sealed class ClientRuntime
 
     public LaneReplica Lanes { get; } = new LaneReplica();
 
+    public MapPingBoard Pings { get; } = new();
+
     public int InventoryEventCount { get; private set; }
 
     public int LaneChecksumCount { get; private set; }
@@ -101,6 +104,16 @@ public sealed class ClientRuntime
             return;
 
         Connection.Send(NetChannels.Reliable, ConstructCodec.Encode(request));
+    }
+
+    public void SendMapPing(TileCoord tile, MapPingKind kind)
+    {
+        if (Connection is null)
+            return;
+
+        Connection.Send(
+            NetChannels.Reliable,
+            MapPingCodec.Encode(new MapPingRequest(tile.X, tile.Y, (byte)kind)));
     }
 
     public void SubmitInput(in InputCmd cmd)
@@ -175,6 +188,9 @@ public sealed class ClientRuntime
             case MessageKind.LaneState:
                 ApplyLaneState(payload);
                 break;
+            case MessageKind.MapPingEvent:
+                ApplyMapPing(payload);
+                break;
             case MessageKind.HelloReject:
                 ApplyHelloReject(payload);
                 break;
@@ -193,6 +209,7 @@ public sealed class ClientRuntime
             case MessageKind.Ping:
             case MessageKind.PlaceConstruct:
             case MessageKind.RemoveConstruct:
+            case MessageKind.MapPing:
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
@@ -343,6 +360,20 @@ public sealed class ClientRuntime
 
         Lanes.Apply(state);
         LaneStateCount++;
+    }
+
+    private void ApplyMapPing(byte[] payload)
+    {
+        if (!MapPingCodec.TryDecode(payload, out MapPingEvent ev))
+            return;
+        if (!MapPingLimits.IsKind(ev.Kind))
+            return;
+
+        Pings.Observe(new MapPing(
+            ev.Id,
+            new TileCoord(ev.TileX, ev.TileY),
+            (MapPingKind)ev.Kind,
+            ev.PlacedTick));
     }
 
     private void ApplySnapshot(byte[] payload)

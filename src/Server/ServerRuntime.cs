@@ -25,9 +25,11 @@ public sealed class ServerRuntime
     private readonly Dictionary<ConnectionId, Seat> _seats = new();
     private readonly Dictionary<uint, PlayerBags> _bags = new();
     private readonly Dictionary<ConnectionId, HashSet<ulong>> _laneInterest = new();
+    private readonly Dictionary<ConnectionId, uint> _lastPingTick = new();
     private readonly HashSet<ulong> _knownSegments = new();
     private PlayerSnapshot[] _snapshotScratch = Array.Empty<PlayerSnapshot>();
     private uint _tick;
+    private int _nextPingId = 1;
 
     public SimWorld World { get; }
 
@@ -322,7 +324,11 @@ public sealed class ServerRuntime
         if (ConstructCodec.TryDecode(payload, out RemoveConstructRequest remove))
         {
             OnRemoveConstruct(from, in remove);
+            return;
         }
+
+        if (MapPingCodec.TryDecode(payload, out MapPingRequest mapPing))
+            OnMapPing(from, in mapPing);
     }
 
     private void OnAccountHello(ConnectionId from, in AccountHello hello)
@@ -496,6 +502,33 @@ public sealed class ServerRuntime
         BroadcastReliable(ConstructCodec.Encode(new RemoveConstructConfirmed(
             request.ReqId,
             request.ConstructId)));
+    }
+
+    private void OnMapPing(ConnectionId from, in MapPingRequest request)
+    {
+        if (!_seats.TryGetValue(from, out var seat) || !seat.Joined)
+            return;
+        if (!MapPingLimits.IsKind(request.Kind))
+            return;
+        if (!InWorld(request.TileX, request.TileY))
+            return;
+        if (_lastPingTick.TryGetValue(from, out var last) && _tick - last < (uint)MapPingLimits.RateLimitTicks)
+            return;
+
+        _lastPingTick[from] = _tick;
+        BroadcastReliable(MapPingCodec.Encode(new MapPingEvent(
+            _nextPingId++,
+            request.TileX,
+            request.TileY,
+            request.Kind,
+            _tick)));
+    }
+
+    private bool InWorld(int tileX, int tileY)
+    {
+        if (Tables is not WorldTables tables)
+            return true;
+        return (uint)tileX < (uint)tables.Width && (uint)tileY < (uint)tables.Height;
     }
 
     private void BroadcastReliable(byte[] payload)
@@ -801,6 +834,7 @@ public sealed class ServerRuntime
 
         _seats.Remove(from);
         _laneInterest.Remove(from);
+        _lastPingTick.Remove(from);
         if (seat.Player is not EntityId player)
             return;
 

@@ -23,6 +23,8 @@ public partial class MapOverlay : Control
 
     public MapPingBoard Pings { get; } = new();
 
+    public Action<TileCoord>? LivePingRequested;
+
     private readonly Dictionary<string, Button> _chips = new();
     private readonly Dictionary<string, Button> _kinds = new();
     private Label _title = null!;
@@ -69,14 +71,19 @@ public partial class MapOverlay : Control
             Open();
     }
 
-    public void Bind(WorldTables? world, OverlayReplica? overlay, uint now)
+    public void Bind(
+        WorldTables? world,
+        OverlayReplica? overlay,
+        uint now,
+        IReadOnlyList<MapPing>? livePings = null)
     {
         BuildChrome();
         _world = world;
         _overlay = overlay;
         _now = now;
         Pings.Expire(now);
-        var frame = MapFrame.From(world, overlay, Layers, Filters, Pings.Visible);
+        var visible = livePings ?? Pings.Visible;
+        var frame = MapFrame.From(world, overlay, Layers, Filters, visible);
         if (_bound && MapFrame.SameDisplay(in _frame, in frame))
             return;
         _frame = frame;
@@ -120,6 +127,8 @@ public partial class MapOverlay : Control
         PaintKinds();
         PaintStatus();
     }
+
+    public bool TryPlacePing(TileCoord tile) => TryPlacePing(tile, _now);
 
     public bool TryPlacePing(TileCoord tile, uint now)
     {
@@ -395,7 +404,13 @@ public partial class MapOverlay : Control
         _kinds[key] = button;
     }
 
-    private void OnCanvasPing(TileCoord tile) => TryPlacePing(tile, _now);
+    private void OnCanvasPing(TileCoord tile)
+    {
+        if (LivePingRequested is { } live)
+            live(tile);
+        else
+            TryPlacePing(tile, _now);
+    }
 
     private static string FormatLayers(MapLayer layers)
     {

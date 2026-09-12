@@ -1,17 +1,17 @@
 using System.Collections.Generic;
-using PerformativeMail.Sim.Core;
+using PerformativeMail.Sim.Net;
 using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Client.UI;
 
 public sealed class MapPingBoard
 {
-    public const int LifetimeSeconds = 10;
-    public const int RateLimitSeconds = 1;
+    public const int LifetimeSeconds = MapPingLimits.LifetimeSeconds;
+    public const int RateLimitSeconds = MapPingLimits.RateLimitSeconds;
 
-    public static int LifetimeTicks => TickClock.TicksFromSeconds(LifetimeSeconds);
+    public static int LifetimeTicks => MapPingLimits.LifetimeTicks;
 
-    public static int RateLimitTicks => TickClock.TicksFromSeconds(RateLimitSeconds);
+    public static int RateLimitTicks => MapPingLimits.RateLimitTicks;
 
     private readonly List<MapPing> _pings = new();
     private int _nextId = 1;
@@ -32,6 +32,19 @@ public sealed class MapPingBoard
         _pings.Add(ping);
         _lastPlaceTick = now;
         return true;
+    }
+
+    public void Observe(MapPing ping)
+    {
+        for (int i = 0; i < _pings.Count; i++)
+        {
+            if (_pings[i].Id == ping.Id)
+                return;
+        }
+
+        _pings.Add(ping);
+        if (ping.Id >= _nextId)
+            _nextId = ping.Id + 1;
     }
 
     public void Expire(uint now)
