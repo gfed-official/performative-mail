@@ -27,10 +27,16 @@ public sealed class ArtMeshBootTests
         Assert.Contains("res://art/props/bike_01.glb", source);
         Assert.Contains("res://art/props/truck_01.glb", source);
         Assert.Contains("res://art/props/rowboat_01.glb", source);
+        Assert.Contains("res://art/props/motorboat_01.glb", source);
         Assert.Contains("res://art/world/pier_01.glb", source);
         Assert.Contains("res://art/world/oil_pump_01.glb", source);
+        Assert.Contains("res://art/world/port_01.glb", source);
         Assert.Contains("TryPathForConstruct", source);
         Assert.Contains("case \"pump\"", source);
+        Assert.Contains("case \"pier\"", source);
+        Assert.Contains("case \"small_port\"", source);
+        Assert.Contains("PierPileSinkMeters", source);
+        Assert.Contains("InstanceYOffset", source);
         Assert.Contains("res://art/world/resource_wood_01.glb", source);
         Assert.Contains("res://art/world/resource_wood_stump_01.glb", source);
         Assert.Contains("res://art/world/resource_fiber_01.glb", source);
@@ -96,6 +102,12 @@ public sealed class ArtMeshBootTests
         Assert.True(File.Exists(Path.Combine(art, "props", "cart_01.glb")));
         AssertNonEmptyGlb(Path.Combine(art, "world", "street_pole_01.glb"));
         AssertNonEmptyGlb(Path.Combine(art, "props", "bike_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "truck_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "rowboat_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "props", "motorboat_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "oil_pump_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "pier_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "port_01.glb"));
     }
 
     [Fact]

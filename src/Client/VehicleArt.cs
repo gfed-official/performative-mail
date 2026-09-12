@@ -15,6 +15,7 @@ public static class VehicleArt
     public const string Bike = "res://art/props/bike_01.glb";
     public const string MailTruck = "res://art/props/truck_01.glb";
     public const string Rowboat = "res://art/props/rowboat_01.glb";
+    public const string Motorboat = "res://art/props/motorboat_01.glb";
 
     public static readonly VehiclePlaceholder BikePlaceholder = new(
         0.45f,
@@ -39,6 +40,14 @@ public static class VehicleArt
         0.42f,
         0.28f,
         0.16f);
+
+    public static readonly VehiclePlaceholder MotorboatPlaceholder = new(
+        1.8f,
+        1.4f,
+        5.5f,
+        0.93f,
+        0.94f,
+        0.95f);
 
     public static string PathForVehicle(VehicleKind kind)
     {
