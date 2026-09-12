@@ -16,6 +16,7 @@ public enum NpcHireReject : byte
     InsufficientFunds,
     AlreadyHired,
     NotParked,
+    CannotOperate,
 }
 
 public abstract record NpcHireResult;
@@ -66,6 +67,20 @@ public sealed class NpcDriver
         Phase = NpcRoutePhase.Hired;
     }
 
+    public static bool CanOperate(VehicleKind kind)
+    {
+        switch (kind)
+        {
+            case VehicleKind.Bike:
+            case VehicleKind.MailTruck:
+                return true;
+            case VehicleKind.Rowboat:
+                return false;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+        }
+    }
+
     public EntityId Depot => _site.Id;
 
     public EntityId Vehicle => _vehicle.Id;
@@ -79,6 +94,8 @@ public sealed class NpcDriver
         if (vehicle is null) throw new ArgumentNullException(nameof(vehicle));
         if (tileCm <= 0) throw new ArgumentOutOfRangeException(nameof(tileCm), tileCm, null);
 
+        if (!CanOperate(vehicle.Kind))
+            return new NpcHireRejected(NpcHireReject.CannotOperate);
         if (site.Driver is not null)
             return new NpcHireRejected(NpcHireReject.AlreadyHired);
         if (!VehicleDepot.HoldsParked(site.Origin, vehicle, tileCm))

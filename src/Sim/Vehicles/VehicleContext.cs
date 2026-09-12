@@ -11,6 +11,7 @@ public readonly record struct VehicleContext(
     public const float BikeOffRoadMetersPerSecond = 5.0f;
     public const float MailTruckOnRoadMetersPerSecond = 14.0f;
     public const float MailTruckOffRoadMetersPerSecond = 7.0f;
+    public const float RowboatWaterMetersPerSecond = 3.0f;
     public const float SpeedClampFactor = 1.1f;
 
     public static VehicleContext BikeOnRoad { get; } = new(true, VehicleKind.Bike);
@@ -21,6 +22,23 @@ public readonly record struct VehicleContext(
 
     public static VehicleContext MailTruckOffRoad { get; } = new(false, VehicleKind.MailTruck);
 
+    public static VehicleContext RowboatOnWater { get; } = new(false, VehicleKind.Rowboat);
+
+    public static VehicleContext ForKind(VehicleKind kind)
+    {
+        switch (kind)
+        {
+            case VehicleKind.Bike:
+                return BikeOnRoad;
+            case VehicleKind.MailTruck:
+                return MailTruckOnRoad;
+            case VehicleKind.Rowboat:
+                return RowboatOnWater;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+        }
+    }
+
     public static VehicleContext OnRoadFor(VehicleKind kind)
     {
         switch (kind)
@@ -29,6 +47,7 @@ public readonly record struct VehicleContext(
                 return BikeOnRoad;
             case VehicleKind.MailTruck:
                 return MailTruckOnRoad;
+            case VehicleKind.Rowboat:
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }
@@ -53,6 +72,8 @@ public readonly record struct VehicleContext(
                     return OnRoad ? BikeOnRoadMetersPerSecond : BikeOffRoadMetersPerSecond;
                 case VehicleKind.MailTruck:
                     return OnRoad ? MailTruckOnRoadMetersPerSecond : MailTruckOffRoadMetersPerSecond;
+                case VehicleKind.Rowboat:
+                    return RowboatWaterMetersPerSecond;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(Kind), Kind, null);
             }

@@ -23,6 +23,7 @@ public enum PlaceReject : byte
     UnknownRecipe,
     OutOfBounds,
     Water,
+    DryLand,
     Street,
     Slope,
     Occupied,
@@ -361,17 +362,51 @@ public sealed class ConstructRegistry
             var at = covered[i];
             if (!_field.InBounds(at))
                 return PlaceReject.OutOfBounds;
-            if (building.OnWater == WaterPlacement.None && _field.IsWater(at))
-                return PlaceReject.Water;
+            if (WaterReject(building.OnWater, at) is PlaceReject water)
+                return water;
             if (!building.OnStreet && _field.IsStreet(at))
                 return PlaceReject.Street;
             if (_at.ContainsKey(at))
                 return PlaceReject.Occupied;
         }
 
+        if (!NeedsFlatten(building.OnWater))
+            return null;
         if (!_field.TryPlanFlatten(covered, out planned))
             return PlaceReject.Slope;
         return null;
+    }
+
+    private PlaceReject? WaterReject(WaterPlacement onWater, TileCoord tile)
+    {
+        switch (onWater)
+        {
+            case WaterPlacement.None:
+                return _field.IsWater(tile) ? PlaceReject.Water : null;
+            case WaterPlacement.Shallow:
+                return _field.IsShallowWater(tile) ? null : PlaceReject.DryLand;
+            case WaterPlacement.Deep:
+                return _field.IsDeepWater(tile) ? null : PlaceReject.Water;
+            case WaterPlacement.Shore:
+                return _field.IsWater(tile) ? PlaceReject.Water : null;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(onWater), onWater, null);
+        }
+    }
+
+    private static bool NeedsFlatten(WaterPlacement onWater)
+    {
+        switch (onWater)
+        {
+            case WaterPlacement.None:
+            case WaterPlacement.Shore:
+                return true;
+            case WaterPlacement.Shallow:
+            case WaterPlacement.Deep:
+                return false;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(onWater), onWater, null);
+        }
     }
 
     private bool TryInputs(RecipeDef recipe, ContainerId from, bool consume, out PlaceReject reject)

@@ -172,13 +172,22 @@ public partial class ConstructStage : Node3D
         var root = new Node3D { Name = Prefix + view.Id };
         root.SetMeta("def", view.DefId);
         var size = ConstructPlacement.BoxSize(view.Behaviour, view.FootprintW, view.FootprintH, view.Rotation, tileM);
-        root.AddChild(new MeshInstance3D
+        if (ArtMesh.TryPathForConstruct(view.DefId, out var path) &&
+            ArtMesh.TryInstantiate(path) is { } mesh)
         {
-            Name = "Body",
-            Mesh = new BoxMesh { Size = new Vector3(size.X, size.Y, size.Z) },
-            MaterialOverride = MaterialFor(view.Behaviour),
-            Position = new Vector3(0f, size.Y * 0.5f, 0f),
-        });
+            mesh.Name = "Body";
+            root.AddChild(mesh);
+        }
+        else
+        {
+            root.AddChild(new MeshInstance3D
+            {
+                Name = "Body",
+                Mesh = new BoxMesh { Size = new Vector3(size.X, size.Y, size.Z) },
+                MaterialOverride = MaterialFor(view.Behaviour),
+                Position = new Vector3(0f, size.Y * 0.5f, 0f),
+            });
+        }
         root.AddChild(new Label3D
         {
             Name = "Label",

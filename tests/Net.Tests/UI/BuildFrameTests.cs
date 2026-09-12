@@ -19,9 +19,22 @@ public sealed class BuildFrameTests
         Assert.Equal(BuildCategory.Transport, frame.Category);
         Assert.Equal("belt_mk1", frame.SelectedId);
         Assert.Equal("Conveyor Belt", frame.SelectedName);
-        Assert.Equal(new[] { "Transport", "Sorting", "Storage", "Defense", "Extractors" },
+        Assert.Equal(new[] { "Transport", "Sorting", "Storage", "Vehicles", "Defense", "Extractors" },
             frame.Categories.Select(tab => tab.Label).ToArray());
         Assert.Contains(frame.Choices, choice => choice.Id == "belt_mk1" && choice.Selected);
+    }
+
+    [Fact]
+    public void Select_Pier_SwitchesToVehicles()
+    {
+        var mode = new BuildModeState(LoadBuildings());
+        Assert.True(mode.Select("pier"));
+        var frame = mode.Frame(true, "");
+
+        Assert.Equal(BuildCategory.Vehicles, frame.Category);
+        Assert.Equal("pier", frame.SelectedId);
+        Assert.Equal("Pier", frame.SelectedName);
+        Assert.Contains(frame.Choices, choice => choice.Id == "pier" && choice.Selected);
     }
 
     [Fact]
@@ -57,6 +70,7 @@ public sealed class BuildFrameTests
         Assert.Equal("On street", BuildRejectText.Of(PlaceReject.Street));
         Assert.Equal("Too steep", BuildRejectText.Of(PlaceReject.Slope));
         Assert.Equal("Needs deep water", BuildRejectText.Of(PlaceReject.Water));
+        Assert.Equal("Needs shallow water", BuildRejectText.Of(PlaceReject.DryLand));
         Assert.Equal("Missing input", BuildRejectText.Of(PlaceReject.MissingInput));
     }
 

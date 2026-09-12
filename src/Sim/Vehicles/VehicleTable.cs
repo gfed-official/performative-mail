@@ -41,5 +41,16 @@ public sealed class VehicleTable
         return body;
     }
 
+    public VehicleBody SpawnRowboat(in PlayerPose pose)
+    {
+        var body = new VehicleBody(
+            EntityId.FromClassAndCounter(EntityClass.Vehicle, _nextCounter++),
+            VehicleKind.Rowboat,
+            in pose);
+        _byId.Add(body.Id.Value, body);
+        _order.Add(body);
+        return body;
+    }
+
     public bool TryGet(EntityId id, out VehicleBody body) => _byId.TryGetValue(id.Value, out body);
 }

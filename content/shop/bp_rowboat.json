@@ -1,0 +1,10 @@
+{
+  "id": "bp_rowboat",
+  "name": "Blueprint: Rowboat",
+  "kind": "blueprint",
+  "price": 0,
+  "grants": { "blueprint": "bp_rowboat" },
+  "availability": { "fromShift": 1, "slot": "fixed" },
+  "oncePerRun": true,
+  "tags": ["kit", "sea"]
+}

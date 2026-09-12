@@ -121,7 +121,7 @@ public sealed class SimWorld
 
         if (body.VehicleId.Value != 0 && Vehicles.TryGet(body.VehicleId, out var bike))
         {
-            bike.Apply(in cmd, VehicleContext.OnRoadFor(bike.Kind));
+            bike.Apply(in cmd, VehicleContext.ForKind(bike.Kind));
             body.SetPose(bike.Pose);
             body.RecordInput(in cmd);
             return;
