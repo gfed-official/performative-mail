@@ -105,6 +105,7 @@ public sealed class ArtMeshBootTests
         AssertNonEmptyGlb(Path.Combine(art, "world", "house_b_lo2.glb"));
         AssertNonEmptyGlb(Path.Combine(art, "world", "house_c_lo1.glb"));
         AssertNonEmptyGlb(Path.Combine(art, "world", "house_c_lo2.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "street_pole_01.glb"));
         AssertNonEmptyGlb(Path.Combine(art, "world", "street_pole_01_lo1.glb"));
         AssertNonEmptyGlb(Path.Combine(art, "world", "street_pole_01_lo2.glb"));
         AssertNonEmptyGlb(Path.Combine(art, "props", "cart_01_lo1.glb"));
