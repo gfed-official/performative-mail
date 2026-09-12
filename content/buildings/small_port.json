@@ -1,0 +1,22 @@
+{
+  "id": "small_port",
+  "name": "Small Port",
+  "footprint": [3, 4],
+  "rotations": 4,
+  "hp": 1200,
+  "placement": {
+    "onStreet": false,
+    "onWater": "shore_deep",
+    "maxSlopeDeg": 15,
+    "dragLine": false
+  },
+  "behaviour": "port",
+  "params": {
+    "vehicleClass": "water",
+    "deepWaterTiles": 2,
+    "npcHireCost": 150
+  },
+  "recipe": "recipe_small_port",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["automation", "vehicles"]
+}

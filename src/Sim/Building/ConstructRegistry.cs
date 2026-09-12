@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PerformativeMail.Sim.Automation;
 using PerformativeMail.Sim.Content;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
@@ -370,6 +371,10 @@ public sealed class ConstructRegistry
                 return PlaceReject.Occupied;
         }
 
+        if (building.OnWater == WaterPlacement.ShoreDeep
+            && SmallPort.RejectFootprint(_field, tile, rotation) is PlaceReject port)
+            return port;
+
         if (!NeedsFlatten(building.OnWater))
             return null;
         if (!_field.TryPlanFlatten(covered, out planned))
@@ -389,6 +394,8 @@ public sealed class ConstructRegistry
                 return _field.IsDeepWater(tile) ? null : PlaceReject.Water;
             case WaterPlacement.Shore:
                 return _field.IsWater(tile) ? PlaceReject.Water : null;
+            case WaterPlacement.ShoreDeep:
+                return null;
             default:
                 throw new ArgumentOutOfRangeException(nameof(onWater), onWater, null);
         }
@@ -403,6 +410,7 @@ public sealed class ConstructRegistry
                 return true;
             case WaterPlacement.Shallow:
             case WaterPlacement.Deep:
+            case WaterPlacement.ShoreDeep:
                 return false;
             default:
                 throw new ArgumentOutOfRangeException(nameof(onWater), onWater, null);

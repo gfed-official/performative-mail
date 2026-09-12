@@ -592,6 +592,10 @@ public sealed class PlaySessionMachine : IDisposable
                 if (TryHostPlaying(out var truckServer, out var truckLocal))
                     TrySpawnMailTruck(truckServer, truckLocal);
                 return;
+            case "motorboat":
+                if (TryHostPlaying(out var boatServer, out var boatLocal))
+                    TrySpawnMotorboat(boatServer, boatLocal);
+                return;
             default:
                 throw new ArgumentOutOfRangeException(nameof(vehicle), vehicle, null);
         }
@@ -618,6 +622,19 @@ public sealed class PlaySessionMachine : IDisposable
         var truck = server.World.Vehicles.SpawnMailTruck(body.Pose, inventory);
         if (server.World.TryMount(local, truck.Id))
             _live.Client.Prediction.Mount(truck.Id, VehicleContext.MailTruckOnRoad);
+        return true;
+    }
+
+    private bool TrySpawnMotorboat(ServerRuntime server, EntityId local)
+    {
+        if (!server.World.Players.TryGet(local, out var body))
+            return false;
+        if (server.World.Inventory is not InventorySystem inventory)
+            return false;
+
+        var boat = server.World.Vehicles.SpawnMotorboat(body.Pose, inventory);
+        if (server.World.TryMount(local, boat.Id))
+            _live.Client.Prediction.Mount(boat.Id, VehicleContext.MotorboatOnWater);
         return true;
     }
 

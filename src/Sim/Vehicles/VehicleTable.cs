@@ -52,5 +52,19 @@ public sealed class VehicleTable
         return body;
     }
 
+    public VehicleBody SpawnMotorboat(in PlayerPose pose, InventorySystem inventory)
+    {
+        inventory = inventory ?? throw new ArgumentNullException(nameof(inventory));
+        var cargo = inventory.CreateContainer(VehicleCargo.Spec);
+        var body = new VehicleBody(
+            EntityId.FromClassAndCounter(EntityClass.Vehicle, _nextCounter++),
+            VehicleKind.Motorboat,
+            in pose,
+            cargo);
+        _byId.Add(body.Id.Value, body);
+        _order.Add(body);
+        return body;
+    }
+
     public bool TryGet(EntityId id, out VehicleBody body) => _byId.TryGetValue(id.Value, out body);
 }

@@ -9,7 +9,8 @@ public enum WaterPlacement
     None,
     Shallow,
     Deep,
-    Shore
+    Shore,
+    ShoreDeep
 }
 
 public enum BuildingBehaviour
@@ -161,13 +162,22 @@ public static class BuildingCatalog
 
     private static WaterPlacement ParseWater(string? raw, string source, string id)
     {
-        string token = ContentIds.RequireClosed(raw, source, $"'{id}' placement.onWater", "none", "shallow", "deep", "shore");
+        string token = ContentIds.RequireClosed(
+            raw,
+            source,
+            $"'{id}' placement.onWater",
+            "none",
+            "shallow",
+            "deep",
+            "shore",
+            "shore_deep");
         return token switch
         {
             "none" => WaterPlacement.None,
             "shallow" => WaterPlacement.Shallow,
             "deep" => WaterPlacement.Deep,
             "shore" => WaterPlacement.Shore,
+            "shore_deep" => WaterPlacement.ShoreDeep,
             _ => throw new InvalidOperationException($"{source}: '{id}' unknown placement.onWater '{raw}'.")
         };
     }

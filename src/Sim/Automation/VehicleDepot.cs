@@ -49,7 +49,7 @@ public static class VehicleDepot
     }
 }
 
-public sealed class VehicleDepotSite
+public sealed class VehicleDepotSite : IRouteConsole
 {
     public VehicleDepotSite(EntityId id, TileCoord origin, Facing facing)
     {
@@ -73,7 +73,7 @@ public sealed class VehicleDepotSite
 
     public TileCoord LoadingFace => VehicleDepot.LoadingFace(Origin, Facing);
 
-    internal void BindDriver(NpcDriver driver)
+    public void BindDriver(NpcDriver driver)
     {
         Driver = driver ?? throw new ArgumentNullException(nameof(driver));
     }

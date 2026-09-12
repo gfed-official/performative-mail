@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using PerformativeMail.Sim.Automation;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
@@ -42,7 +41,7 @@ public sealed class NpcDriver
 
     public static int InsertPeriodTicks => TickClock.TickHz / 2;
 
-    private readonly VehicleDepotSite _site;
+    private readonly IRouteConsole _site;
     private readonly VehicleBody _vehicle;
     private readonly int _tileCm;
     private PathHop[] _hops = Array.Empty<PathHop>();
@@ -59,7 +58,7 @@ public sealed class NpcDriver
     private ComplaintMeter? _complaint;
     private byte _shift = 1;
 
-    private NpcDriver(VehicleDepotSite site, VehicleBody vehicle, int tileCm)
+    private NpcDriver(IRouteConsole site, VehicleBody vehicle, int tileCm)
     {
         _site = site;
         _vehicle = vehicle;
@@ -73,6 +72,7 @@ public sealed class NpcDriver
         {
             case VehicleKind.Bike:
             case VehicleKind.MailTruck:
+            case VehicleKind.Motorboat:
                 return true;
             case VehicleKind.Rowboat:
                 return false;
@@ -87,7 +87,7 @@ public sealed class NpcDriver
 
     public NpcRoutePhase Phase { get; private set; }
 
-    public static NpcHireResult TryHire(Wallet wallet, VehicleDepotSite site, VehicleBody vehicle, int tileCm)
+    public static NpcHireResult TryHire(Wallet wallet, IRouteConsole site, VehicleBody vehicle, int tileCm)
     {
         if (wallet is null) throw new ArgumentNullException(nameof(wallet));
         if (site is null) throw new ArgumentNullException(nameof(site));
@@ -98,7 +98,7 @@ public sealed class NpcDriver
             return new NpcHireRejected(NpcHireReject.CannotOperate);
         if (site.Driver is not null)
             return new NpcHireRejected(NpcHireReject.AlreadyHired);
-        if (!VehicleDepot.HoldsParked(site.Origin, vehicle, tileCm))
+        if (!vehicle.IsParked || !vehicle.Tile(tileCm).Equals(site.ParkingZone))
             return new NpcHireRejected(NpcHireReject.NotParked);
         if (wallet.Balance.Value < HireCents)
             return new NpcHireRejected(NpcHireReject.InsufficientFunds);
@@ -249,7 +249,7 @@ public sealed class NpcDriver
             return;
         }
 
-        double speed = VehicleContext.OnRoadFor(_vehicle.Kind).AtRatio(SpeedRatio).MaxSpeedMetersPerSecond;
+        double speed = VehicleContext.ForKind(_vehicle.Kind).AtRatio(SpeedRatio).MaxSpeedMetersPerSecond;
         double step = speed * TickClock.TickDurationSeconds;
         double next = _metresAlong + step;
         if (next >= hop.LengthMetres)

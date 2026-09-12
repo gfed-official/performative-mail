@@ -77,6 +77,7 @@ public sealed class InserterNetwork
     private InventorySystem? _inventory;
     private MailRegistry? _mail;
     private VehicleTable? _vehicles;
+    private IReadOnlyList<SmallPortSite>? _ports;
     private int _tileCm = SegmentInterest.DefaultTileCm;
 
     public IReadOnlyList<Inserter> Inserters
@@ -102,6 +103,11 @@ public sealed class InserterNetwork
     {
         _vehicles = vehicles ?? throw new ArgumentNullException(nameof(vehicles));
         _tileCm = tileCm;
+    }
+
+    public void BindPorts(IReadOnlyList<SmallPortSite> ports)
+    {
+        _ports = ports ?? throw new ArgumentNullException(nameof(ports));
     }
 
     public void BindTiles(ContainerId container, params TileCoord[] tiles)
@@ -152,7 +158,7 @@ public sealed class InserterNetwork
     {
         if (belts is null) throw new ArgumentNullException(nameof(belts));
         for (int i = 0; i < _inserters.Count; i++)
-            _inserters[i].Step(_chests, _inventory, _mail, _vehicles, _tileCm);
+            _inserters[i].Step(_chests, _inventory, _mail, _vehicles, _tileCm, _ports);
     }
 
     public void StepTicks(BeltNetwork belts, int ticks)
@@ -226,12 +232,13 @@ public sealed class InserterNetwork
             InventorySystem? inventory,
             MailRegistry? mail,
             VehicleTable? vehicles,
-            int tileCm)
+            int tileCm,
+            IReadOnlyList<SmallPortSite>? ports)
         {
             if (!TryPeek(chests, inventory, out var head)) return;
             if (!Machine.TryReady(head)) return;
             if (!TryTake(inventory, out var taken)) return;
-            if (!TryEmit(chests, inventory, mail, vehicles, tileCm, taken))
+            if (!TryEmit(chests, inventory, mail, vehicles, tileCm, ports, taken))
             {
                 Restore(inventory, taken);
                 return;
@@ -358,11 +365,12 @@ public sealed class InserterNetwork
             MailRegistry? mail,
             VehicleTable? vehicles,
             int tileCm,
+            IReadOnlyList<SmallPortSite>? ports,
             in BeltItem item)
         {
             if (chests.TryGetValue(Machine.Ahead, out var chest))
                 return TryDepositChest(inventory, mail, chest, item);
-            if (VehicleSinks.TryFindParkedCargo(vehicles, tileCm, Machine.Ahead, out var cargo))
+            if (VehicleSinks.TryFindParkedCargo(vehicles, tileCm, Machine.Ahead, out var cargo, ports))
                 return TryDepositChest(inventory, mail, cargo, item);
             if (_output is null) return false;
             if (_output.TryInsert(0, item.ItemId, 0f, item.Kind, item.Address))

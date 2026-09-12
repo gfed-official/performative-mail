@@ -1,0 +1,11 @@
+{
+  "id": "recipe_small_port",
+  "produces": { "building": "small_port" },
+  "inputs": [
+    { "item": "plank", "count": 16 },
+    { "item": "stone", "count": 10 },
+    { "item": "iron_ingot", "count": 6 }
+  ],
+  "blueprint": "bp_motorboat",
+  "unlockShift": 3
+}

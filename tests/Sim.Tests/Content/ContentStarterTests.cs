@@ -40,6 +40,7 @@ public sealed class ContentStarterTests
         Assert.Contains("vehicle_depot", buildings);
         Assert.Contains("pump", buildings);
         Assert.Contains("pier", buildings);
+        Assert.Contains("small_port", buildings);
         Assert.Contains("pipe", buildings);
         Assert.Contains("pipe_inlet", buildings);
         Assert.Contains("pipe_outlet", buildings);
@@ -56,6 +57,7 @@ public sealed class ContentStarterTests
         Assert.Contains("recipe_vehicle_depot", recipes);
         Assert.Contains("recipe_pump", recipes);
         Assert.Contains("recipe_pier", recipes);
+        Assert.Contains("recipe_small_port", recipes);
         Assert.Contains("recipe_pipe", recipes);
         Assert.Contains("recipe_pipe_inlet", recipes);
         Assert.Contains("recipe_pipe_outlet", recipes);
@@ -64,6 +66,8 @@ public sealed class ContentStarterTests
         Assert.Contains("bp_pipes", shop);
         Assert.Contains("bp_oil", shop);
         Assert.Contains("bp_rowboat", shop);
+        Assert.Contains("bp_motorboat", shop);
+        Assert.Contains("motorboat", shop);
         Assert.Contains("bandage_x3", shop);
         Assert.Contains("bike", shop);
         Assert.Equal(12, perks.Count);

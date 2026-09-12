@@ -146,10 +146,11 @@ public static class ShopCatalog
             if (grantVehicle is null)
                 throw new InvalidOperationException($"{source}: '{id}' kind vehicle requires grants.vehicle.");
             if (!string.Equals(grantVehicle, "bike", StringComparison.Ordinal) &&
-                !string.Equals(grantVehicle, "mail_truck", StringComparison.Ordinal))
+                !string.Equals(grantVehicle, "mail_truck", StringComparison.Ordinal) &&
+                !string.Equals(grantVehicle, "motorboat", StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(
-                    $"{source}: '{id}' grants.vehicle '{grantVehicle}' is not bike or mail_truck.");
+                    $"{source}: '{id}' grants.vehicle '{grantVehicle}' is not bike, mail_truck, or motorboat.");
             }
         }
         else if (doc.Grants?.Count is int listed)

@@ -1,0 +1,10 @@
+{
+  "id": "bp_motorboat",
+  "name": "Blueprint: Harbour",
+  "kind": "blueprint",
+  "price": 500,
+  "grants": { "blueprint": "bp_motorboat" },
+  "availability": { "fromShift": 3, "slot": "fixed" },
+  "oncePerRun": true,
+  "tags": ["automation"]
+}
