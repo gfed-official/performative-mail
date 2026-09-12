@@ -58,6 +58,18 @@ public sealed class ArtLodTests
     }
 
     [Fact]
+    public void ResolveThenFallback_SwapsBandsAndKeepsLo0WhenMissing()
+    {
+        const string mailbox = "res://art/world/mailbox_01.glb";
+        Assert.Equal(ArtLodLevel.Lo0, ArtLod.Fallback(ArtLod.Resolve(10f, mailbox), hasLo1: true, hasLo2: true));
+        Assert.Equal(ArtLodLevel.Lo1, ArtLod.Fallback(ArtLod.Resolve(45f, mailbox), hasLo1: true, hasLo2: true));
+        Assert.Equal(ArtLodLevel.Lo2, ArtLod.Fallback(ArtLod.Resolve(90f, mailbox), hasLo1: true, hasLo2: true));
+        Assert.Equal(ArtLodLevel.Lo0, ArtLod.Fallback(ArtLod.Resolve(90f, mailbox), hasLo1: false, hasLo2: false));
+        Assert.Equal(ArtLodLevel.Lo1, ArtLod.Fallback(ArtLod.Resolve(90f, mailbox), hasLo1: true, hasLo2: false));
+        Assert.Equal(ArtLodLevel.Lo0, ArtLod.Fallback(ArtLod.Resolve(45f, mailbox), hasLo1: false, hasLo2: true));
+    }
+
+    [Fact]
     public void Fallback_KeepsLo0WhenHigherMeshesAreMissing()
     {
         Assert.Equal(ArtLodLevel.Lo0, ArtLod.Fallback(ArtLodLevel.Lo0, hasLo1: false, hasLo2: false));
