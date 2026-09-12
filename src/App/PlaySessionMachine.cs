@@ -435,6 +435,22 @@ public sealed class PlaySessionMachine : IDisposable
         return after > before;
     }
 
+    public bool TryPlacePing(TileCoord tile, MapPingKind kind)
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+
+        var client = _live.Client;
+        if (client.Connection is null)
+            return false;
+
+        int before = client.Pings.Visible.Count;
+        client.SendMapPing(tile, kind);
+        _live.Server?.TickOnce();
+        client.Receive();
+        return client.Pings.Visible.Count > before;
+    }
+
     public bool TryAimTile(in PlayerPose pose, float pitchRadians, out TileCoord tile)
     {
         tile = default;
@@ -964,17 +980,20 @@ public sealed class PlaySessionMachine : IDisposable
             _live.Server?.World.Constructs ?? client.Constructs,
             client.Lanes,
             advanceDt);
+        var hud = ProjectHud(client, local);
+        client.Pings.Expire(hud.Now);
 
         return new PlaySession.Playing(
             role,
             local,
             _pawns.Visible,
-            ProjectHud(client, local),
+            hud,
             world,
             overlay,
             ProjectResources(_live.Server, world),
             constructs,
-            _vehicles.Visible);
+            _vehicles.Visible,
+            client.Pings.Visible);
     }
 
     private void BindClientConstructs(ClientRuntime client)

@@ -54,7 +54,8 @@ public abstract record PlaySession
             OverlayReplica? overlay,
             IReadOnlyList<ResourceNodeView>? resources = null,
             ConstructFrame? constructs = null,
-            IReadOnlyList<VehicleView>? vehicles = null)
+            IReadOnlyList<VehicleView>? vehicles = null,
+            IReadOnlyList<MapPing>? pings = null)
         {
             Role = role;
             LocalPlayer = localPlayer;
@@ -88,6 +89,17 @@ public abstract record PlaySession
                     spawned[i] = vehicles[i];
                 Vehicles = spawned;
             }
+            if (pings is null || pings.Count == 0)
+            {
+                Pings = Array.Empty<MapPing>();
+            }
+            else
+            {
+                var marks = new MapPing[pings.Count];
+                for (int i = 0; i < marks.Length; i++)
+                    marks[i] = pings[i];
+                Pings = marks;
+            }
         }
 
         public SessionRole Role { get; }
@@ -107,6 +119,8 @@ public abstract record PlaySession
         public ConstructFrame Constructs { get; }
 
         public IReadOnlyList<VehicleView> Vehicles { get; }
+
+        public IReadOnlyList<MapPing> Pings { get; }
     }
 
     public sealed record Failed(FailReason Reason) : PlaySession;

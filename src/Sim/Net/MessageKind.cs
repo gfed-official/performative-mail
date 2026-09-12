@@ -22,4 +22,6 @@ public enum MessageKind : byte
     LaneRemove = 71,
     LaneChecksum = 72,
     LaneState = 73,
+    MapPing = 80,
+    MapPingEvent = 81,
 }
