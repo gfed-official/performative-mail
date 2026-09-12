@@ -70,6 +70,24 @@ public sealed class DebugSpawnTests
     }
 
     [Fact]
+    public void HostSpawnedMailTruck_ProjectsVehicleViewKind()
+    {
+        using var host = Play(out var now);
+        Assert.True(host.TryHostWorld(out var world, out var local));
+        Assert.NotNull(world.Inventory);
+        Assert.True(world.Players.TryGet(local, out var body));
+
+        var truck = world.Vehicles.SpawnMailTruck(body.Pose, world.Inventory);
+        Assert.True(world.TryMount(local, truck.Id));
+        Pump(host, ref now, 4);
+
+        var play = Assert.IsType<PlaySession.Playing>(host.State);
+        var view = Assert.Single(play.Vehicles);
+        Assert.Equal(VehicleKind.MailTruck, truck.Kind);
+        Assert.Equal(VehicleKind.MailTruck, view.Kind);
+    }
+
+    [Fact]
     public void HostMountedBike_VehicleViewFollowsPredictedPose()
     {
         using var host = Play(out var now);

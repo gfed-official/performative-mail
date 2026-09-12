@@ -27,6 +27,8 @@ public sealed class PredictionState
 
     public EntityId VehicleId { get; private set; }
 
+    public VehicleKind VehicleKind => _vehicle.Kind;
+
     public int PendingCount => _pending.Count;
 
     public IReadOnlyList<InputCmd> Pending => _pending;
