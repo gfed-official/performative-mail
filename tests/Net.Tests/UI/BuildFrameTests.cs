@@ -19,7 +19,7 @@ public sealed class BuildFrameTests
         Assert.Equal(BuildCategory.Transport, frame.Category);
         Assert.Equal("belt_mk1", frame.SelectedId);
         Assert.Equal("Conveyor Belt", frame.SelectedName);
-        Assert.Equal(new[] { "Transport", "Sorting", "Storage", "Defense" },
+        Assert.Equal(new[] { "Transport", "Sorting", "Storage", "Defense", "Extractors" },
             frame.Categories.Select(tab => tab.Label).ToArray());
         Assert.Contains(frame.Choices, choice => choice.Id == "belt_mk1" && choice.Selected);
     }
