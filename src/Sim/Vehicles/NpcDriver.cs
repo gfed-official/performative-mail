@@ -29,6 +29,7 @@ public enum NpcRoutePhase : byte
     Hired,
     Driving,
     Delivering,
+    Fleeing,
     Done,
 }
 
@@ -36,6 +37,7 @@ public sealed class NpcDriver
 {
     public const int HireCents = 150;
     public const float SpeedRatio = 0.6f;
+    public const double FleeRadiusMetres = 20;
 
     public static int InsertPeriodTicks => TickClock.TickHz / 2;
 
@@ -43,6 +45,9 @@ public sealed class NpcDriver
     private readonly VehicleBody _vehicle;
     private readonly int _tileCm;
     private PathHop[] _hops = Array.Empty<PathHop>();
+    private TileCoord[] _routeTiles = Array.Empty<TileCoord>();
+    private RouteEnemy[] _enemies = Array.Empty<RouteEnemy>();
+    private RoutingGraph? _graph;
     private int _hop;
     private double _metresAlong;
     private int _insertWait;
@@ -133,14 +138,27 @@ public sealed class NpcDriver
                 _tileCm);
         }
 
+        _graph = graph;
         _hops = hops;
+        _routeTiles = CollectTiles(hops);
         _hop = 0;
         _metresAlong = 0;
         _insertWait = 0;
         Phase = hops.Length == 0 ? NpcRoutePhase.Done : NpcRoutePhase.Driving;
         if (Phase == NpcRoutePhase.Driving)
             SnapTo(_hops[0].Tiles[0], yaw: 0, speed: 0f);
+        MaybeFlee();
         return true;
+    }
+
+    public void NoticeEnemies(IReadOnlyList<RouteEnemy> enemies)
+    {
+        if (enemies is null) throw new ArgumentNullException(nameof(enemies));
+        var copy = new RouteEnemy[enemies.Count];
+        for (int i = 0; i < enemies.Count; i++)
+            copy[i] = enemies[i];
+        _enemies = copy;
+        MaybeFlee();
     }
 
     public void Step()
@@ -148,9 +166,11 @@ public sealed class NpcDriver
         if (_vehicle.NpcInPassengerSeat)
             return;
 
+        MaybeFlee();
         switch (Phase)
         {
             case NpcRoutePhase.Driving:
+            case NpcRoutePhase.Fleeing:
                 Drive();
                 return;
             case NpcRoutePhase.Delivering:
@@ -165,6 +185,35 @@ public sealed class NpcDriver
                 throw new ArgumentOutOfRangeException(nameof(Phase), unseen, null);
             }
         }
+    }
+
+    private void MaybeFlee()
+    {
+        if (Phase != NpcRoutePhase.Driving && Phase != NpcRoutePhase.Delivering)
+            return;
+        if (!VehicleRoute.EnemyWithin(_routeTiles, _tileCm, _enemies, FleeRadiusMetres))
+            return;
+        BeginFlee();
+    }
+
+    private void BeginFlee()
+    {
+        _insertWait = 0;
+        var from = _vehicle.Tile(_tileCm);
+        if (_graph is not null && _graph.TryPath(from, _site.ParkingZone, out var path))
+        {
+            _hops = new[]
+            {
+                new PathHop(CopyTiles(path.Tiles), MetresOf(path.Tiles, _tileCm), null, _tileCm)
+            };
+            _hop = 0;
+            _metresAlong = 0;
+            Phase = NpcRoutePhase.Fleeing;
+            return;
+        }
+
+        Park();
+        Phase = NpcRoutePhase.Done;
     }
 
     private void Drive()
@@ -410,6 +459,23 @@ public sealed class NpcDriver
         for (int i = 0; i < tiles.Count - 1; i++)
             metres += Manhattan(tiles[i], tiles[i + 1]) * tileM;
         return metres;
+    }
+
+    private static TileCoord[] CollectTiles(PathHop[] hops)
+    {
+        int n = 0;
+        for (int i = 0; i < hops.Length; i++)
+            n += hops[i].Tiles.Length;
+        var tiles = new TileCoord[n];
+        int w = 0;
+        for (int i = 0; i < hops.Length; i++)
+        {
+            var hop = hops[i].Tiles;
+            for (int t = 0; t < hop.Length; t++)
+                tiles[w++] = hop[t];
+        }
+
+        return tiles;
     }
 
     private static TileCoord[] CopyTiles(IReadOnlyList<TileCoord> tiles)
