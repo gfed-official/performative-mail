@@ -1,0 +1,11 @@
+{
+  "id": "recipe_vehicle_depot",
+  "produces": { "building": "vehicle_depot" },
+  "inputs": [
+    { "item": "plank", "count": 12 },
+    { "item": "stone", "count": 8 },
+    { "item": "iron_ingot", "count": 4 }
+  ],
+  "blueprint": "bp_truck",
+  "unlockShift": 2
+}
