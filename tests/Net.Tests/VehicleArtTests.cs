@@ -32,6 +32,17 @@ public sealed class VehicleArtTests
     }
 
     [Fact]
+    public void PathForVehicle_Motorboat_ReturnsDedicatedPath()
+    {
+        string path = VehicleArt.PathForVehicle(VehicleKind.Motorboat);
+        Assert.Equal("res://art/props/motorboat_01.glb", path);
+        Assert.Equal(VehicleArt.Motorboat, path);
+        Assert.NotEqual(VehicleArt.PathForVehicle(VehicleKind.Rowboat), path);
+        var placeholder = VehicleArt.PlaceholderFor(VehicleKind.Motorboat);
+        Assert.True(placeholder.LengthMeters > VehicleArt.PlaceholderFor(VehicleKind.Rowboat).LengthMeters);
+    }
+
+    [Fact]
     public void P5BoatPaths_AreReservedOnVehicleArt()
     {
         Assert.Equal("res://art/props/rowboat_01.glb", VehicleArt.Rowboat);

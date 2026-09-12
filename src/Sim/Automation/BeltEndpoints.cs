@@ -22,6 +22,7 @@ public sealed class BeltEndpoints
     private InventorySystem? _inventory;
     private MailRegistry? _mail;
     private VehicleTable? _vehicles;
+    private IReadOnlyList<SmallPortSite>? _ports;
     private int _tileCm = SegmentInterest.DefaultTileCm;
     private ContainerId _intake;
     private TileCoord _intakeTile;
@@ -44,6 +45,11 @@ public sealed class BeltEndpoints
     {
         _vehicles = vehicles ?? throw new ArgumentNullException(nameof(vehicles));
         _tileCm = tileCm;
+    }
+
+    public void BindPorts(IReadOnlyList<SmallPortSite> ports)
+    {
+        _ports = ports ?? throw new ArgumentNullException(nameof(ports));
     }
 
     public void BindTiles(ContainerId container, params TileCoord[] tiles)
@@ -141,7 +147,7 @@ public sealed class BeltEndpoints
             return new BeltSink(SinkKind.Mailbox, destination, default, tile);
         if (_chests.TryGetValue(tile, out var chest))
             return new BeltSink(SinkKind.Chest, default, chest, tile);
-        if (VehicleSinks.TryFindParkedCargo(_vehicles, _tileCm, tile, out var cargo))
+        if (VehicleSinks.TryFindParkedCargo(_vehicles, _tileCm, tile, out var cargo, _ports))
             return new BeltSink(SinkKind.Vehicle, default, cargo, tile);
         return new BeltSink(SinkKind.Air, default, default, tile);
     }

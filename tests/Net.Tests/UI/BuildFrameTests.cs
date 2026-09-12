@@ -38,6 +38,19 @@ public sealed class BuildFrameTests
     }
 
     [Fact]
+    public void Select_SmallPort_SwitchesToVehicles()
+    {
+        var mode = new BuildModeState(LoadBuildings());
+        Assert.True(mode.Select("small_port"));
+        var frame = mode.Frame(true, "");
+
+        Assert.Equal(BuildCategory.Vehicles, frame.Category);
+        Assert.Equal("small_port", frame.SelectedId);
+        Assert.Equal("Small Port", frame.SelectedName);
+        Assert.Contains(frame.Choices, choice => choice.Id == "small_port" && choice.Selected);
+    }
+
+    [Fact]
     public void Select_Wall_SwitchesToDefense()
     {
         var mode = new BuildModeState(LoadBuildings());

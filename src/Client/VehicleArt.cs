@@ -59,6 +59,8 @@ public static class VehicleArt
                 return MailTruck;
             case VehicleKind.Rowboat:
                 return Rowboat;
+            case VehicleKind.Motorboat:
+                return Motorboat;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }
@@ -74,6 +76,8 @@ public static class VehicleArt
                 return MailTruckPlaceholder;
             case VehicleKind.Rowboat:
                 return RowboatPlaceholder;
+            case VehicleKind.Motorboat:
+                return MotorboatPlaceholder;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }

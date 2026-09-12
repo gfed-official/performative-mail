@@ -1,0 +1,11 @@
+{
+  "id": "motorboat",
+  "name": "Motor Boat",
+  "kind": "vehicle",
+  "price": 700,
+  "grants": { "vehicle": "motorboat" },
+  "requires": { "blueprint": "bp_motorboat" },
+  "availability": { "fromShift": 3, "slot": "fixed" },
+  "oncePerRun": false,
+  "tags": ["transport"]
+}

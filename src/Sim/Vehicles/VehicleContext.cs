@@ -12,6 +12,7 @@ public readonly record struct VehicleContext(
     public const float MailTruckOnRoadMetersPerSecond = 14.0f;
     public const float MailTruckOffRoadMetersPerSecond = 7.0f;
     public const float RowboatWaterMetersPerSecond = 3.0f;
+    public const float MotorboatWaterMetersPerSecond = 9.0f;
     public const float SpeedClampFactor = 1.1f;
 
     public static VehicleContext BikeOnRoad { get; } = new(true, VehicleKind.Bike);
@@ -24,6 +25,8 @@ public readonly record struct VehicleContext(
 
     public static VehicleContext RowboatOnWater { get; } = new(false, VehicleKind.Rowboat);
 
+    public static VehicleContext MotorboatOnWater { get; } = new(false, VehicleKind.Motorboat);
+
     public static VehicleContext ForKind(VehicleKind kind)
     {
         switch (kind)
@@ -34,6 +37,8 @@ public readonly record struct VehicleContext(
                 return MailTruckOnRoad;
             case VehicleKind.Rowboat:
                 return RowboatOnWater;
+            case VehicleKind.Motorboat:
+                return MotorboatOnWater;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }
@@ -48,6 +53,7 @@ public readonly record struct VehicleContext(
             case VehicleKind.MailTruck:
                 return MailTruckOnRoad;
             case VehicleKind.Rowboat:
+            case VehicleKind.Motorboat:
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
         }
@@ -74,6 +80,8 @@ public readonly record struct VehicleContext(
                     return OnRoad ? MailTruckOnRoadMetersPerSecond : MailTruckOffRoadMetersPerSecond;
                 case VehicleKind.Rowboat:
                     return RowboatWaterMetersPerSecond;
+                case VehicleKind.Motorboat:
+                    return MotorboatWaterMetersPerSecond;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(Kind), Kind, null);
             }
