@@ -67,7 +67,14 @@ public sealed class VehicleDepotSite
 
     public VehicleRoute Route { get; }
 
+    public NpcDriver? Driver { get; private set; }
+
     public TileCoord ParkingZone => VehicleDepot.ParkingZone(Origin);
 
     public TileCoord LoadingFace => VehicleDepot.LoadingFace(Origin, Facing);
+
+    internal void BindDriver(NpcDriver driver)
+    {
+        Driver = driver ?? throw new ArgumentNullException(nameof(driver));
+    }
 }

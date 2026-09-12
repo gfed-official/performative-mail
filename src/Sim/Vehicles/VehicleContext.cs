@@ -2,7 +2,10 @@ using System;
 
 namespace PerformativeMail.Sim.Vehicles;
 
-public readonly record struct VehicleContext(bool OnRoad, VehicleKind Kind = VehicleKind.Bike)
+public readonly record struct VehicleContext(
+    bool OnRoad,
+    VehicleKind Kind = VehicleKind.Bike,
+    float SpeedRatio = 1f)
 {
     public const float BikeOnRoadMetersPerSecond = 8.0f;
     public const float BikeOffRoadMetersPerSecond = 5.0f;
@@ -31,7 +34,16 @@ public readonly record struct VehicleContext(bool OnRoad, VehicleKind Kind = Veh
         }
     }
 
-    public float MaxSpeedMetersPerSecond
+    public VehicleContext AtRatio(float speedRatio)
+    {
+        if (speedRatio < 0f || float.IsNaN(speedRatio) || float.IsInfinity(speedRatio))
+            throw new ArgumentOutOfRangeException(nameof(speedRatio), speedRatio, null);
+        return this with { SpeedRatio = speedRatio };
+    }
+
+    public float MaxSpeedMetersPerSecond => BaseSpeedMetersPerSecond * SpeedRatio;
+
+    private float BaseSpeedMetersPerSecond
     {
         get
         {

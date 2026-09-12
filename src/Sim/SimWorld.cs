@@ -79,9 +79,17 @@ public sealed class SimWorld
         if (body.VehicleId.Value != 0 && body.VehicleId != vehicle)
             ReleaseDriver(body.VehicleId, player);
 
+        bool takeover = bike.NpcInDriverSeat;
+        if (takeover)
+        {
+            bike.SeatNpcPassenger();
+            body.SetPose(bike.Pose);
+        }
+
         body.Mount(vehicle);
         bike.SetDriver(player);
-        bike.SetPose(body.Pose);
+        if (!takeover)
+            bike.SetPose(body.Pose);
         return true;
     }
 
@@ -91,6 +99,9 @@ public sealed class SimWorld
             return false;
         if (body.VehicleId.Value == 0)
             return false;
+
+        if (Vehicles.TryGet(body.VehicleId, out var bike) && bike.NpcInPassengerSeat)
+            bike.SeatNpcDriver();
 
         ReleaseDriver(body.VehicleId, player);
         body.Dismount();
