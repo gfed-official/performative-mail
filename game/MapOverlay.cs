@@ -226,11 +226,17 @@ public partial class MapOverlay : Control
             dump.Append(district.District);
             dump.Append(" hex=");
             dump.Append(district.Hex);
-            dump.Append(" label=");
+            dump.Append('\n');
+            dump.Append("district.");
+            dump.Append(district.District);
+            dump.Append(".label=");
             dump.Append(district.Label.X);
             dump.Append(',');
             dump.Append(district.Label.Y);
-            dump.Append(" name=");
+            dump.Append('\n');
+            dump.Append("district.");
+            dump.Append(district.District);
+            dump.Append(".name=");
             dump.Append(district.Name);
             dump.Append('\n');
         }

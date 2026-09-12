@@ -9,6 +9,9 @@ public sealed class MapOverlaySourceTests
         Assert.Contains("MAP_DUMP case=", source);
         Assert.Contains("chip.", source);
         Assert.Contains("districts=", source);
+        Assert.Contains("district.", source);
+        Assert.Contains(".label=", source);
+        Assert.Contains(".name=", source);
         Assert.Contains("streets=", source);
         Assert.Contains("houses=", source);
         Assert.Contains("resources=", source);
