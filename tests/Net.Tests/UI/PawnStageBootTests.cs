@@ -13,6 +13,7 @@ public sealed class PawnStageBootTests
         Assert.Contains("ArtMesh.PawnRemote", source);
         Assert.Contains("ArtMesh.ApplyPawnKitColor", source);
         Assert.Contains("ArtMesh.PathForVehicle", source);
+        Assert.Contains("ArtMesh.TryInstantiate", source);
         Assert.Contains("VehicleArt.PlaceholderFor", source);
         Assert.Contains("PlaceholderVehicle", source);
         Assert.Contains("ArtMesh.PathForMail", source);

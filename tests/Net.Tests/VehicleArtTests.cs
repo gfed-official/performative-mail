@@ -16,6 +16,7 @@ public sealed class VehicleArtTests
     {
         string path = VehicleArt.PathForVehicle(VehicleKind.MailTruck);
         Assert.Equal("res://art/props/truck_01.glb", path);
+        Assert.Equal(VehicleArt.MailTruck, path);
         Assert.NotEqual(VehicleArt.PathForVehicle(VehicleKind.Bike), path);
     }
 
@@ -28,6 +29,17 @@ public sealed class VehicleArtTests
         Assert.NotEqual(VehicleArt.PathForVehicle(VehicleKind.Bike), path);
         var placeholder = VehicleArt.PlaceholderFor(VehicleKind.Rowboat);
         Assert.True(placeholder.LengthMeters > VehicleArt.PlaceholderFor(VehicleKind.Bike).WidthMeters);
+    }
+
+    [Fact]
+    public void P5BoatPaths_AreReservedOnVehicleArt()
+    {
+        Assert.Equal("res://art/props/rowboat_01.glb", VehicleArt.Rowboat);
+        Assert.Equal("res://art/props/motorboat_01.glb", VehicleArt.Motorboat);
+        Assert.NotEqual(VehicleArt.Rowboat, VehicleArt.Motorboat);
+        Assert.NotEqual(VehicleArt.MailTruck, VehicleArt.Rowboat);
+        Assert.True(VehicleArt.MotorboatPlaceholder.LengthMeters > VehicleArt.RowboatPlaceholder.LengthMeters);
+        Assert.True(VehicleArt.RowboatPlaceholder.LengthMeters > VehicleArt.BikePlaceholder.LengthMeters);
     }
 
     [Fact]

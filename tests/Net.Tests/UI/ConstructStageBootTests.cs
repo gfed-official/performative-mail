@@ -15,6 +15,7 @@ public sealed class ConstructStageBootTests
         Assert.Contains("BoxMesh", source);
         Assert.Contains("ArtMesh.TryPathForConstruct", source);
         Assert.Contains("ArtMesh.TryInstantiate", source);
+        Assert.Contains("ArtMesh.InstanceYOffset", source);
         Assert.Contains("view.DefId", source);
         Assert.Contains("#C4A84A", source);
         Assert.Contains("#8B5A2B", source);

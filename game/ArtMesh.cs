@@ -31,8 +31,10 @@ public static class ArtMesh
     public const string Bike = "res://art/props/bike_01.glb";
     public const string MailTruck = "res://art/props/truck_01.glb";
     public const string Rowboat = "res://art/props/rowboat_01.glb";
+    public const string Motorboat = "res://art/props/motorboat_01.glb";
     public const string Pier = "res://art/world/pier_01.glb";
     public const string OilPump = "res://art/world/oil_pump_01.glb";
+    public const string Port = "res://art/world/port_01.glb";
     public const string ResourceWood = "res://art/world/resource_wood_01.glb";
     public const string ResourceWoodStump = "res://art/world/resource_wood_stump_01.glb";
     public const string ResourceFiber = "res://art/world/resource_fiber_01.glb";
@@ -51,6 +53,7 @@ public static class ArtMesh
     public const string LodPathMeta = "lod_path";
     public const string LodLevelMeta = "lod_level";
     public const float PostOfficeHeightMeters = 4.5f;
+    public const float PierPileSinkMeters = 1.2f;
 
     private static readonly Dictionary<string, PackedScene> Packed = new();
     private static readonly Dictionary<string, Mesh> Meshes = new();
@@ -167,10 +170,21 @@ public static class ArtMesh
             case "pump":
                 path = OilPump;
                 return true;
+            case "port":
+            case "small_port":
+                path = Port;
+                return true;
             default:
                 path = "";
                 return false;
         }
+    }
+
+    public static float InstanceYOffset(string path)
+    {
+        if (string.Equals(path, Pier, StringComparison.Ordinal))
+            return -PierPileSinkMeters;
+        return 0f;
     }
 
     public static string PathForProp(EnvPropKind kind)

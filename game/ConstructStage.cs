@@ -172,11 +172,17 @@ public partial class ConstructStage : Node3D
         var root = new Node3D { Name = Prefix + view.Id };
         root.SetMeta("def", view.DefId);
         var size = ConstructPlacement.BoxSize(view.Behaviour, view.FootprintW, view.FootprintH, view.Rotation, tileM);
+        float labelY = size.Y + 0.35f;
         if (ArtMesh.TryPathForConstruct(view.DefId, out var path) &&
             ArtMesh.TryInstantiate(path) is { } mesh)
         {
             mesh.Name = "Body";
+            float sink = ArtMesh.InstanceYOffset(path);
+            if (sink != 0f)
+                mesh.Position = new Vector3(0f, sink, 0f);
             root.AddChild(mesh);
+            var aabb = ArtMesh.LocalAabb(mesh);
+            labelY = mesh.Position.Y + aabb.Position.Y + aabb.Size.Y + 0.35f;
         }
         else
         {
@@ -192,7 +198,7 @@ public partial class ConstructStage : Node3D
         {
             Name = "Label",
             Text = view.Name,
-            Position = new Vector3(0f, size.Y + 0.35f, 0f),
+            Position = new Vector3(0f, labelY, 0f),
             FontSize = 36,
             OutlineSize = LabelOutlineSize,
             PixelSize = LabelPixelSize,
