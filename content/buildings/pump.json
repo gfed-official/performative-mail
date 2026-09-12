@@ -1,0 +1,21 @@
+{
+  "id": "pump",
+  "name": "Oil Pump",
+  "footprint": [1, 1],
+  "rotations": 4,
+  "hp": 400,
+  "placement": {
+    "onStreet": false,
+    "onWater": "none",
+    "maxSlopeDeg": 15,
+    "dragLine": false
+  },
+  "behaviour": "pump",
+  "params": {
+    "outputItem": "oil_can",
+    "rate": 0.022222222222222223
+  },
+  "recipe": "recipe_pump",
+  "ruinRebuildRatio": 0.5,
+  "tags": ["automation", "extractors"]
+}

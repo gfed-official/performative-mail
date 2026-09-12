@@ -23,6 +23,7 @@ public sealed class ContentStarterTests
 
         Assert.Contains("axe", items);
         Assert.Contains("log", items);
+        Assert.Contains("oil_can", items);
         Assert.Contains("letter", kinds);
         Assert.Contains("small", kinds);
         Assert.Contains("cargo", kinds);
@@ -37,6 +38,7 @@ public sealed class ContentStarterTests
         Assert.Contains("inserter", buildings);
         Assert.Contains("depot", buildings);
         Assert.Contains("vehicle_depot", buildings);
+        Assert.Contains("pump", buildings);
         Assert.Contains("pipe", buildings);
         Assert.Contains("pipe_inlet", buildings);
         Assert.Contains("pipe_outlet", buildings);
@@ -51,12 +53,14 @@ public sealed class ContentStarterTests
         Assert.Contains("recipe_inserter", recipes);
         Assert.Contains("recipe_depot", recipes);
         Assert.Contains("recipe_vehicle_depot", recipes);
+        Assert.Contains("recipe_pump", recipes);
         Assert.Contains("recipe_pipe", recipes);
         Assert.Contains("recipe_pipe_inlet", recipes);
         Assert.Contains("recipe_pipe_outlet", recipes);
         Assert.Contains("recipe_pipe_junction", recipes);
         Assert.Contains("recipe_pipe_underground", recipes);
         Assert.Contains("bp_pipes", shop);
+        Assert.Contains("bp_oil", shop);
         Assert.Contains("bandage_x3", shop);
         Assert.Contains("bike", shop);
         Assert.Equal(12, perks.Count);

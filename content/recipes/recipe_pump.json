@@ -1,0 +1,10 @@
+{
+  "id": "recipe_pump",
+  "produces": { "building": "pump" },
+  "inputs": [
+    { "item": "iron_ingot", "count": 6 },
+    { "item": "glass", "count": 2 }
+  ],
+  "blueprint": "bp_oil",
+  "unlockShift": 3
+}

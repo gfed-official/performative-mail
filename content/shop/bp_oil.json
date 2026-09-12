@@ -1,0 +1,10 @@
+{
+  "id": "bp_oil",
+  "name": "Blueprint: Oil",
+  "kind": "blueprint",
+  "price": 600,
+  "grants": { "blueprint": "bp_oil" },
+  "availability": { "fromShift": 3, "slot": "fixed" },
+  "oncePerRun": true,
+  "tags": ["automation"]
+}
