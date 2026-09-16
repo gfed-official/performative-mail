@@ -232,8 +232,9 @@ public sealed class MainPlayBootTests
         Assert.Contains("PollBuild", body);
         Assert.Contains("InputSampler.Sample", body);
         Assert.Contains("InputSampler.BuildHeld", MethodBody(ReadMain(), "PollBuild"));
-        Assert.Contains("TryPlaceAt", MethodBody(ReadMain(), "PollBuild"));
+        Assert.Contains("TryDragPlace", MethodBody(ReadMain(), "PollBuild"));
         Assert.Contains("TryPipetteAt", MethodBody(ReadMain(), "PollBuild"));
+        Assert.DoesNotContain("FilterPanel", ReadMain());
     }
 
     [Fact]
@@ -409,6 +410,10 @@ public sealed class MainPlayBootTests
         Assert.Contains("Dump(\"open\")", inspect);
         Assert.Contains("PlaceReject.Street", inspect);
         Assert.Contains("Dump(\"street\")", inspect);
+        Assert.Contains("PlaceReject.Slope", inspect);
+        Assert.Contains("Dump(\"slope\")", inspect);
+        Assert.Contains("PlaceReject.MissingInput", inspect);
+        Assert.Contains("Dump(\"missing\")", inspect);
         Assert.Contains("Dump(\"closed\")", inspect);
         Assert.Contains("BUILD_DUMP_END", inspect);
         Assert.DoesNotContain("HudBoot.Placeholder", inspect);

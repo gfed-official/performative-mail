@@ -10,6 +10,15 @@ public readonly record struct PlaceConstructRequest(
     int TileY,
     Facing Rotation);
 
+public readonly record struct PlaceLineRequest(
+    uint ReqId,
+    string BuildingId,
+    int FromX,
+    int FromY,
+    int ToX,
+    int ToY,
+    Facing Rotation);
+
 public readonly record struct PlaceConstructConfirmed(
     uint ReqId,
     EntityId ConstructId,

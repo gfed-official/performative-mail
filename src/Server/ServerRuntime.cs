@@ -321,6 +321,12 @@ public sealed class ServerRuntime
             return;
         }
 
+        if (ConstructCodec.TryDecode(payload, out PlaceLineRequest line))
+        {
+            OnPlaceLine(from, in line);
+            return;
+        }
+
         if (ConstructCodec.TryDecode(payload, out RemoveConstructRequest remove))
         {
             OnRemoveConstruct(from, in remove);
@@ -477,6 +483,48 @@ public sealed class ServerRuntime
             placed.Construct.Tile.Y,
             placed.Construct.Rotation,
             placed.Construct.Owner)));
+    }
+
+    private void OnPlaceLine(ConnectionId from, in PlaceLineRequest request)
+    {
+        if (World.Constructs is not ConstructRegistry constructs)
+            return;
+        if (!_seats.TryGetValue(from, out var seat) || seat.Player is not EntityId player)
+            return;
+        if (!World.Players.TryGet(player, out var body))
+            return;
+        if (!_bags.TryGetValue(player.Value, out var bags))
+            return;
+
+        var start = new TileCoord(request.FromX, request.FromY);
+        var end = new TileCoord(request.ToX, request.ToY);
+        if (!InBuildRange(body, start, constructs.TileCm) || !InBuildRange(body, end, constructs.TileCm))
+            return;
+
+        var result = constructs.TryPlaceLine(
+            request.BuildingId,
+            start,
+            end,
+            request.Rotation,
+            player,
+            bags.Inventory);
+        if (result is not PlaceLineApplied applied)
+            return;
+
+        World.Belts.Compile(constructs.All);
+        for (int i = 0; i < applied.Tiles.Count; i++)
+        {
+            if (applied.Tiles[i].Result is not Placed placed)
+                continue;
+            BroadcastReliable(ConstructCodec.Encode(new PlaceConstructConfirmed(
+                request.ReqId,
+                placed.Construct.Id,
+                placed.Construct.DefId,
+                placed.Construct.Tile.X,
+                placed.Construct.Tile.Y,
+                placed.Construct.Rotation,
+                placed.Construct.Owner)));
+        }
     }
 
     private void OnRemoveConstruct(ConnectionId from, in RemoveConstructRequest request)

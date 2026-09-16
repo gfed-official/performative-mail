@@ -17,6 +17,8 @@ public sealed class ConstructEventTests
 {
     private static readonly TileCoord Origin = new(1, 1);
     private static readonly ItemDefId LogId = new(1);
+    private static readonly ItemDefId PlankId = new(2);
+    private static readonly ItemDefId IronId = new(3);
     private static readonly EntityId FirstConstruct = EntityId.FromClassAndCounter(EntityClass.Construct, 1);
     private static readonly EntityId FirstPlayer = EntityId.FromClassAndCounter(EntityClass.Player, 1);
 
@@ -29,6 +31,19 @@ public sealed class ConstructEventTests
         0x01, 0x00, 0x00, 0x00,
         0x01, 0x00, 0x00, 0x00,
         0x00,
+    };
+
+    private static readonly byte[] PlaceLineRequestBytes =
+    {
+        0x40,
+        0x01, 0x00, 0x00, 0x00,
+        0x08,
+        0x62, 0x65, 0x6C, 0x74, 0x5F, 0x6D, 0x6B, 0x31,
+        0x01, 0x00, 0x00, 0x00,
+        0x01, 0x00, 0x00, 0x00,
+        0x03, 0x00, 0x00, 0x00,
+        0x01, 0x00, 0x00, 0x00,
+        0x01,
     };
 
     private static readonly byte[] PlaceConfirmedBytes =
@@ -65,6 +80,7 @@ public sealed class ConstructEventTests
         Assert.Equal(61, (byte)MessageKind.PlaceConstructConfirmed);
         Assert.Equal(62, (byte)MessageKind.RemoveConstruct);
         Assert.Equal(63, (byte)MessageKind.RemoveConstructConfirmed);
+        Assert.Equal(64, (byte)MessageKind.PlaceLine);
         Assert.Equal(0x4112C9FAu, Protocol.SchemaHash);
     }
 
@@ -87,6 +103,41 @@ public sealed class ConstructEventTests
         Assert.Equal(PlaceConfirmedBytes, ConstructCodec.Encode(confirmed));
         Assert.True(ConstructCodec.TryDecode(PlaceConfirmedBytes, out PlaceConstructConfirmed seen));
         Assert.Equal(confirmed, seen);
+    }
+
+    [Fact]
+    public void PlaceLine_GoldenRoundTrip()
+    {
+        var request = new PlaceLineRequest(1, "belt_mk1", 1, 1, 3, 1, Facing.East);
+        Assert.Equal(PlaceLineRequestBytes, ConstructCodec.Encode(request));
+        Assert.True(ConstructCodec.TryDecode(PlaceLineRequestBytes, out PlaceLineRequest decoded));
+        Assert.Equal(request, decoded);
+    }
+
+    [Fact]
+    public void PlaceLine_TwoClients_OneRequestPlacesThreeBelts()
+    {
+        var fx = Hosted(logs: 0, planks: 3, iron: 3);
+        var from = Origin;
+        var to = new TileCoord(3, 1);
+
+        fx.First.Connection!.Send(
+            NetChannels.Reliable,
+            ConstructCodec.Encode(new PlaceLineRequest(1, "belt_mk1", from.X, from.Y, to.X, to.Y, Facing.East)));
+        fx.Server.TickOnce();
+        fx.First.Receive();
+        fx.Second.Receive();
+
+        Assert.Equal(3, fx.World.Constructs!.Count);
+        Assert.Equal(3, fx.First.Constructs!.Count);
+        Assert.Equal(3, fx.Second.Constructs!.Count);
+        Assert.True(fx.World.Constructs.TryGetAt(from, out var start));
+        Assert.Equal("belt_mk1", start.DefId);
+        Assert.True(fx.World.Constructs.TryGetAt(to, out var end));
+        Assert.Equal("belt_mk1", end.DefId);
+        Assert.Equal(0, CountItem(fx.Inv, fx.Bag, PlankId));
+        Assert.Equal(0, CountItem(fx.Inv, fx.Bag, IronId));
+        Assert.Equal(3, CountItem(fx.SecondBagInv, fx.SecondBag, PlankId));
     }
 
     [Fact]
@@ -185,24 +236,28 @@ public sealed class ConstructEventTests
         Assert.Equal(0, fx.Second.Constructs!.Count);
     }
 
-    private static Fixture Hosted(int logs)
+    private static Fixture Hosted(int logs, int planks = 0, int iron = 0)
     {
         var catalog = new MaterialCatalog();
         var world = new SimWorld(catalog);
         var inv = world.Inventory!;
         var bag = inv.CreateContainer(ContainerSpec.Chest);
-        DepositChunks(inv, bag, logs);
+        DepositChunks(inv, bag, LogId, logs);
+        DepositChunks(inv, bag, PlankId, planks);
+        DepositChunks(inv, bag, IronId, iron);
         var secondInv = new InventorySystem(catalog);
         var secondBag = secondInv.CreateContainer(ContainerSpec.Chest);
-        DepositChunks(secondInv, secondBag, 3);
+        DepositChunks(secondInv, secondBag, LogId, 3);
+        DepositChunks(secondInv, secondBag, PlankId, 3);
+        DepositChunks(secondInv, secondBag, IronId, 3);
 
         var buildings = BuildingCatalog.LoadDir(Path.Combine(ContentRoot.Find(), BuildingCatalog.RelativeDir));
         var recipes = RecipeCatalog.LoadDir(Path.Combine(ContentRoot.Find(), RecipeCatalog.RelativeDir));
         var ids = new Dictionary<string, ItemDefId>(StringComparer.Ordinal)
         {
             ["log"] = LogId,
-            ["plank"] = new ItemDefId(2),
-            ["iron_ingot"] = new ItemDefId(3)
+            ["plank"] = PlankId,
+            ["iron_ingot"] = IronId
         };
         world.Constructs = new ConstructRegistry(
             buildings,
@@ -237,25 +292,27 @@ public sealed class ConstructEventTests
         return new Fixture(world, server, first, second, inv, bag, secondInv, secondBag);
     }
 
-    private static void DepositChunks(InventorySystem inv, ContainerId bag, int count)
+    private static void DepositChunks(InventorySystem inv, ContainerId bag, ItemDefId item, int count)
     {
         int left = count;
         while (left > 0)
         {
             int n = left < 10 ? left : 10;
-            Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(LogId, n))));
+            Assert.IsType<Accepted>(inv.Apply(Actor.System, new Deposit(bag, new ItemStack(item, n))));
             left -= n;
         }
     }
 
-    private static int CountLog(InventorySystem inv, ContainerId bag)
+    private static int CountLog(InventorySystem inv, ContainerId bag) => CountItem(inv, bag, LogId);
+
+    private static int CountItem(InventorySystem inv, ContainerId bag, ItemDefId item)
     {
         Assert.True(inv.TryGetContainer(bag, out var grid));
         int n = 0;
         foreach (var entry in grid.Entries)
         {
-            if (entry.Stack is ItemStack item && item.Item.Equals(LogId))
-                n += item.Count;
+            if (entry.Stack is ItemStack stack && stack.Item.Equals(item))
+                n += stack.Count;
         }
 
         return n;

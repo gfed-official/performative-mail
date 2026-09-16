@@ -181,7 +181,8 @@ public sealed class ConstructRegistry
         TileCoord from,
         TileCoord to,
         Facing rotation,
-        EntityId owner = default)
+        EntityId owner = default,
+        ContainerId? consumeFrom = null)
     {
         if (!_buildings.TryGetValue(buildingId, out var building))
             return new PlaceLineRejected(PlaceLineReject.UnknownBuilding);
@@ -192,8 +193,16 @@ public sealed class ConstructRegistry
 
         var results = new LineTile[tiles.Length];
         for (int i = 0; i < tiles.Length; i++)
-            results[i] = new LineTile(tiles[i], TryPlace(buildingId, tiles[i], rotation, owner));
+            results[i] = new LineTile(tiles[i], TryPlace(buildingId, tiles[i], rotation, owner, consumeFrom));
         return new PlaceLineApplied(results);
+    }
+
+    public bool TrySetHeight(TileCoord tile, short heightCm)
+    {
+        if (!_field.InBounds(tile))
+            return false;
+        _field.ApplyFlatten(new[] { new FlattenedTile(tile.X, tile.Y, heightCm) });
+        return true;
     }
 
     public bool TryApplyPlaced(ConstructRecord record)

@@ -87,6 +87,18 @@ public sealed class BuildFrameTests
         Assert.Equal("Missing input", BuildRejectText.Of(PlaceReject.MissingInput));
     }
 
+    [Fact]
+    public void Belt_AllowsDragLine_ChestDoesNot()
+    {
+        var mode = new BuildModeState(LoadBuildings());
+        Assert.True(mode.Select("belt_mk1"));
+        Assert.True(mode.DragLine);
+        Assert.True(mode.Select("wall_wood"));
+        Assert.True(mode.DragLine);
+        Assert.True(mode.Select("chest"));
+        Assert.False(mode.DragLine);
+    }
+
     private static BuildingDef[] LoadBuildings()
     {
         var bundle = ContentBoot.Load(out _, out _);
