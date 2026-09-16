@@ -18,6 +18,7 @@ public enum MessageKind : byte
     PlaceConstructConfirmed = 61,
     RemoveConstruct = 62,
     RemoveConstructConfirmed = 63,
+    PlaceLine = 64,
     LaneInsert = 70,
     LaneRemove = 71,
     LaneChecksum = 72,

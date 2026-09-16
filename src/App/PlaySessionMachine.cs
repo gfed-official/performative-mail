@@ -37,6 +37,8 @@ public sealed class PlaySessionMachine : IDisposable
     private BuildModeState? _build;
     private uint _placeReq;
 
+    public int PlaceLineRequests { get; private set; }
+
     public PlaySessionMachine(INetworkStack stack, SessionOptions? options = null)
     {
         _stack = stack ?? throw new ArgumentNullException(nameof(stack));
@@ -433,6 +435,46 @@ public sealed class PlaySessionMachine : IDisposable
         if (_live.Server?.World.Constructs is ConstructRegistry placed)
             after = placed.Count;
         return after > before;
+    }
+
+    public bool TryPlaceLine(TileCoord from, TileCoord to)
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+        if (_build is not { IsOpen: true, SelectedId: { Length: > 0 } id })
+            return false;
+
+        var client = _live.Client;
+        if (client.Connection is null)
+            return false;
+
+        int before = PlacedConstructs().Count;
+        if (_live.Server?.World.Constructs is ConstructRegistry host)
+            before = host.Count;
+        PlaceLineRequests++;
+        client.SendPlaceLine(new PlaceLineRequest(++_placeReq, id, from.X, from.Y, to.X, to.Y, _build.Facing));
+        _live.Server?.TickOnce();
+        client.Receive();
+        int after = PlacedConstructs().Count;
+        if (_live.Server?.World.Constructs is ConstructRegistry placed)
+            after = placed.Count;
+        return after > before;
+    }
+
+    public bool TryDragPlace(TileCoord from, TileCoord to)
+    {
+        if (_build is not { IsOpen: true })
+            return false;
+        if (from == to || !_build.DragLine)
+            return TryPlaceAt(from);
+        return TryPlaceLine(from, to);
+    }
+
+    internal bool TrySetPlacementHeight(TileCoord tile, short heightCm)
+    {
+        if (!TryHostPlaying(out var server, out _))
+            return false;
+        return server.World.Constructs is ConstructRegistry constructs && constructs.TrySetHeight(tile, heightCm);
     }
 
     public bool TryPlacePing(TileCoord tile, MapPingKind kind)

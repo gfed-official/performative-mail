@@ -106,6 +106,14 @@ public sealed class ClientRuntime
         Connection.Send(NetChannels.Reliable, ConstructCodec.Encode(request));
     }
 
+    public void SendPlaceLine(in PlaceLineRequest request)
+    {
+        if (Connection is null)
+            return;
+
+        Connection.Send(NetChannels.Reliable, ConstructCodec.Encode(request));
+    }
+
     public void SendMapPing(TileCoord tile, MapPingKind kind)
     {
         if (Connection is null)
@@ -208,6 +216,7 @@ public sealed class ClientRuntime
             case MessageKind.Input:
             case MessageKind.Ping:
             case MessageKind.PlaceConstruct:
+            case MessageKind.PlaceLine:
             case MessageKind.RemoveConstruct:
             case MessageKind.MapPing:
                 break;

@@ -92,6 +92,8 @@ public sealed class BuildModeState
     public void Rotate() =>
         Facing = (Facing)(((int)Facing + 1) % 4);
 
+    public bool DragLine => TryFind(SelectedId, out var def) && def.DragLine;
+
     public bool TryPipette(string id) => Select(id);
 
     public BuildFrame Frame(bool valid, string reason)

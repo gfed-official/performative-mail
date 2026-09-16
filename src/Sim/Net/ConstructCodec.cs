@@ -20,6 +20,22 @@ public static class ConstructCodec
         return writer.ToArray();
     }
 
+    public static byte[] Encode(in PlaceLineRequest message)
+    {
+        if (message.BuildingId is null) throw new ArgumentNullException(nameof(message));
+
+        var writer = new BitWriter();
+        writer.WriteByte((byte)MessageKind.PlaceLine);
+        writer.WriteUInt32(message.ReqId);
+        writer.WriteUtf8(message.BuildingId);
+        writer.WriteInt32(message.FromX);
+        writer.WriteInt32(message.FromY);
+        writer.WriteInt32(message.ToX);
+        writer.WriteInt32(message.ToY);
+        writer.WriteByte((byte)message.Rotation);
+        return writer.ToArray();
+    }
+
     public static byte[] Encode(in PlaceConstructConfirmed message)
     {
         if (message.BuildingId is null) throw new ArgumentNullException(nameof(message));
@@ -67,6 +83,24 @@ public static class ConstructCodec
         if (!reader.AtEnd) return false;
 
         message = new PlaceConstructRequest(reqId, buildingId, tileX, tileY, rotation);
+        return true;
+    }
+
+    public static bool TryDecode(ReadOnlySpan<byte> payload, out PlaceLineRequest message)
+    {
+        message = default;
+        var reader = new BitReader(payload);
+        if (!TryReadKind(reader, MessageKind.PlaceLine)) return false;
+        if (!reader.TryReadUInt32(out var reqId)) return false;
+        if (!reader.TryReadUtf8(out var buildingId)) return false;
+        if (!reader.TryReadInt32(out var fromX)) return false;
+        if (!reader.TryReadInt32(out var fromY)) return false;
+        if (!reader.TryReadInt32(out var toX)) return false;
+        if (!reader.TryReadInt32(out var toY)) return false;
+        if (!TryReadFacing(reader, out var rotation)) return false;
+        if (!reader.AtEnd) return false;
+
+        message = new PlaceLineRequest(reqId, buildingId, fromX, fromY, toX, toY, rotation);
         return true;
     }
 

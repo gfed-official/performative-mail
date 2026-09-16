@@ -88,6 +88,9 @@ public partial class Main : Node3D
     private bool _rotateHeld;
     private bool _pipetteHeld;
     private bool _placeHeld;
+    private bool _dragging;
+    private TileCoord _dragFrom;
+    private TileCoord _dragTo;
 
     public override void _Ready()
     {
@@ -624,6 +627,7 @@ public partial class Main : Node3D
             _session.CloseBuild();
             _buildBar.Visible = false;
             _buildGhost.Visible = false;
+            _dragging = false;
             _buildHeld = InputSampler.BuildHeld();
             _rotateHeld = InputSampler.RotateHeld();
             _pipetteHeld = InputSampler.PipetteHeld();
@@ -645,6 +649,7 @@ public partial class Main : Node3D
         {
             _buildBar.Visible = false;
             _buildGhost.Visible = false;
+            _dragging = false;
             _rotateHeld = InputSampler.RotateHeld();
             _pipetteHeld = InputSampler.PipetteHeld();
             _placeHeld = InputSampler.PlaceHeld();
@@ -662,9 +667,25 @@ public partial class Main : Node3D
             _session.TryPipetteAt(tile);
         _pipetteHeld = pipette;
 
+        bool blocked = _pause.IsOpen || _overlay.IsOpen || _map.IsOpen || _shop.IsOpen;
         bool place = InputSampler.PlaceHeld();
-        if (place && !_placeHeld && aim && !_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen && !_shop.IsOpen)
-            _session.TryPlaceAt(tile);
+        if (place && !_placeHeld && aim && !blocked)
+        {
+            _dragFrom = tile;
+            _dragTo = tile;
+            _dragging = true;
+        }
+
+        if (_dragging && aim)
+            _dragTo = tile;
+
+        if (!place && _placeHeld)
+        {
+            if (_dragging && !blocked)
+                _session.TryDragPlace(_dragFrom, _dragTo);
+            _dragging = false;
+        }
+
         _placeHeld = place;
 
         bool valid = true;
@@ -705,6 +726,10 @@ public partial class Main : Node3D
         dump.AppendLine(_buildBar.Dump("open"));
         _buildBar.Bind(mode.Frame(false, BuildRejectText.Of(PlaceReject.Street)));
         dump.AppendLine(_buildBar.Dump("street"));
+        _buildBar.Bind(mode.Frame(false, BuildRejectText.Of(PlaceReject.Slope)));
+        dump.AppendLine(_buildBar.Dump("slope"));
+        _buildBar.Bind(mode.Frame(false, BuildRejectText.Of(PlaceReject.MissingInput)));
+        dump.AppendLine(_buildBar.Dump("missing"));
         mode.Close();
         _buildBar.Bind(mode.Frame(true, ""));
         dump.AppendLine(_buildBar.Dump("closed"));
