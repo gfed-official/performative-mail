@@ -44,6 +44,15 @@ public sealed class ConstructStageBootTests
         Assert.DoesNotContain("Colors.Magenta", source);
     }
 
+    [Fact]
+    public void ConstructStage_SetsMultiMeshTransformFormatOnlyOnCreate()
+    {
+        var source = ReadGame("ConstructStage.cs");
+        Assert.Contains("new MultiMesh", source);
+        Assert.Contains("TransformFormat = MultiMesh.TransformFormatEnum.Transform3D", source);
+        Assert.DoesNotContain("mm.TransformFormat", source);
+    }
+
     private static string ReadGame(string fileName)
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
