@@ -19,6 +19,7 @@ public sealed class ClientRuntime
     private const int InputWindow = 3;
 
     private readonly List<InputCmd> _recent = new List<InputCmd>(InputWindow);
+    private readonly List<LaneChecksum> _checksumMismatches = new List<LaneChecksum>();
     private readonly Dictionary<EntityId, PlayerReplication.RemoteInterpolated> _remotes =
         new Dictionary<EntityId, PlayerReplication.RemoteInterpolated>();
     private readonly PlayerReplication.OwnerPredicted _owner =
@@ -67,6 +68,17 @@ public sealed class ClientRuntime
     public int LaneChecksumCount { get; private set; }
 
     public int LaneStateCount { get; private set; }
+
+    public int DrainChecksumMismatches(List<LaneChecksum> into)
+    {
+        if (into is null) throw new ArgumentNullException(nameof(into));
+
+        int n = _checksumMismatches.Count;
+        for (int i = 0; i < n; i++)
+            into.Add(_checksumMismatches[i]);
+        _checksumMismatches.Clear();
+        return n;
+    }
 
     public ClientRuntime()
     {
@@ -356,10 +368,12 @@ public sealed class ClientRuntime
 
     private void ApplyLaneChecksum(byte[] payload)
     {
-        if (!LaneCodec.TryDecode(payload, out LaneChecksum _))
+        if (!LaneCodec.TryDecode(payload, out LaneChecksum checksum))
             return;
 
         LaneChecksumCount++;
+        if (!Lanes.Matches(checksum))
+            _checksumMismatches.Add(checksum);
     }
 
     private void ApplyLaneState(byte[] payload)

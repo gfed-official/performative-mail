@@ -156,6 +156,31 @@ public sealed class LaneChecksumTests
         Assert.True(fx.First.Lanes.Matches(segment.Checksum(0)));
     }
 
+    [Fact]
+    public void ChecksumMismatch_QueuesForDrain()
+    {
+        var fx = Hosted();
+        fx.World.Belts.Compile(new[] { EastBelt(new TileCoord(1, 1)) });
+        var segment = Assert.Single(fx.World.Belts.Segments);
+        Assert.True(segment.TryInsert(0, 11, 0f, MailKinds.Letter, new AddressId(2, 3, 1, 0)));
+        fx.Server.TickOnce();
+        fx.First.Receive();
+        fx.Second.Receive();
+
+        WaitChecksum(fx);
+        Assert.True(fx.First.Lanes.TryPlantDrift(segment.Id, 0, LaneHash.QuantumCm));
+
+        var queued = new List<LaneChecksum>();
+        WaitChecksum(fx);
+        Assert.True(fx.First.DrainChecksumMismatches(queued) >= 1);
+        Assert.Contains(queued, row => row.Segment.Equals(segment.Id) && row.Lane == 0);
+
+        Assert.True(fx.Server.ResendLane(segment.Id, 0));
+        fx.First.Receive();
+        fx.Second.Receive();
+        Assert.True(fx.First.Lanes.Matches(segment.Checksum(0)));
+    }
+
     private static void WaitChecksum(Fixture fx)
     {
         int before = fx.First.LaneChecksumCount;
