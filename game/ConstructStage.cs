@@ -2,6 +2,7 @@ using System.Text;
 using Godot;
 using PerformativeMail.App;
 using PerformativeMail.Sim.Content;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Game;
 
