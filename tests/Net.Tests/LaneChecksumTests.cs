@@ -165,7 +165,7 @@ public sealed class LaneChecksumTests
         Assert.True(fx.First.Lanes.TryPlantDrift(segment.Id, 0, LaneHash.QuantumCm));
 
         var queued = new List<LaneChecksum>();
-        WaitChecksum(fx, segment);
+        WaitChecksum(fx, segment, advanceVisual: false);
         Assert.True(fx.First.DrainChecksumMismatches(queued) >= 1);
         Assert.Contains(queued, row => row.Segment.Equals(segment.Id) && row.Lane == 0);
 
@@ -191,13 +191,21 @@ public sealed class LaneChecksumTests
         fx.Second.Lanes.Advance(segment.Id, dt, BeltNetwork.Mk1MetresPerSecond, lengthCm);
     }
 
-    private static void WaitChecksum(Fixture fx, BeltSegment segment)
+    private static void WaitChecksum(Fixture fx, BeltSegment segment, bool advanceVisual = true)
     {
         int before = fx.First.LaneChecksumCount;
         int period = TickClock.TicksFromSeconds(2);
         for (int i = 0; i < period; i++)
         {
-            TickReceiveAdvance(fx, segment);
+            if (advanceVisual)
+                TickReceiveAdvance(fx, segment);
+            else
+            {
+                fx.Server.TickOnce();
+                fx.First.Receive();
+                fx.Second.Receive();
+            }
+
             if (fx.First.LaneChecksumCount > before)
                 return;
         }
