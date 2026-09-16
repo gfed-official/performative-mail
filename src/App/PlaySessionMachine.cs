@@ -365,11 +365,16 @@ public sealed class PlaySessionMachine : IDisposable
     {
         if (_state is not PlaySession.Playing)
             return false;
-        if (_live.Server?.World.Constructs is not ConstructRegistry host ||
-            !host.TryGetAt(tile, out var placed))
-            return false;
         _filter ??= new FilterPanelState();
-        return _filter.TryOpen(placed.DefId);
+        if (_live.Client.Constructs is ConstructRegistry client &&
+            client.TryGetAt(tile, out var row) &&
+            _filter.TryOpen(row.DefId))
+            return true;
+        if (_live.Server?.World.Constructs is ConstructRegistry host &&
+            host.TryGetAt(tile, out var placed) &&
+            _filter.TryOpen(placed.DefId))
+            return true;
+        return false;
     }
 
     public FilterPanelFrame FilterFrame()
@@ -377,15 +382,29 @@ public sealed class PlaySessionMachine : IDisposable
         if (_filter is null)
             return new FilterPanelFrame(false, Array.Empty<FilterChip>(), 0);
 
-        var streets = _live.Server?.Tables?.Streets ?? Array.Empty<StreetRecord>();
-        IReadOnlyList<AddressId> unlocked =
-            _live.Server?.World.Atlas?.DeliverableAddresses ?? Array.Empty<AddressId>();
+        var tables = _live.Server?.Tables ?? _live.Client.GeneratedWorld;
+        var streets = tables?.Streets ?? Array.Empty<StreetRecord>();
+        IReadOnlyList<AddressId> unlocked = UnlockedAddresses(tables);
         GridContainer? intake = null;
         if (_live.Server is { } server &&
             server.World.Inventory is InventorySystem inventory &&
             server.World.Intake.Value != 0)
             inventory.TryGetContainer(server.World.Intake, out intake);
+        else if (_live.Client.Inventory is InventorySystem clientInv &&
+                 LiveOverlay.TryFrom(clientInv, out var overlay))
+            intake = overlay.External;
         return _filter.Frame(streets, unlocked, intake);
+    }
+
+    private static IReadOnlyList<AddressId> UnlockedAddresses(WorldTables? tables)
+    {
+        if (tables is null)
+            return Array.Empty<AddressId>();
+        var houses = tables.Houses;
+        var unlocked = new AddressId[houses.Length];
+        for (int i = 0; i < houses.Length; i++)
+            unlocked[i] = houses[i].Address;
+        return unlocked;
     }
 
     public IReadOnlyList<ConstructRecord> PlacedConstructs()
