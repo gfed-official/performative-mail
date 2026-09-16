@@ -31,7 +31,10 @@ U1.1 shape is already concrete in chapter 05 §2 (HP 60, speed 4.5 m/s, melee sw
 | Blocker | Impact | Mitigation |
 | --- | --- | --- |
 | No `src/Sim/Combat/` and no `EntityClass.Enemy` | Agents have no home or id class | U1.1 adds `src/Sim/Combat/` and `EntityClass.Enemy = 4`. Chapter 07 §4.2 already names enemy as a class |
-| `RoutingGraph` is a static street node graph. `TryPath` ignores `ConstructRecord` walls | Chapter 05 §3.3 needs walls impassable | U1.1 paths on the existing graph with no walls. U1.6 adds a wall overlay. U8.2 is the 200-layout fuzz |
+| `RoutingGraph` is a static street node graph. `TryPath` ignores `ConstructRecord` walls | Chapter 05 §3.3 needs walls impassable | U1.1 paths on the existing graph with no walls. U1.6 queries `ConstructRegistry.TryGetAt` off the street edges. U8.2 is the 200-layout fuzz |
+| `wall_wood` is `onStreet: false`. `ConstructRegistry` returns `PlaceReject.Street` on street tiles | Street graph edges cannot hold a wall. A wall overlay on Dijkstra street hops never sees a blocker | U1.6 treats walls on lots, the PO pad, and other legal tiles. U8.2 places fuzz walls only where `TryPlace` accepts them. Do not invent a second road graph |
+| `SimWorld` does not own `RoutingGraph` or `WorldTables` | Live tick has no graph to query | U1.1 tests construct `new RoutingGraph(...)` the way `NpcDriverTests` does. Binding tables onto `SimWorld` waits until a later unit needs spawn edges |
+| `BuildingCatalog` drops JSON `params` | `wall_wood` `wallBreakerResist` never loads. Stone 50 percent resist cannot be data | U5.1 parses `params` or stores resist on `BuildingDef`. U1.1 does not touch the catalog |
 | `RoutePath.Tiles` is node tiles, not every street tile | A step that hops nodes skips the road | U1.1 interpolates the node polyline the way `NpcDriver` hops. Not a new nav |
 | `RouteEnemy` already exists for NPC flee | Easy to treat it as the agent type | Leave `NpcDriver` and `RouteEnemy` alone in U1.1. Later units may project agent pose into `NoticeEnemies` |
 | `ConstructRecord` has `Hp` and `MaxHp` but no damage API | Melee and siege cannot land | U3.1 owns `ApplyDamage`. U1.1 deals none. `wall_wood` stays at 300 HP |
@@ -41,7 +44,8 @@ U1.1 shape is already concrete in chapter 05 §2 (HP 60, speed 4.5 m/s, melee sw
 | Enemy replication is a one-way door | Early `MessageKind` values can blow the 40 kbps budget | U1.1 adds no `MessageKind`. U1.11 is codec tests. U8.1 is the 40 kbps gate |
 | PO is `PostOfficeRecord`, not a construct | PO death cannot end the run today | U1.1 paths to `PostOfficeRecord.SpawnPadTile` (already a route node). U3.5 owns PO HP 3000 and run end |
 | Mailboxes and houses are atlas destinations, not constructs | "No damage" needs an explicit deny list | U1.3 and U8.5 assert enemies never select those destination types |
-| No `content/enemies/*.json` yet | Chapter 07 wants data-driven enemies | U1.1 hardcodes Barbarian constants from chapter 05 §2. `EnemyDef` JSON waits until a second kind or U1.4 |
+| `content/enemies/` and `content/waves/` exist and are empty | `ContentValidator` only requires the directories | U1.1 hardcodes Barbarian constants from chapter 05 §2. `EnemyDef` JSON waits until a second kind or U1.4 |
+| `ShiftClock` already enters `RunPhase.Raid` in the last 90 s of Delivery on shift 2 and later | A second raid clock would desync from M1 | U2.1 binds waves to the existing phase. U1.1 does not read the clock |
 
 ## Workflow (Phase B)
 
@@ -50,11 +54,11 @@ Riskiest unknown first: a server-only enemy that reuses `RoutingGraph`. Smallest
 | Unit | Landable change | Verify |
 | --- | --- | --- |
 | U1 | Enemy agents spawn, path on `RoutingGraph`, carry traits, pick targets | One Barbarian steps toward the PO. Later children add targeting, wall overlay, and the roster |
-| U2 | Wave scheduler: budget, pulses, spawn edges, warning, end-of-raid flee | Shift 2 Delivery last 90 s spends budget. Shift 1 spawns none. Clock end flees |
+| U2 | Wave scheduler: budget, pulses, spawn edges, warning, end-of-raid flee | `RunPhase.Raid` spends budget. Shift 1 stays out of Raid. Clock end flees |
 | U3 | Construct damage, HP snapshot while damaged, ruins, spill, PO death ends run | `wall_wood` HP falls. Ruin at 0. PO at 0 ends the run |
 | U4 | Player combat: melee arc, hitscan plus rewind, weapons, bandages | Arc hits an enemy. Hitscan rewind matches the buffer. No friendly fire |
 | U5 | Stone wall, gate, spikes, turret, alarm, repair hammer | Each def places and does the chapter 05 §4 job |
-| U6 | Drops, Lost Parcels, Mega variants, Cursed Mail mini-raid | Death drop table. Mega roll. Misdelivered cursed mail spawns 4 Barbarians and 1 Archer |
+| U6 | Drops, Lost Parcels, Mega variants, Cursed Mail flag | Death drop table. Mega roll. Mail can carry the Cursed flag. Mini-raids wait for M4 |
 | U7 | Raid HUD: warning, compass markers, under-attack, construct HP bars | Warning bind at 15 s. Damaged construct shows a bar |
 | U8 | M3 acceptance gates | Criteria 1 to 5 on the real artifact |
 
@@ -63,11 +67,11 @@ Riskiest unknown first: a server-only enemy that reuses `RoutingGraph`. Smallest
 | Unit | Landable change | Verify | Depends on |
 | --- | --- | --- | --- |
 | U1.1 | Barbarian spawn, path toward PO on `RoutingGraph`, Sim step | Recipe-free spawn. One agent marches 4.5 m in 1 s. No damage | M2 on main (`RoutingGraph`, `ConstructRegistry`) |
-| U1.2 | Last 15 m straight-line and 1 s retarget to nearest player or construct | At 15 m the agent leaves the graph. Retarget after 1 s picks the nearest valid class | U1.1 |
+| U1.2 | Last 15 m straight-line and 1 s retarget to nearest player or construct | At 15 m the agent leaves the graph. Retarget after 1 s picks the nearest valid class. For 1 or 2 players, constructs win ties (chapter 01 §8) | U1.1 |
 | U1.3 | Barbarian melee 10 damage / 1.0 s through the U3.1 API | A `wall_wood` loses 10 HP. Mailbox and house tiles are never selected | U1.2, U3.1 |
 | U1.4 | Archer (HP 40, 8 damage, 1.5 s, 4 m/s, ranged 15 m, keep 10 m) | Priority is player then turret then construct. Agent retreats when a player closes | U1.2 |
 | U1.5 | Giant (HP 400, 40 damage, 2.0 s, 3 m/s). Buildings first | Ignores players unless one attacks within 5 m for 3 s | U1.2, U3.1 |
-| U1.6 | Wall overlay on `RoutingGraph`. Walls impassable except Hog Rider | A blocked path names the wall segment. Not a second graph | U1.2, M1 `wall_wood` |
+| U1.6 | Occupancy overlay via `ConstructRegistry.TryGetAt`. Walls impassable except Hog Rider | A wall on a legal (non-street) tile is a named blocker. Street `RoutePath` hops stay open. Not a second graph. `Pipes.ClimbId` stays `wall_wood` | U1.2, M1 `wall_wood` |
 | U1.7 | Wall Breaker. Suicide 150 to walls, gates, belts. 20 otherwise | Runs to the wall on the shortest blocked path to the PO and explodes (r = 1.5 m) | U1.6, U3.1 |
 | U1.8 | Hog Rider. Jump 1 m. Each container hit drops 1 item 3 m away | Hops a `wall_wood`. Steals from a depot or chest | U1.6, U3.1, M2 depot or chest |
 | U1.9 | Balloon. Airborne 6 m. Bombs turrets | Only ranged weapons and turrets hit it. Priority is turret then depot | U1.4, U5.4 |
@@ -85,6 +89,7 @@ Landable change:
 - U1.1 state machine is Spawned, then Marching, then Arrived. No Attack state.
 - Add `EntityClass.Enemy = 4` so agents get `EntityId`s.
 - Spawn a Barbarian at a `TileCoord`. A spawn-edge tile is allowed as that coordinate.
+- Tests construct `new RoutingGraph(...)` from node and edge lists. Do not add `WorldTables` to `SimWorld` in this unit. Do not walk `SpawnEdgeRecord.PathToPo`.
 - Call `RoutingGraph.TryPath` from the spawn tile to `PostOfficeRecord.SpawnPadTile`. Follow `RoutePath.Tiles` as a polyline at 4.5 m/s. Reuse `RoutingGraph`. Do not invent a second nav system.
 - Stats from chapter 05 §2 are HP 60, speed 4.5 m/s, and melee-swarmer targeting of the nearest player or construct. This unit marches toward the PO only.
 - `SimWorld.Tick` calls the combat step the way it already calls `Belts.Step`.
@@ -117,7 +122,7 @@ Verify:
 
 | Unit | Landable change | Verify | Depends on |
 | --- | --- | --- | --- |
-| U2.1 | Raid window. Last 90 s of Delivery on shifts 2 to 5. Shift 1 has none | Clock in that window is a raid. Shift 1 Delivery never opens it | U1.1, M1 `ShiftClock` |
+| U2.1 | Bind waves to existing `ShiftClock` `RunPhase.Raid` (last 90 s, shift ≥ 2) | Shift 2 Delivery enters Raid at 90 s left. Shift 1 never does. No second clock | U1.1, M1 `ShiftClock` |
 | U2.2 | `waveBudget(shift, n)` from chapter 05 §3.2 | Shift 2 solo is 96. Shift 1 is 0. `baseBudget` is `[0, 120, 220, 360, 560]` | U2.1 |
 | U2.3 | Six pulses every 15 s. Pulse 6 gets +50%. Edges 1 then 2 | Pulse spend sums to the wave budget. Pulses 4 to 6 use two spawn edges | U2.2, U1.1 |
 | U2.4 | Warning 15 s before the first spawn. Spawn edge marked | Warning flag is on 15 s before the first pulse. Edge id is set | U2.3 |
@@ -154,7 +159,7 @@ Verify:
 | U5.3 | Spike strip. 150 HP. 15 dmg/s to ground enemies. Does not block | A Barbarian on the tile loses 15 HP per second. Players take 0 | U1.3, U4.1 |
 | U5.4 | Turret auto. 400 HP. 12 damage / 0.5 s, 18 m. Can hit Balloons | Nearest enemy in range is hit. Balloon in range is hit | U1.2, U3.1 |
 | U5.5 | Turret operated. 2× fire rate and manual aim | Mounted fire is 12 / 0.25 s. Player stays damageable | U5.4, U4.1 |
-| U5.6 | Alarm post. 100 HP. Warning +15 s. Marks enemies within 40 m | Warning duration grows. Cap is 45 s with Early Warning (chapter 11) | U2.4 |
+| U5.6 | Alarm post. 100 HP. Warning +15 s. Marks enemies within 40 m | Warning duration grows by 15 s per post. Early Warning perk waits for M4 | U2.4 |
 | U5.7 | Repair hammer. 50 HP/s. Consumes 25 percent of build cost per full bar | A 300 HP wall full repair spends 25 percent of `recipe_wall_wood` | U3.1, M1 shop 100 ¢ |
 
 ### U6 children (drops, mega, cursed)
@@ -162,9 +167,9 @@ Verify:
 | Unit | Landable change | Verify | Depends on |
 | --- | --- | --- | --- |
 | U6.1 | Death drops. `WorldItem` despawn 2 min. Wall Breaker drops nothing | Barbarian 1 Fiber at 50 percent. Giant 3 Stone and 1 Iron Ore at 100 percent | U1.3, M2 `WorldItem` |
-| U6.2 | Mega roll. 5 percent plus 2 percent per shift. Megamail ×2 | HP ×2.5, damage ×1.5, scale ×1.4, speed ×0.9. Aura +20 percent speed within 8 m | U1.1, U2.3 |
+| U6.2 | Mega roll. 5 percent plus 2 percent per shift. Shift 5 pulse 6 always has at least one Mega | HP ×2.5, damage ×1.5, scale ×1.4, speed ×0.9. Aura +20 percent speed within 8 m. Megamail ×2 waits for M4 | U1.1, U2.3 |
 | U6.3 | Lost Parcel on Mega death. Medium Package, random unlocked address, value ×3, plus 2 Iron Ingots | Parcel address is unlocked. Value is 3× the medium baseline | U6.2, M1 mail |
-| U6.4 | Cursed Mail. 10 percent of mail. Misdelivery spawns 4 Barbarians and 1 Archer (30 budget), no warning | Correct delivery pays ×1.5. Mini-raid has no U2.4 warning | U1.4, U2.2, M1 destinations, `cursed_mail` stamp |
+| U6.4 | Cursed Mail flag on a mail item (chapter 12 M3 flag support) | Flag round-trips on the item. Mini-raid spawn and ×1.5 pay wait for M4 | M1 mail |
 
 ### U7 children (raid HUD)
 
@@ -180,9 +185,9 @@ Verify:
 | Unit | Landable change | Verify | Depends on |
 | --- | --- | --- | --- |
 | U8.1 | 40 enemies in interest to 8 clients | Per-client down ≤ 40 kbps. Worst case ≤ 80 kbps | U1.11, U2.3 |
-| U8.2 | Pathing fuzz. 200 random wall layouts | Every enemy finds a path or a wall to break within 2 s | U1.6, U1.7, U2.3 |
+| U8.2 | Pathing fuzz. 200 random wall layouts on legal place tiles | Every enemy finds a path or a wall to break within 2 s. Hog Rider and Balloon use their trait success (jump, air) | U1.6, U1.7, U2.3 |
 | U8.3 | Scripted Wall Breaker, Hog Rider, Balloon, Tank | Each chapter 12 scenario test passes | U1.7, U1.8, U1.9, U1.10 |
-| U8.4 | `BalanceSim` chapter 11 §10.1 combat agents | Solo shift 2 with 6 `wall_wood` tiles loses 0 belts | U2.2, U3.1, U1.3, U1.4, M1 `wall_wood` |
+| U8.4 | `BalanceSim` chapter 11 §10.1 combat agents | Solo shift 2 with 6 `wall_wood` tiles loses 0 belts. Giant 20 DPS kills a belt in 4 s, a depot in 40 s, the PO in 150 s | U2.2, U3.1, U1.3, U1.4, U1.5, M1 `wall_wood` |
 | U8.5 | No friendly fire. No enemy damage to mailboxes or houses | Assertion suite on both rules | U4.5, U1.3 |
 
 Architect arena runs before U1.11 (replication payload is a one-way door) and before U4.3 (hitscan rewind). U1.1 shape is already concrete in chapter 05 §2 and `RoutingGraph.TryPath`, so arena is skipped for the skeleton. U1.2 to U1.10, U2, U3, U4.1, U4.2, U4.4 to U4.6, U5, U6, U7, and U8 compose named spec tables, so arena is skipped. Two sketches compared in-thread when a unit forks.
