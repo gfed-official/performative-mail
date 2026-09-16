@@ -230,7 +230,6 @@ public partial class ConstructStage : Node3D
             }
 
             var mm = batch.Multimesh;
-            mm.TransformFormat = MultiMesh.TransformFormatEnum.Transform3D;
             mm.Mesh = mesh;
             batch.MaterialOverride = pair.Key == FallbackMeshKey ? BeltGoldMat : null;
             var indices = pair.Value;
@@ -339,7 +338,6 @@ public partial class ConstructStage : Node3D
         }
 
         var mm = _laneBatch.Multimesh;
-        mm.TransformFormat = MultiMesh.TransformFormatEnum.Transform3D;
         mm.InstanceCount = _laneVisible.Count;
         for (int i = 0; i < _laneVisible.Count; i++)
             mm.SetInstanceTransform(i, _laneVisible[i]);
