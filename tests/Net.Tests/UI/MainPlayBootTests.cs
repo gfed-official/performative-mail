@@ -334,6 +334,42 @@ public sealed class MainPlayBootTests
     }
 
     [Fact]
+    public void ApplyArgs_WiresPackedBeltsToHostPacked()
+    {
+        var apply = MethodBody(ReadMain(), "ApplyArgs");
+        Assert.Contains("\"--packed-belts\"", apply);
+        Assert.Contains("HostPacked()", apply);
+        Assert.Contains("\"--frame-dump=\"", apply);
+        Assert.Contains("_session.HostDebug()", apply);
+        Assert.Contains("_session.Host()", apply);
+        var main = ReadMain();
+        Assert.Contains("delta * 1000.0", MethodBody(ReadMain(), "_Process"));
+        Assert.Contains("PackedBeltCamera", main);
+        Assert.Contains("AimPackedCamera", main);
+        Assert.Contains("DebugFactory.PackedStart", main);
+        Assert.Contains("_constructs.BeltInstanceCount", main);
+    }
+
+    [Fact]
+    public void MaybeFinish_WritesFrameDumpWhenPathSet()
+    {
+        var finish = MethodBody(ReadMain(), "MaybeFinish");
+        Assert.Contains("_frameDumpPath", finish);
+        Assert.Contains("FrameDump", finish);
+        Assert.Contains("PlaySession.Playing", finish);
+        var main = ReadMain();
+        Assert.Contains("FRAME_DUMP", main);
+        Assert.Contains("FRAME_DUMP_END", main);
+        Assert.Contains("instances=", main);
+        Assert.Contains("avgMs=", main);
+        Assert.Contains("p99Ms=", main);
+        Assert.Contains("limitMs=", main);
+        Assert.Contains("pass=", main);
+        Assert.Contains("FrameTimeBudget.LimitMs", main);
+        Assert.Contains("BeltInstanceCount", main);
+    }
+
+    [Fact]
     public void MaybeFinish_WritesWorldStageDumpOnPlayingQuit()
     {
         var finish = MethodBody(ReadMain(), "MaybeFinish");

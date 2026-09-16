@@ -82,6 +82,8 @@ public sealed class PlaySessionMachine : IDisposable
 
     public void HostDebug() => StartHost(ArcadeSession.CreateDebug);
 
+    public void HostPacked() => StartHost(ArcadeSession.CreatePacked);
+
     private void StartHost(Func<ArcadeBoot> create)
     {
         Leave();

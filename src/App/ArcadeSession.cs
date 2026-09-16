@@ -21,14 +21,26 @@ public static class ArcadeSession
         return Boot(DebugWorld.Tables(), RunSettings.Arcade(), seedFactory: true);
     }
 
-    private static ArcadeBoot Boot(WorldTables tables, RunSettings settings, bool seedFactory = false)
+    public static ArcadeBoot CreatePacked()
+    {
+        var settings = RunSettings.Arcade();
+        return Boot(WorldGen.GenerateSmallIsland(settings.Seed), settings, seedPacked: true);
+    }
+
+    private static ArcadeBoot Boot(
+        WorldTables tables,
+        RunSettings settings,
+        bool seedFactory = false,
+        bool seedPacked = false)
     {
         ulong hash = WorldHash.Compute(tables);
         var atlas = WorldAtlas.FromTables(tables);
         var bundle = ContentBoot.Load(out var ids, out var catalog);
         var world = new SimWorld(atlas, catalog, unchecked((int)settings.Seed));
         world.Constructs = ConstructBoot.ForWorld(bundle, ids, tables, world.Inventory);
-        if (seedFactory)
+        if (seedPacked)
+            DebugFactory.SeedPacked(world);
+        else if (seedFactory)
             DebugFactory.Seed(world);
         if (world.Mail is null)
             throw new InvalidOperationException("Arcade world has no mail registry.");

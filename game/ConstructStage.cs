@@ -2,6 +2,7 @@ using System.Text;
 using Godot;
 using PerformativeMail.App;
 using PerformativeMail.Sim.Content;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Game;
 
@@ -35,18 +36,41 @@ public partial class ConstructStage : Node3D
     private static readonly StandardMaterial3D DefaultSteelMat = Solid(DefaultSteel);
     private static readonly StandardMaterial3D MailPaperMat = Solid(MailPaper);
 
+    private const string FallbackMeshKey = "box";
+
     private readonly Dictionary<uint, ConstructVisual> _nodes = new();
     private readonly HashSet<uint> _seen = new();
     private readonly List<uint> _stale = new();
-    private readonly List<Node3D> _laneItems = new();
+    private readonly List<ConstructView> _belts = new();
+    private readonly Dictionary<string, List<int>> _beltGroups = new();
+    private readonly Dictionary<string, MultiMeshInstance3D> _beltBatches = new();
+    private readonly List<Vector3> _laneWorld = new();
+    private readonly List<Transform3D> _laneVisible = new();
+    private readonly List<string> _dropKeys = new();
+    private Node3D? _beltLabel;
+    private MultiMeshInstance3D? _laneBatch;
+    private Mesh? _laneMesh;
+    private float _laneYLift;
+    private bool _lanePaper;
+    private int _beltStamp;
+    private int _beltInstanceTotal;
+
+    public int BeltInstanceCount => _beltInstanceTotal;
 
     public void Sync(in ConstructFrame frame)
     {
         _seen.Clear();
+        _belts.Clear();
         float tileM = frame.TileCm / 100f;
         for (int i = 0; i < frame.Placed.Count; i++)
         {
             var view = frame.Placed[i];
+            if (IsBatchedBelt(view.Behaviour))
+            {
+                _belts.Add(view);
+                continue;
+            }
+
             _seen.Add(view.Id);
             if (!_nodes.TryGetValue(view.Id, out var visual))
             {
@@ -77,19 +101,46 @@ public partial class ConstructStage : Node3D
             }
         }
 
+        SyncBelts(tileM);
         SyncLaneItems(in frame);
+        PushLaneInstances();
+    }
+
+    public override void _Process(double delta)
+    {
+        _ = delta;
+        PushLaneInstances();
     }
 
     public void Clear()
     {
-        if (_nodes.Count == 0 && _laneItems.Count == 0)
+        if (_nodes.Count == 0
+            && _beltBatches.Count == 0
+            && _laneBatch is null
+            && _beltLabel is null
+            && _laneWorld.Count == 0)
             return;
         foreach (var visual in _nodes.Values)
             visual.Root.QueueFree();
         _nodes.Clear();
-        for (int i = 0; i < _laneItems.Count; i++)
-            _laneItems[i].QueueFree();
-        _laneItems.Clear();
+        foreach (var batch in _beltBatches.Values)
+            batch.QueueFree();
+        _beltBatches.Clear();
+        _beltInstanceTotal = 0;
+        _beltStamp = 0;
+        if (_beltLabel is not null)
+        {
+            _beltLabel.QueueFree();
+            _beltLabel = null;
+        }
+
+        if (_laneBatch is not null)
+        {
+            _laneBatch.QueueFree();
+            _laneBatch = null;
+        }
+
+        _laneWorld.Clear();
     }
 
     public string Dump()
@@ -112,58 +163,289 @@ public partial class ConstructStage : Node3D
             dump.AppendLine();
         }
 
+        dump.Append("instances=");
+        dump.Append(_beltInstanceTotal);
+        dump.AppendLine();
         dump.Append("CONSTRUCT_DUMP_END");
         return dump.ToString();
     }
 
-    private void SyncLaneItems(in ConstructFrame frame)
+    private void SyncBelts(float tileM)
     {
-        int need = frame.LaneItems.Count;
-        while (_laneItems.Count > need)
+        int stamp = _belts.Count;
+        for (int i = 0; i < _belts.Count; i++)
         {
-            int last = _laneItems.Count - 1;
-            _laneItems[last].QueueFree();
-            _laneItems.RemoveAt(last);
+            var view = _belts[i];
+            stamp = (stamp * 31) ^ (int)view.Id ^ view.Tile.X ^ (view.Tile.Y << 16) ^ (int)view.Rotation;
         }
 
-        for (int i = 0; i < need; i++)
+        if (stamp == _beltStamp && _beltInstanceTotal == _belts.Count && _belts.Count > 0)
+            return;
+        if (stamp == _beltStamp && _beltInstanceTotal == 0 && _belts.Count == 0)
+            return;
+
+        _beltStamp = stamp;
+        _beltGroups.Clear();
+        for (int i = 0; i < _belts.Count; i++)
+        {
+            string key = BeltMeshKey(_belts[i].DefId);
+            if (!_beltGroups.TryGetValue(key, out var indices))
+            {
+                indices = new List<int>();
+                _beltGroups[key] = indices;
+            }
+
+            indices.Add(i);
+        }
+
+        _dropKeys.Clear();
+        foreach (var key in _beltBatches.Keys)
+        {
+            if (!_beltGroups.ContainsKey(key))
+                _dropKeys.Add(key);
+        }
+
+        for (int i = 0; i < _dropKeys.Count; i++)
+        {
+            _beltBatches[_dropKeys[i]].QueueFree();
+            _beltBatches.Remove(_dropKeys[i]);
+        }
+
+        int instances = 0;
+        foreach (var pair in _beltGroups)
+        {
+            var mesh = MeshForBeltKey(pair.Key, tileM, out float yLift);
+            if (!_beltBatches.TryGetValue(pair.Key, out var batch))
+            {
+                batch = new MultiMeshInstance3D
+                {
+                    Name = BeltNodeName(pair.Key),
+                    Multimesh = new MultiMesh
+                    {
+                        TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
+                    },
+                };
+                AddChild(batch);
+                _beltBatches[pair.Key] = batch;
+            }
+
+            var mm = batch.Multimesh;
+            mm.TransformFormat = MultiMesh.TransformFormatEnum.Transform3D;
+            mm.Mesh = mesh;
+            batch.MaterialOverride = pair.Key == FallbackMeshKey ? BeltGoldMat : null;
+            var indices = pair.Value;
+            mm.InstanceCount = indices.Count;
+            for (int i = 0; i < indices.Count; i++)
+            {
+                var belt = _belts[indices[i]];
+                mm.SetInstanceTransform(i, InstanceXf(in belt, tileM, yLift));
+            }
+
+            instances += indices.Count;
+        }
+
+        _beltInstanceTotal = instances;
+        SyncBeltLabel();
+    }
+
+    private void SyncBeltLabel()
+    {
+        if (_belts.Count == 0)
+        {
+            if (_beltLabel is not null)
+            {
+                _beltLabel.QueueFree();
+                _beltLabel = null;
+            }
+
+            return;
+        }
+
+        if (_beltLabel is not null)
+            return;
+
+        _beltLabel = new Node3D { Name = Prefix + "Belt" };
+        _beltLabel.AddChild(new Label3D
+        {
+            Name = "Label",
+            Text = "Conveyor Belt",
+            Position = new Vector3(0f, 0.5f, 0f),
+            FontSize = 36,
+            OutlineSize = LabelOutlineSize,
+            PixelSize = LabelPixelSize,
+            Modulate = Colors.White,
+            Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+        });
+        AddChild(_beltLabel);
+    }
+
+    private void SyncLaneItems(in ConstructFrame frame)
+    {
+        _laneWorld.Clear();
+        EnsureLaneMesh();
+        for (int i = 0; i < frame.LaneItems.Count; i++)
         {
             var item = frame.LaneItems[i];
             var at = ConstructPlacement.LaneItem(item.Tiles, item.Facing, item.PositionCm, item.Lane, frame.TileCm);
-            if (i == _laneItems.Count)
+            _laneWorld.Add(new Vector3(at.X, at.Y + _laneYLift, at.Z));
+        }
+
+        if (_laneWorld.Count == 0)
+        {
+            if (_laneBatch is not null)
+                _laneBatch.Multimesh.InstanceCount = 0;
+            return;
+        }
+
+        if (_laneBatch is null)
+        {
+            _laneBatch = new MultiMeshInstance3D
             {
-                var node = new Node3D
+                Name = LanePrefix + "Batch",
+                Multimesh = new MultiMesh
                 {
-                    Name = LanePrefix + item.Segment + "_" + item.Lane + "_" + i,
-                    Position = new Vector3(at.X, at.Y, at.Z),
-                };
-                node.AddChild(new MeshInstance3D
-                {
-                    Mesh = new BoxMesh
-                    {
-                        Size = new Vector3(0.22f, ConstructPlacement.LaneItemHeightMeters, 0.28f),
-                    },
-                    MaterialOverride = MailPaperMat,
-                    Position = new Vector3(0f, ConstructPlacement.LaneItemHeightMeters * 0.5f, 0f),
-                });
-                node.AddChild(new Label3D
-                {
-                    Name = "Label",
-                    Text = "Mail",
-                    Position = new Vector3(0f, 0.35f, 0f),
-                    FontSize = 28,
-                    OutlineSize = LabelOutlineSize,
-                    PixelSize = LabelPixelSize,
-                    Modulate = Colors.White,
-                    Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-                });
-                AddChild(node);
-                _laneItems.Add(node);
-            }
-            else
+                    TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
+                    Mesh = _laneMesh,
+                },
+                MaterialOverride = _lanePaper ? MailPaperMat : null,
+            };
+            AddChild(_laneBatch);
+        }
+        else
+        {
+            _laneBatch.Multimesh.Mesh = _laneMesh;
+            _laneBatch.MaterialOverride = _lanePaper ? MailPaperMat : null;
+        }
+    }
+
+    private void PushLaneInstances()
+    {
+        if (_laneBatch is null)
+            return;
+
+        var cam = GetViewport()?.GetCamera3D();
+        _laneVisible.Clear();
+        for (int i = 0; i < _laneWorld.Count; i++)
+        {
+            var at = _laneWorld[i];
+            if (cam is not null)
             {
-                _laneItems[i].Position = new Vector3(at.X, at.Y, at.Z);
+                float meters = ArtLod.HorizontalMeters(at.X, at.Z, cam.GlobalPosition.X, cam.GlobalPosition.Z);
+                if (!LaneItemVisible(meters))
+                    continue;
             }
+
+            _laneVisible.Add(new Transform3D(Basis.Identity, at));
+        }
+
+        var mm = _laneBatch.Multimesh;
+        mm.TransformFormat = MultiMesh.TransformFormatEnum.Transform3D;
+        mm.InstanceCount = _laneVisible.Count;
+        for (int i = 0; i < _laneVisible.Count; i++)
+            mm.SetInstanceTransform(i, _laneVisible[i]);
+    }
+
+    private void EnsureLaneMesh()
+    {
+        if (_laneMesh is not null)
+            return;
+        if (ArtMesh.TryMesh(ArtMesh.MailLetter) is { } letter)
+        {
+            _laneMesh = letter;
+            _laneYLift = 0f;
+            _lanePaper = false;
+            return;
+        }
+
+        _laneMesh = new BoxMesh
+        {
+            Size = new Vector3(0.22f, ConstructPlacement.LaneItemHeightMeters, 0.28f),
+        };
+        _laneYLift = ConstructPlacement.LaneItemHeightMeters * 0.5f;
+        _lanePaper = true;
+    }
+
+    private static string BeltNodeName(string key)
+    {
+        if (key == FallbackMeshKey)
+            return Prefix + "Belt_box";
+        int slash = key.LastIndexOf('/');
+        string file = slash >= 0 ? key[(slash + 1)..] : key;
+        return Prefix + "Belt_" + file;
+    }
+
+    private static string BeltMeshKey(string defId)
+    {
+        if (ArtMesh.TryPathForConstruct(defId, out var path) && ArtMesh.TryMesh(path) is not null)
+            return path;
+        return FallbackMeshKey;
+    }
+
+    private static Mesh MeshForBeltKey(string key, float tileM, out float yLift)
+    {
+        if (key != FallbackMeshKey && ArtMesh.TryMesh(key) is { } mesh)
+        {
+            yLift = ArtMesh.InstanceYOffset(key);
+            return mesh;
+        }
+
+        var size = ConstructPlacement.BoxSize(BuildingBehaviour.Belt, 1, 1, Facing.North, tileM);
+        yLift = size.Y * 0.5f;
+        return new BoxMesh { Size = new Vector3(size.X, size.Y, size.Z) };
+    }
+
+    private static Transform3D InstanceXf(in ConstructView view, float tileM, float yLift)
+    {
+        var origin = ConstructPlacement.Origin(view.Tile, view.FootprintW, view.FootprintH, view.Rotation, tileM);
+        var toward = ConstructPlacement.Toward(view.Rotation);
+        var dir = new Vector3(toward.X, 0f, toward.Z);
+        var basis = dir.LengthSquared() < 1e-8f
+            ? Basis.Identity
+            : Basis.LookingAt(dir, Vector3.Up, useModelFront: true);
+        return new Transform3D(basis, new Vector3(origin.X, origin.Y + yLift, origin.Z));
+    }
+
+    private static bool LaneItemVisible(float meters)
+    {
+        switch (ArtLod.ForDistance(meters))
+        {
+            case ArtLodLevel.Lo0:
+            case ArtLodLevel.Lo1:
+                return true;
+            case ArtLodLevel.Lo2:
+                return false;
+            default:
+            {
+                ArtLodLevel exhausted = ArtLod.ForDistance(meters);
+                throw new ArgumentOutOfRangeException(nameof(meters), exhausted, null);
+            }
+        }
+    }
+
+    private static bool IsBatchedBelt(BuildingBehaviour behaviour)
+    {
+        switch (behaviour)
+        {
+            case BuildingBehaviour.Belt:
+                return true;
+            case BuildingBehaviour.Container:
+            case BuildingBehaviour.Wall:
+            case BuildingBehaviour.Gate:
+            case BuildingBehaviour.Sorter:
+            case BuildingBehaviour.Splitter:
+            case BuildingBehaviour.Merger:
+            case BuildingBehaviour.Inserter:
+            case BuildingBehaviour.Pipe:
+            case BuildingBehaviour.Spike:
+            case BuildingBehaviour.Turret:
+            case BuildingBehaviour.Alarm:
+            case BuildingBehaviour.VehicleDepot:
+            case BuildingBehaviour.Port:
+            case BuildingBehaviour.Pump:
+            case BuildingBehaviour.Pier:
+                return false;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(behaviour), behaviour, null);
         }
     }
 

@@ -409,6 +409,54 @@ host_worldstage_smoke() {
   test "$boxes" -ge 2 || fail "WorldStage dump expected at least 2 mailboxes, got $boxes: $(cat "$dump")"
 }
 
+host_packed_belts_smoke() {
+  echo "==> headless host packed-belts frame dump"
+  local reports report dump log
+  reports="$(mktemp -d)"
+  report="$reports/report.json"
+  dump="$reports/frame-dump.txt"
+  log="$(mktemp)"
+  if ! godot --headless --display-driver headless --path "$PROJECT_PATH" -- \
+    --host --packed-belts --quit-after-ms=8000 --report="$report" --frame-dump="$dump" \
+    >"$log" 2>&1; then
+    cat "$log"
+    fail "host packed-belts process exited non-zero"
+  fi
+  if [[ ! -f "$report" ]]; then
+    cat "$log"
+    fail "host packed-belts did not write a report"
+  fi
+  if [[ ! -f "$dump" ]]; then
+    cat "$log"
+    fail "host packed-belts did not write a FRAME_DUMP sidecar"
+  fi
+  cat "$report"
+  echo
+  echo "---- $dump ----"
+  cat "$dump"
+  echo
+  grep -q '"state":"Playing"' "$report" || fail "host packed-belts report is not Playing: $(cat "$report")"
+  need_jq
+  jq -e '
+    .state == "Playing"
+    and .constructCounts.belts == 400
+  ' "$report" >/dev/null \
+    || fail "host packed-belts report failed jq schema: $(cat "$report")"
+  grep -q 'FRAME_DUMP' "$dump" || fail "missing FRAME_DUMP: $(cat "$dump")"
+  grep -q 'FRAME_DUMP_END' "$dump" || fail "missing FRAME_DUMP_END: $(cat "$dump")"
+  grep -Fqx "limitMs=16.7" "$dump" || fail "FRAME_DUMP missing limitMs=16.7: $(cat "$dump")"
+  grep -Fqx "pass=true" "$dump" || fail "FRAME_DUMP pass is not true: $(cat "$dump")"
+  local instances avg
+  instances="$(grep '^instances=' "$dump" | head -n1 | cut -d= -f2)"
+  instances="${instances// /}"
+  test -n "$instances" || fail "FRAME_DUMP missing instances=: $(cat "$dump")"
+  test "$instances" -ge 400 || fail "FRAME_DUMP instances expected >= 400, got $instances: $(cat "$dump")"
+  avg="$(grep '^avgMs=' "$dump" | head -n1 | cut -d= -f2)"
+  test -n "$avg" || fail "FRAME_DUMP missing avgMs=: $(cat "$dump")"
+  awk -v avg="$avg" 'BEGIN { exit !(avg+0 <= 16.7) }' \
+    || fail "FRAME_DUMP avgMs $avg exceeded 16.7: $(cat "$dump")"
+}
+
 host_interact_smoke() {
   echo "==> headless host debug-helper=interact pickup and deliver"
   local report log
@@ -785,7 +833,7 @@ host_leave_smoke() {
 
 usage() {
   cat <<'EOF'
-Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|shop|debug|build|join|play|debug-world|debug-helpers|worldstage|interact|live-overlay|live-hud|live-map|live-shop|live-build|leave]
+Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|shop|debug|build|join|play|debug-world|debug-helpers|worldstage|packed-belts|interact|live-overlay|live-hud|live-map|live-shop|live-build|leave]
 
   verify   Godot 4.7.2 .NET on PATH, --headless --quit, dotnet 8.x
   import   godot --import + dotnet build of game/
@@ -803,6 +851,7 @@ Usage: tools/godot/ci.sh [all|verify|import|boot|hud|overlay|map|lobby|overlays|
   debug-world solo Host --debug-world report (2 houses, hash 0x4CF184F2FA4D4EEE)
   debug-helpers solo Host --debug-world --debug-helper=intake; local pawn at Intake (1100, 500)
   worldstage solo Host --debug-world report plus WorldStage/ConstructStage dump (PO, Mail, factory)
+  packed-belts solo Host --packed-belts plus --frame-dump=; 400 belt_mk1 tiles, instances>=400, avgMs<=16.7
   interact solo Host --debug-world --debug-helper=interact; pickup Intake mail, deliver, wallet 8
   live-overlay solo Host --debug-world --debug-helper=live-overlay; pickup, open overlay, dump live cell text
   live-hud solo Host --debug-world report plus live HUD dump (Playing / HudSnapshot, not Placeholder)
@@ -865,6 +914,9 @@ case "$cmd" in
   worldstage)
     host_worldstage_smoke
     ;;
+  packed-belts)
+    host_packed_belts_smoke
+    ;;
   interact)
     host_interact_smoke
     ;;
@@ -904,6 +956,7 @@ case "$cmd" in
     host_debug_world_smoke
     host_debug_helpers_smoke
     host_worldstage_smoke
+    host_packed_belts_smoke
     host_interact_smoke
     host_live_overlay_smoke
     host_live_hud_smoke

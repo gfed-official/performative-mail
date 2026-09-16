@@ -14,10 +14,17 @@ public sealed class ConstructStageBootTests
         Assert.Contains("ConstructPlacement.LaneItem", source);
         Assert.Contains("BoxMesh", source);
         Assert.Contains("ArtMesh.TryPathForConstruct", source);
+        Assert.Contains("ArtMesh.TryMesh", source);
         Assert.Contains("ArtMesh.TryInstantiate", source);
         Assert.Contains("ArtMesh.InstanceYOffset", source);
         Assert.Contains("useModelFront: true", source);
         Assert.Contains("view.DefId", source);
+        Assert.Contains("MultiMesh", source);
+        Assert.Contains("ArtLod.ForDistance", source);
+        Assert.Contains("case ArtLodLevel.Lo2:", source);
+        Assert.Contains("return false;", source);
+        Assert.Contains("\"Conveyor Belt\"", source);
+        Assert.Contains("instances=", source);
         Assert.Contains("#C4A84A", source);
         Assert.Contains("#8B5A2B", source);
         Assert.Contains("#A67C52", source);
