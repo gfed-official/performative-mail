@@ -418,7 +418,7 @@ public partial class ConstructStage : Node3D
             case ArtLodLevel.Lo1:
                 return true;
             case ArtLodLevel.Lo2:
-                return meters <= ArtLod.Lo2Meters;
+                return false;
             default:
             {
                 ArtLodLevel exhausted = ArtLod.ForDistance(meters);

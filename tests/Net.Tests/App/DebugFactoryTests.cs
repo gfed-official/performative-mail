@@ -62,6 +62,15 @@ public sealed class DebugFactoryTests
         Assert.NotEmpty(boot.World.Belts.Segments);
         for (int i = 0; i < boot.World.Belts.Segments.Count; i++)
             Assert.True(boot.World.Belts.Segments[i].Lane(0).Count >= 1);
+
+        var po = boot.Tables.PostOffice.Tile;
+        float tileM = boot.Tables.TileCm / 100f;
+        float dx = (DebugFactory.PackedStart.X - po.X) * tileM;
+        float dy = (DebugFactory.PackedStart.Y - po.Y) * tileM;
+        float meters = MathF.Sqrt(dx * dx + dy * dy);
+        Assert.True(
+            meters <= 150f,
+            $"packed grid is {meters} m from the PO, outside the 150 m lane interest radius");
     }
 
     [Fact]

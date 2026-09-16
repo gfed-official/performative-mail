@@ -20,7 +20,9 @@ public sealed class ConstructStageBootTests
         Assert.Contains("useModelFront: true", source);
         Assert.Contains("view.DefId", source);
         Assert.Contains("MultiMesh", source);
-        Assert.Contains("ArtLod.Lo2Meters", source);
+        Assert.Contains("ArtLod.ForDistance", source);
+        Assert.Contains("case ArtLodLevel.Lo2:", source);
+        Assert.Contains("return false;", source);
         Assert.Contains("\"Conveyor Belt\"", source);
         Assert.Contains("instances=", source);
         Assert.Contains("#C4A84A", source);

@@ -57,6 +57,31 @@ public sealed class DebugWorldSessionTests
     }
 
     [Fact]
+    public void HostPacked_ReachesPlayingWithFourHundredBelts()
+    {
+        var stack = new LoopbackStack();
+        using var host = new PlaySessionMachine(stack);
+        var now = TimeSpan.Zero;
+        host.HostPacked();
+        Pump(host, ref now, 8);
+
+        var play = Assert.IsType<PlaySession.Playing>(host.State);
+        Assert.NotNull(play.World);
+        Assert.Equal(WorldGen.SmallIslandTiles, play.World.Width);
+        Assert.Equal(0x821670054873680EUL, WorldHash.Compute(play.World));
+        Assert.Equal(DebugFactory.PackedBeltTiles, play.Constructs.Placed.Count);
+        int belts = 0;
+        for (int i = 0; i < play.Constructs.Placed.Count; i++)
+        {
+            if (play.Constructs.Placed[i].DefId == "belt_mk1")
+                belts++;
+        }
+
+        Assert.Equal(400, belts);
+        Assert.True(play.Constructs.LaneItems.Count >= 1);
+    }
+
+    [Fact]
     public void Render_DebugWorld_KeepsSchemaWithTwoHouses()
     {
         var session = GoldenPlaying(DebugWorld.Tables());
