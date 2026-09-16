@@ -26,6 +26,11 @@ var shift2 = BalanceSim.RunHand(balance, 2);
 Console.WriteLine(BalanceSim.Line(in shift1));
 Console.WriteLine(BalanceSim.Line(in shift2));
 
+var shift3 = BalanceSim.RunSoloShift3(balance);
+var shift5 = BalanceSim.RunSoloShift5(balance);
+Console.WriteLine(BalanceSim.AutomationLine(in shift3));
+Console.WriteLine(BalanceSim.AutomationLine(in shift5));
+
 var run = FiveShiftRun.Drive(balance);
 for (byte shift = 1; shift <= 5; shift++)
 {
@@ -34,4 +39,4 @@ for (byte shift = 1; shift <= 5; shift++)
 }
 
 Console.WriteLine(BalanceSim.DurationLine(run.DurationSeconds));
-return BalanceSim.SoloHandShift1WinShift2Fail(balance) && run.GateHolds ? 0 : 1;
+return BalanceSim.SoloHandShift1WinShift2Fail(balance) && BalanceSim.SoloShift3And5Met(balance) && run.GateHolds ? 0 : 1;
