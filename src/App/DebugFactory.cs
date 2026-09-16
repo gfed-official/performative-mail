@@ -12,7 +12,10 @@ public static class DebugFactory
     public static readonly TileCoord ChestTile = new(7, 3);
     public static readonly TileCoord BeltStart = new(8, 3);
     public static readonly TileCoord SorterTile = new(12, 2);
+    public static readonly TileCoord PackedStart = new(140, 140);
     public const int BeltTiles = 4;
+    public const int PackedGrid = 20;
+    public const int PackedBeltTiles = 400;
     public const Facing Travel = Facing.East;
 
     public static int Seed(SimWorld world)
@@ -31,6 +34,26 @@ public static class DebugFactory
         world.Belts.Compile(constructs.All);
         if (world.Belts.Segments.Count > 0)
             world.Belts.Segments[0].TryInsert(0, 1, 0.25f);
+        return placed;
+    }
+
+    public static int SeedPacked(SimWorld world)
+    {
+        if (world is null) throw new ArgumentNullException(nameof(world));
+        if (world.Constructs is not ConstructRegistry constructs)
+            return 0;
+
+        int placed = 0;
+        for (int y = 0; y < PackedGrid; y++)
+        {
+            for (int x = 0; x < PackedGrid; x++)
+                placed += Place(constructs, BeltNetwork.BuildingId, new TileCoord(PackedStart.X + x, PackedStart.Y + y));
+        }
+
+        world.Belts.Compile(constructs.All);
+        int itemId = 1;
+        for (int i = 0; i < world.Belts.Segments.Count; i++)
+            world.Belts.Segments[i].TryInsert(0, itemId++, 0.25f);
         return placed;
     }
 

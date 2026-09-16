@@ -83,6 +83,7 @@ public sealed class DebugWorldSessionTests
         Assert.Contains("StartHost(ArcadeSession.Create)", source);
         Assert.DoesNotContain("StartHost(ArcadeSession.Create())", source);
         Assert.Contains("StartHost(ArcadeSession.CreateDebug)", source);
+        Assert.Contains("StartHost(ArcadeSession.CreatePacked)", source);
         string start = SliceMethod(source, "StartHost");
         int leave = start.IndexOf("Leave();", StringComparison.Ordinal);
         int tryAt = start.IndexOf("try", StringComparison.Ordinal);

@@ -1,6 +1,7 @@
 using PerformativeMail.App;
 using PerformativeMail.Sim.Automation;
 using PerformativeMail.Sim.Content;
+using PerformativeMail.Sim.World;
 
 namespace PerformativeMail.Net.Tests.App;
 
@@ -36,6 +37,31 @@ public sealed class DebugFactoryTests
         Assert.Equal(DebugFactory.BeltTiles, belts);
         Assert.NotEmpty(boot.World.Belts.Segments);
         Assert.True(boot.World.Belts.Segments[0].Lane(0).Count >= 1);
+    }
+
+    [Fact]
+    public void CreatePacked_PlacesFourHundredBeltMk1Tiles()
+    {
+        var boot = ArcadeSession.CreatePacked();
+        var constructs = boot.World.Constructs;
+        Assert.NotNull(constructs);
+        Assert.Equal(DebugFactory.PackedBeltTiles, constructs.Count);
+        Assert.Equal(WorldGen.SmallIslandTiles, boot.Tables.Width);
+        Assert.Equal(WorldGen.SmallIslandTiles, boot.Tables.Height);
+        Assert.NotEqual(DebugWorld.Width, boot.Tables.Width);
+        int belts = 0;
+        for (int i = 0; i < constructs.All.Count; i++)
+        {
+            Assert.Equal("belt_mk1", constructs.All[i].DefId);
+            if (constructs.All[i].DefId == BeltNetwork.BuildingId)
+                belts++;
+        }
+
+        Assert.Equal(400, belts);
+        Assert.Equal(DebugFactory.PackedBeltTiles, belts);
+        Assert.NotEmpty(boot.World.Belts.Segments);
+        for (int i = 0; i < boot.World.Belts.Segments.Count; i++)
+            Assert.True(boot.World.Belts.Segments[i].Lane(0).Count >= 1);
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Godot;
 using PerformativeMail.App;
@@ -22,6 +23,7 @@ public partial class Main : Node3D
     private WorldStage _world = null!;
     private ConstructStage _constructs = null!;
     private Camera3D _menuCamera = null!;
+    private Camera3D _packedCamera = null!;
     private LineEdit _address = null!;
     private Label _status = null!;
     private Button _host = null!;
@@ -42,6 +44,10 @@ public partial class Main : Node3D
     private bool _pauseHeld;
     private bool _shopHeld;
     private string? _reportPath;
+    private string? _frameDumpPath;
+    private bool _packedBelts;
+    private readonly FrameTimeLog _frameTimes = new();
+    private const int FrameWarmup = 30;
     private string? _hudDumpPath;
     private string? _overlayDumpPath;
     private string? _mapDumpPath;
@@ -262,6 +268,8 @@ public partial class Main : Node3D
                 _usingMenuCamera = false;
                 _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing), HeldMailDistrict(playing));
                 _pawns.SyncVehicles(playing.Vehicles);
+                if (_packedBelts)
+                    _packedCamera.Current = true;
                 _world.Sync(playing.World);
                 _world.SyncHarvest(playing.Resources);
                 _constructs.Sync(playing.Constructs);
@@ -385,6 +393,13 @@ public partial class Main : Node3D
         };
         AddChild(_menuCamera);
         _menuCamera.LookAt(new Vector3(0f, FirstPersonLook.EyeHeightMeters, 0f));
+
+        _packedCamera = new Camera3D
+        {
+            Name = "PackedBeltCamera",
+            Current = false,
+        };
+        AddChild(_packedCamera);
 
         _world = new WorldStage();
         AddChild(_world);
@@ -1145,6 +1160,14 @@ public partial class Main : Node3D
         new(RunPhase.Delivery, 1, 0, 2700, new Cents(1820), interact,
             new Cents(640), new Cents(2214), 23, 100, 0);
 
+    public override void _Process(double delta)
+    {
+        _ = delta;
+        if (!_packedBelts || _session.State is not PlaySession.Playing)
+            return;
+        _frameTimes.Add(GetProcessDeltaTime() * 1000.0);
+    }
+
     private void OnJoinPressed()
     {
         if (!JoinTarget.TryParse(_address.Text, SessionOptions.DefaultPort, out var target))
@@ -1162,6 +1185,7 @@ public partial class Main : Node3D
         string? join = null;
         bool host = false;
         bool debugWorld = false;
+        bool packedBelts = false;
         for (int i = 0; i < args.Length; i++)
         {
             var arg = args[i];
@@ -1169,12 +1193,16 @@ public partial class Main : Node3D
                 host = true;
             else if (arg == "--debug-world")
                 debugWorld = true;
+            else if (arg == "--packed-belts")
+                packedBelts = true;
             else if (arg == "--walk")
                 _walk = true;
             else if (arg.StartsWith("--join=", StringComparison.Ordinal))
                 join = arg.Substring("--join=".Length);
             else if (arg.StartsWith("--report=", StringComparison.Ordinal))
                 _reportPath = arg.Substring("--report=".Length);
+            else if (arg.StartsWith("--frame-dump=", StringComparison.Ordinal))
+                _frameDumpPath = arg.Substring("--frame-dump=".Length);
             else if (arg == "--inspect-hud")
                 _inspectHud = true;
             else if (arg == "--inspect-overlay")
@@ -1216,12 +1244,27 @@ public partial class Main : Node3D
                 _quitAfterMs = ms;
         }
 
-        if (host && debugWorld)
+        _packedBelts = packedBelts;
+        if (packedBelts)
+            AimPackedCamera();
+        if (host && packedBelts)
+            _session.HostPacked();
+        else if (host && debugWorld)
             _session.HostDebug();
         else if (host)
             _session.Host();
         else if (join is not null && JoinTarget.TryParse(join, SessionOptions.DefaultPort, out var target))
             _session.Join(target);
+    }
+
+    private void AimPackedCamera()
+    {
+        var origin = WorldTilePlacement.FootprintOrigin(
+            DebugFactory.PackedStart,
+            new TileCoord(DebugFactory.PackedGrid, DebugFactory.PackedGrid),
+            WorldGen.SmallIslandTileCm / 100f);
+        _packedCamera.Position = new Vector3(origin.X, 80f, origin.Z);
+        _packedCamera.LookAt(new Vector3(origin.X, 0f, origin.Z), Vector3.Forward);
     }
 
     private void MaybeFinish(PlaySession state)
@@ -1281,7 +1324,45 @@ public partial class Main : Node3D
             dump.AppendLine("BUILD_DUMP_END");
             File.WriteAllText(_buildDumpPath, dump.ToString());
         }
+        if (_frameDumpPath is not null && state is PlaySession.Playing playingDump)
+            File.WriteAllText(_frameDumpPath, FrameDump(playingDump));
         GetTree().Quit();
+    }
+
+    private string FrameDump(PlaySession.Playing playing)
+    {
+        int belts = 0;
+        var placed = playing.Constructs.Placed;
+        for (int i = 0; i < placed.Count; i++)
+        {
+            if (placed[i].Behaviour == BuildingBehaviour.Belt)
+                belts++;
+        }
+
+        FrameTimeReport report;
+        if (_frameTimes.Count > FrameWarmup)
+            report = _frameTimes.Close(FrameWarmup);
+        else
+            report = new FrameTimeReport(FrameWarmup, 0, 0, 0, false);
+
+        var dump = new StringBuilder();
+        dump.AppendLine("FRAME_DUMP");
+        dump.Append("belts=");
+        dump.AppendLine(belts.ToString(CultureInfo.InvariantCulture));
+        dump.Append("instances=");
+        dump.AppendLine(_constructs.BeltInstanceCount.ToString(CultureInfo.InvariantCulture));
+        dump.Append("avgMs=");
+        dump.AppendLine(report.MeanMs.ToString("G", CultureInfo.InvariantCulture));
+        dump.Append("p99Ms=");
+        dump.AppendLine(report.P99Ms.ToString("G", CultureInfo.InvariantCulture));
+        dump.Append("samples=");
+        dump.AppendLine(report.SampleCount.ToString(CultureInfo.InvariantCulture));
+        dump.Append("limitMs=");
+        dump.AppendLine(FrameTimeBudget.LimitMs.ToString(CultureInfo.InvariantCulture));
+        dump.Append("pass=");
+        dump.AppendLine(report.Pass ? "true" : "false");
+        dump.Append("FRAME_DUMP_END");
+        return dump.ToString();
     }
 
     private void WriteReport(PlaySession state, string path) =>
