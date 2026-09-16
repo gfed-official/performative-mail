@@ -14,13 +14,19 @@ public sealed class FactoryDesyncTests
     {
         var report = FactoryDesyncSession.Run();
         var line =
-            $"U10.3 segments={report.Segments} ticks={report.TicksRun} resends={report.ChecksumResends} resendsPerSegmentPerMinute={report.ResendsPerSegmentPerMinute:F3} earlyEndpointRenders={report.EarlyEndpointRenders} pass={report.Pass}";
+            $"U10.3 segments={report.Segments} ticks={report.TicksRun} resends={report.ChecksumResends} resendsPerSegmentPerMinute={report.ResendsPerSegmentPerMinute:F3} checksums={report.ChecksumsReceived} endpointConfirms={report.EndpointConfirms} earlyEndpointRenders={report.EarlyEndpointRenders} pass={report.Pass}";
         Console.WriteLine(line);
         _output.WriteLine(line);
 
         Assert.Equal(FactoryDesyncReport.SegmentCount, report.Segments);
         Assert.Equal(SoakDuration.TicksForSimMinutes(10), report.TicksRun);
         Assert.Equal(0, report.EarlyEndpointRenders);
+        Assert.True(
+            report.ChecksumsReceived >= report.Segments * 2,
+            $"Soak observed {report.ChecksumsReceived} LaneChecksum packets.");
+        Assert.True(
+            report.EndpointConfirms >= report.Segments,
+            $"Soak confirmed {report.EndpointConfirms} endpoint removes.");
         Assert.True(
             report.ResendsPerSegmentPerMinute <= FactoryDesyncReport.MaxResendsPerSegmentPerMinute,
             $"resends per segment per minute {report.ResendsPerSegmentPerMinute:F3} exceeds {FactoryDesyncReport.MaxResendsPerSegmentPerMinute}");

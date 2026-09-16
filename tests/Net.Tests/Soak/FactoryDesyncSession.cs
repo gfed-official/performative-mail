@@ -30,6 +30,7 @@ public sealed class FactoryDesyncSession
     private int _nextItem = 1;
     private int _resends;
     private int _earlyRenders;
+    private int _endpointConfirms;
 
     private FactoryDesyncSession()
     {
@@ -116,13 +117,17 @@ public sealed class FactoryDesyncSession
         bool pass = _server.World.Belts.Segments.Count == FactoryDesyncReport.SegmentCount
             && ticks == SoakDuration.TicksForSimMinutes(10)
             && rate <= FactoryDesyncReport.MaxResendsPerSegmentPerMinute
-            && _earlyRenders == 0;
+            && _earlyRenders == 0
+            && _client.LaneChecksumCount > 0
+            && _endpointConfirms > 0;
 
         return new FactoryDesyncReport
         {
             Segments = _server.World.Belts.Segments.Count,
             TicksRun = ticks,
             ChecksumResends = _resends,
+            ChecksumsReceived = _client.LaneChecksumCount,
+            EndpointConfirms = _endpointConfirms,
             ResendsPerSegmentPerMinute = rate,
             EarlyEndpointRenders = _earlyRenders,
             Pass = pass
@@ -149,7 +154,10 @@ public sealed class FactoryDesyncSession
         {
             var segment = segments[i];
             for (int lane = 0; lane < BeltNetwork.LaneCount; lane++)
-                segment.TryTakeHead(lane, out _);
+            {
+                if (segment.TryTakeHead(lane, out _))
+                    _endpointConfirms++;
+            }
         }
     }
 

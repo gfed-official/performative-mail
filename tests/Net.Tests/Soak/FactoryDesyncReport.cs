@@ -12,6 +12,10 @@ public sealed class FactoryDesyncReport
 
     public required int ChecksumResends { get; init; }
 
+    public required int ChecksumsReceived { get; init; }
+
+    public required int EndpointConfirms { get; init; }
+
     public required double ResendsPerSegmentPerMinute { get; init; }
 
     public required int EarlyEndpointRenders { get; init; }
