@@ -31,10 +31,24 @@ public sealed class ArtMeshBootTests
         Assert.Contains("res://art/world/pier_01.glb", source);
         Assert.Contains("res://art/world/oil_pump_01.glb", source);
         Assert.Contains("res://art/world/port_01.glb", source);
+        Assert.Contains("res://art/world/address_sorter_01.glb", source);
+        Assert.Contains("res://art/world/belt_mk1.glb", source);
+        Assert.Contains("res://art/world/inserter_01.glb", source);
+        Assert.Contains("res://art/world/splitter_01.glb", source);
+        Assert.Contains("res://art/world/merger_01.glb", source);
+        Assert.Contains("res://art/world/chest_01.glb", source);
+        Assert.Contains("res://art/world/wall_wood_01.glb", source);
         Assert.Contains("TryPathForConstruct", source);
         Assert.Contains("case \"pump\"", source);
         Assert.Contains("case \"pier\"", source);
         Assert.Contains("case \"small_port\"", source);
+        Assert.Contains("case \"address_sorter_mk1\"", source);
+        Assert.Contains("case \"belt_mk1\"", source);
+        Assert.Contains("case \"inserter\"", source);
+        Assert.Contains("case \"splitter\"", source);
+        Assert.Contains("case \"merger\"", source);
+        Assert.Contains("case \"chest\"", source);
+        Assert.Contains("case \"wall_wood\"", source);
         Assert.Contains("PierPileSinkMeters", source);
         Assert.Contains("InstanceYOffset", source);
         Assert.Contains("res://art/world/resource_wood_01.glb", source);
@@ -108,6 +122,19 @@ public sealed class ArtMeshBootTests
         AssertNonEmptyGlb(Path.Combine(art, "world", "oil_pump_01.glb"));
         AssertNonEmptyGlb(Path.Combine(art, "world", "pier_01.glb"));
         AssertNonEmptyGlb(Path.Combine(art, "world", "port_01.glb"));
+    }
+
+    [Fact]
+    public void P6ConstructGlbs_ArePresentOnDisk()
+    {
+        string art = FindArtRoot();
+        AssertNonEmptyGlb(Path.Combine(art, "world", "address_sorter_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "belt_mk1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "inserter_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "splitter_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "merger_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "chest_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "world", "wall_wood_01.glb"));
     }
 
     [Fact]

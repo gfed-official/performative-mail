@@ -35,6 +35,13 @@ public static class ArtMesh
     public const string Pier = "res://art/world/pier_01.glb";
     public const string OilPump = "res://art/world/oil_pump_01.glb";
     public const string Port = "res://art/world/port_01.glb";
+    public const string AddressSorter = "res://art/world/address_sorter_01.glb";
+    public const string BeltMk1 = "res://art/world/belt_mk1.glb";
+    public const string Inserter = "res://art/world/inserter_01.glb";
+    public const string Splitter = "res://art/world/splitter_01.glb";
+    public const string Merger = "res://art/world/merger_01.glb";
+    public const string Chest = "res://art/world/chest_01.glb";
+    public const string WallWood = "res://art/world/wall_wood_01.glb";
     public const string ResourceWood = "res://art/world/resource_wood_01.glb";
     public const string ResourceWoodStump = "res://art/world/resource_wood_stump_01.glb";
     public const string ResourceFiber = "res://art/world/resource_fiber_01.glb";
@@ -173,6 +180,27 @@ public static class ArtMesh
             case "port":
             case "small_port":
                 path = Port;
+                return true;
+            case "address_sorter_mk1":
+                path = AddressSorter;
+                return true;
+            case "belt_mk1":
+                path = BeltMk1;
+                return true;
+            case "inserter":
+                path = Inserter;
+                return true;
+            case "splitter":
+                path = Splitter;
+                return true;
+            case "merger":
+                path = Merger;
+                return true;
+            case "chest":
+                path = Chest;
+                return true;
+            case "wall_wood":
+                path = WallWood;
                 return true;
             default:
                 path = "";
