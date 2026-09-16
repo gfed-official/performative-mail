@@ -35,6 +35,7 @@ public sealed class PlaySessionMachine : IDisposable
     private bool _shopRolled;
     private ContentBundle? _bundle;
     private BuildModeState? _build;
+    private FilterPanelState? _filter;
     private uint _placeReq;
 
     public int PlaceLineRequests { get; private set; }
@@ -57,6 +58,8 @@ public sealed class PlaySessionMachine : IDisposable
     }
 
     public BuildModeState? Build => _build;
+
+    public FilterPanelState? Filter => _filter;
 
     public bool ClockPaused { get; private set; }
 
@@ -130,6 +133,7 @@ public sealed class PlaySessionMachine : IDisposable
         ClockPaused = false;
         ResetShop();
         _build?.Close();
+        _filter?.Close();
         _live.Dispose();
         _live = Live.None.Instance;
         _pawns.Clear();
@@ -354,6 +358,54 @@ public sealed class PlaySessionMachine : IDisposable
     }
 
     public void CloseBuild() => _build?.Close();
+
+    public void CloseFilter() => _filter?.Close();
+
+    public bool TryOpenSorterFilter(TileCoord tile)
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+        _filter ??= new FilterPanelState();
+        if (_live.Client.Constructs is ConstructRegistry client &&
+            client.TryGetAt(tile, out var row) &&
+            _filter.TryOpen(row.DefId))
+            return true;
+        if (_live.Server?.World.Constructs is ConstructRegistry host &&
+            host.TryGetAt(tile, out var placed) &&
+            _filter.TryOpen(placed.DefId))
+            return true;
+        return false;
+    }
+
+    public FilterPanelFrame FilterFrame()
+    {
+        if (_filter is null)
+            return new FilterPanelFrame(false, Array.Empty<FilterChip>(), 0);
+
+        var tables = _live.Server?.Tables ?? _live.Client.GeneratedWorld;
+        var streets = tables?.Streets ?? Array.Empty<StreetRecord>();
+        IReadOnlyList<AddressId> unlocked = UnlockedAddresses(tables);
+        GridContainer? intake = null;
+        if (_live.Server is { } server &&
+            server.World.Inventory is InventorySystem inventory &&
+            server.World.Intake.Value != 0)
+            inventory.TryGetContainer(server.World.Intake, out intake);
+        else if (_live.Client.Inventory is InventorySystem clientInv &&
+                 LiveOverlay.TryFrom(clientInv, out var overlay))
+            intake = overlay.External;
+        return _filter.Frame(streets, unlocked, intake);
+    }
+
+    private static IReadOnlyList<AddressId> UnlockedAddresses(WorldTables? tables)
+    {
+        if (tables is null)
+            return Array.Empty<AddressId>();
+        var houses = tables.Houses;
+        var unlocked = new AddressId[houses.Length];
+        for (int i = 0; i < houses.Length; i++)
+            unlocked[i] = houses[i].Address;
+        return unlocked;
+    }
 
     public IReadOnlyList<ConstructRecord> PlacedConstructs()
     {
@@ -1153,6 +1205,7 @@ public sealed class PlaySessionMachine : IDisposable
         ClockPaused = false;
         ResetShop();
         _build?.Close();
+        _filter?.Close();
         _live.Dispose();
         _live = Live.None.Instance;
         _pawns.Clear();

@@ -230,11 +230,13 @@ public sealed class MainPlayBootTests
         Assert.Contains("PollMapToggle", body);
         Assert.Contains("PollShopToggle", body);
         Assert.Contains("PollBuild", body);
+        Assert.Contains("PollFilter", body);
         Assert.Contains("InputSampler.Sample", body);
         Assert.Contains("InputSampler.BuildHeld", MethodBody(ReadMain(), "PollBuild"));
         Assert.Contains("TryDragPlace", MethodBody(ReadMain(), "PollBuild"));
         Assert.Contains("TryPipetteAt", MethodBody(ReadMain(), "PollBuild"));
-        Assert.DoesNotContain("FilterPanel", ReadMain());
+        Assert.Contains("FilterPanel", ReadMain());
+        Assert.Contains("TryOpenSorterFilter", ReadMain());
     }
 
     [Fact]
