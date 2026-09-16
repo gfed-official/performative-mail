@@ -1162,10 +1162,9 @@ public partial class Main : Node3D
 
     public override void _Process(double delta)
     {
-        _ = delta;
         if (!_packedBelts || _session.State is not PlaySession.Playing)
             return;
-        _frameTimes.Add(GetProcessDeltaTime() * 1000.0);
+        _frameTimes.Add(delta * 1000.0);
     }
 
     private void OnJoinPressed()

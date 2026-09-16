@@ -343,7 +343,7 @@ public sealed class MainPlayBootTests
         Assert.Contains("_session.HostDebug()", apply);
         Assert.Contains("_session.Host()", apply);
         var main = ReadMain();
-        Assert.Contains("GetProcessDeltaTime()", main);
+        Assert.Contains("delta * 1000.0", MethodBody(ReadMain(), "_Process"));
         Assert.Contains("PackedBeltCamera", main);
         Assert.Contains("AimPackedCamera", main);
         Assert.Contains("DebugFactory.PackedStart", main);

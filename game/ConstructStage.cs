@@ -103,19 +103,13 @@ public partial class ConstructStage : Node3D
 
         SyncBelts(tileM);
         SyncLaneItems(in frame);
-        ApplyCameraLod();
+        PushLaneInstances();
     }
 
     public override void _Process(double delta)
     {
         _ = delta;
-        ApplyCameraLod();
-    }
-
-    public void ApplyCameraLod()
-    {
-        var cam = GetViewport()?.GetCamera3D();
-        PushLaneInstances(cam);
+        PushLaneInstances();
     }
 
     public void Clear()
@@ -324,11 +318,12 @@ public partial class ConstructStage : Node3D
         }
     }
 
-    private void PushLaneInstances(Camera3D? cam)
+    private void PushLaneInstances()
     {
         if (_laneBatch is null)
             return;
 
+        var cam = GetViewport()?.GetCamera3D();
         _laneVisible.Clear();
         for (int i = 0; i < _laneWorld.Count; i++)
         {
@@ -336,7 +331,7 @@ public partial class ConstructStage : Node3D
             if (cam is not null)
             {
                 float meters = ArtLod.HorizontalMeters(at.X, at.Z, cam.GlobalPosition.X, cam.GlobalPosition.Z);
-                if (!DrawBusyBeltItem(meters))
+                if (!LaneItemVisible(meters))
                     continue;
             }
 
@@ -410,7 +405,7 @@ public partial class ConstructStage : Node3D
         return new Transform3D(basis, new Vector3(origin.X, origin.Y + yLift, origin.Z));
     }
 
-    private static bool DrawBusyBeltItem(float meters)
+    private static bool LaneItemVisible(float meters)
     {
         switch (ArtLod.ForDistance(meters))
         {
