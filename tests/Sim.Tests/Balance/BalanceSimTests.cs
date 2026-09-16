@@ -144,6 +144,51 @@ public sealed class BalanceSimTests
         Assert.Throws<ArgumentNullException>(() => BalanceSim.RunFourPlayer(null!, 1));
     }
 
+    [Fact]
+    public void RunSoloShift3_TruckMeetsQuota()
+    {
+        var record = BalanceSim.RunSoloShift3(Balance);
+
+        Assert.Equal(new Cents(2340), record.Earnings);
+        Assert.Equal(QuotaBudget.For(Balance, 3, 1).Quota, record.Quota);
+        Assert.Equal(new Cents(1800), record.Quota);
+        Assert.True(record.Earnings.Value >= record.Quota.Value);
+        Assert.True(record.Met);
+        Assert.Equal(DeliveryAgent.Truck, record.Agent);
+        Assert.Equal("shift 3 truck 2340 / 1800 MET", BalanceSim.AutomationLine(in record));
+    }
+
+    [Fact]
+    public void RunSoloShift5_MixMeetsQuota()
+    {
+        var record = BalanceSim.RunSoloShift5(Balance);
+
+        Assert.Equal(new Cents(8350), record.Earnings);
+        Assert.Equal(QuotaBudget.For(Balance, 5, 1).Quota, record.Quota);
+        Assert.Equal(new Cents(4000), record.Quota);
+        Assert.True(record.Earnings.Value >= record.Quota.Value);
+        Assert.True(record.Met);
+        Assert.Equal("shift 5 truck+belt+npc 8350 / 4000 MET", BalanceSim.AutomationLine(in record));
+    }
+
+    [Fact]
+    public void SoloShift3And5Met_RepoBalance_Holds()
+    {
+        Assert.True(BalanceSim.SoloShift3And5Met(Balance));
+    }
+
+    [Fact]
+    public void RunSoloShift3_NullBalance_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() => BalanceSim.RunSoloShift3(null!));
+    }
+
+    [Fact]
+    public void RunSoloShift5_NullBalance_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() => BalanceSim.RunSoloShift5(null!));
+    }
+
     private static string FindContentRoot()
     {
         foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })

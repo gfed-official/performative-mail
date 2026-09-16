@@ -10,6 +10,9 @@ public enum DeliveryAgent : byte
     HandShift1 = 1,
     HandShift2 = 2,
     Bike = 3,
+    Truck = 4,
+    BeltLineSorter = 5,
+    NpcTruck = 6,
 }
 
 public readonly record struct ShiftRecord(
@@ -26,6 +29,9 @@ public static class BalanceSim
     public const int HandShift1ValuePerMinute = 220;
     public const int HandShift2ValuePerMinute = 180;
     public const int BikeValuePerMinute = 200;
+    public const int TruckValuePerMinute = 520;
+    public const int BeltLineSorterValuePerMinute = 900;
+    public const int NpcTruckValuePerMinute = 250;
     public const int FourPlayerCount = 4;
     public const int MaxRunSeconds = 32 * 60;
 
@@ -34,6 +40,9 @@ public static class BalanceSim
         DeliveryAgent.HandShift1 => HandShift1ValuePerMinute,
         DeliveryAgent.HandShift2 => HandShift2ValuePerMinute,
         DeliveryAgent.Bike => BikeValuePerMinute,
+        DeliveryAgent.Truck => TruckValuePerMinute,
+        DeliveryAgent.BeltLineSorter => BeltLineSorterValuePerMinute,
+        DeliveryAgent.NpcTruck => NpcTruckValuePerMinute,
         _ => throw new ArgumentOutOfRangeException(nameof(agent), agent, null),
     };
 
@@ -62,6 +71,40 @@ public static class BalanceSim
         return shift1.Met && !shift2.Met;
     }
 
+    public static ShiftRecord RunSoloShift3(BalanceTable balance)
+    {
+        if (balance is null) throw new ArgumentNullException(nameof(balance));
+
+        var agent = DeliveryAgent.Truck;
+        return RunSolo(balance, 3, agent, ValuePerMinute(agent));
+    }
+
+    public static ShiftRecord RunSoloShift5(BalanceTable balance)
+    {
+        if (balance is null) throw new ArgumentNullException(nameof(balance));
+
+        int rate = checked(
+            ValuePerMinute(DeliveryAgent.Truck)
+            + ValuePerMinute(DeliveryAgent.BeltLineSorter)
+            + ValuePerMinute(DeliveryAgent.NpcTruck));
+        return RunSolo(balance, 5, DeliveryAgent.Truck, rate);
+    }
+
+    public static bool SoloShift3And5Met(BalanceTable balance)
+    {
+        var shift3 = RunSoloShift3(balance);
+        var shift5 = RunSoloShift5(balance);
+        return shift3.Met && shift5.Met;
+    }
+
+    private static ShiftRecord RunSolo(BalanceTable balance, byte shift, DeliveryAgent agent, int rate)
+    {
+        var budget = QuotaBudget.For(balance, shift, playerCount: 1);
+        int seconds = balance.DeliverySeconds[shift - 1];
+        int earnings = checked(rate * seconds / 60);
+        return new ShiftRecord(shift, agent, new Cents(earnings), budget.Quota);
+    }
+
     public static DeliveryAgent FourPlayerAgent(byte shift) => shift switch
     {
         1 => DeliveryAgent.HandShift1,
@@ -84,6 +127,18 @@ public static class BalanceSim
     {
         string outcome = record.Met ? "MET" : "MISS";
         return $"shift {record.Shift} hand {record.Earnings.Value} / {record.Quota.Value} {outcome}";
+    }
+
+    public static string AutomationLine(in ShiftRecord record)
+    {
+        string agent = record.Shift switch
+        {
+            3 => "truck",
+            5 => "truck+belt+npc",
+            _ => throw new ArgumentOutOfRangeException(nameof(record), record.Shift, null),
+        };
+        string outcome = record.Met ? "MET" : "MISS";
+        return $"shift {record.Shift} {agent} {record.Earnings.Value} / {record.Quota.Value} {outcome}";
     }
 
     public static string PaydayLine(in ShiftRecord record)
