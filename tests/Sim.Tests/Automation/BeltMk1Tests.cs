@@ -1,3 +1,4 @@
+using PerformativeMail.Sim;
 using PerformativeMail.Sim.Automation;
 using PerformativeMail.Sim.Building;
 using PerformativeMail.Sim.Content;
@@ -539,6 +540,39 @@ public sealed class BeltMk1Tests
 
         Assert.Equal(ExpectedMetres(0f, TickClock.TickHz), Assert.Single(segment.Lane(0)).MetresFromStart, 3);
         Assert.Equal(ExpectedMetres(1f, TickClock.TickHz), Assert.Single(segment.Lane(1)).MetresFromStart, 3);
+    }
+
+    [Fact]
+    public void SimWorldTick_Lane0_ThirtyTicks_AtTwoMetres()
+    {
+        var fx = PlaceEastRun(4);
+        var world = new SimWorld();
+        world.Belts.Compile(fx.Registry.All);
+        var segment = Assert.Single(world.Belts.Segments);
+        Assert.True(segment.TryInsert(0, 11, 0f));
+
+        for (uint t = 1; t <= (uint)TickClock.TickHz; t++)
+            world.Tick(t, spawnMail: false);
+
+        Assert.Equal(ExpectedMetres(0f, TickClock.TickHz), Assert.Single(segment.Lane(0)).MetresFromStart, 3);
+        Assert.Equal(2f, Assert.Single(segment.Lane(0)).MetresFromStart, 3);
+    }
+
+    [Fact]
+    public void Step_CargoOnLane0_LetterOnLane1_StopsAtCargoBody()
+    {
+        var belts = CompileEastNetwork(4);
+        var segment = Assert.Single(belts.Segments);
+        Assert.True(segment.TryInsert(0, 1, 2.0f, MailKinds.Cargo));
+        Assert.True(segment.TryInsert(1, 2, 0f));
+
+        belts.StepTicks(TickClock.TickHz * 4);
+
+        float cargo = Assert.Single(segment.Lane(0)).MetresFromStart;
+        float letter = Assert.Single(segment.Lane(1)).MetresFromStart;
+        Assert.Equal(8f, cargo, 3);
+        Assert.Equal(6f, letter, 3);
+        Assert.True(letter <= cargo - BeltNetwork.CargoLengthMetres);
     }
 
     [Fact]

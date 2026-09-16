@@ -235,8 +235,8 @@ public sealed class BeltSegment
 
     internal void Step(float dt)
     {
-        var across0 = Snapshot(_lane1);
-        var across1 = Snapshot(_lane0);
+        var across0 = HasCargo(_lane0) ? Snapshot(_lane1) : CargoSnapshot(_lane1);
+        var across1 = HasCargo(_lane1) ? Snapshot(_lane0) : CargoSnapshot(_lane0);
         StepLane(_lane0, dt, across0);
         StepLane(_lane1, dt, across1);
     }
@@ -272,6 +272,41 @@ public sealed class BeltSegment
         var rows = new Occupancy[items.Count];
         for (int i = 0; i < items.Count; i++)
             rows[i] = Occupancy.Of(items[i]);
+        return rows;
+    }
+
+    private static bool HasCargo(List<BeltItem> items)
+    {
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i].Kind.Equals(MailKinds.Cargo))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static Occupancy[] CargoSnapshot(List<BeltItem> items)
+    {
+        int n = 0;
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i].Kind.Equals(MailKinds.Cargo))
+                n++;
+        }
+
+        if (n == 0)
+            return Array.Empty<Occupancy>();
+
+        var rows = new Occupancy[n];
+        int w = 0;
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (!items[i].Kind.Equals(MailKinds.Cargo))
+                continue;
+            rows[w++] = Occupancy.Of(items[i]);
+        }
+
         return rows;
     }
 
