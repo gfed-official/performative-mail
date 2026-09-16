@@ -25,14 +25,19 @@ public sealed class TickLog
         double max = double.NegativeInfinity;
         double sum = 0;
         uint count = 0;
+        var ranked = new double[_samples.Count - (int)warmupTicks];
         for (int i = (int)warmupTicks; i < _samples.Count; i++)
         {
             var cpu = _samples[i].CpuMs;
+            ranked[count] = cpu;
             if (cpu > max)
                 max = cpu;
             sum += cpu;
             count++;
         }
+
+        Array.Sort(ranked);
+        int p99At = (int)Math.Ceiling(0.99 * count) - 1;
 
         return new TickBudgetReport
         {
@@ -40,6 +45,7 @@ public sealed class TickLog
             SampleCount = count,
             MaxCpuMs = max,
             MeanCpuMs = sum / count,
+            P99CpuMs = ranked[p99At],
         };
     }
 }

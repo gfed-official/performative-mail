@@ -16,5 +16,7 @@ public sealed class TickBudgetReport
 
     public required double MeanCpuMs { get; init; }
 
+    public required double P99CpuMs { get; init; }
+
     public bool Pass => MaxCpuMs <= LimitMs;
 }
