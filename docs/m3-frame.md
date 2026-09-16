@@ -84,7 +84,7 @@ Title: `[M3 U1.1] Barbarian enemy agent: spawn + path toward PO on RoutingGraph 
 
 Landable change:
 
-- Add types under `src/Sim/Combat/`. Sim stays free of Godot refs.
+- Add types under `src/Sim/Combat/`. Tests live under `tests/Sim.Tests/Combat/`. Sim stays free of Godot refs.
 - Named shape: `EnemyKind` closed id (`barbarian` first). `EnemyAgent` row holds `EntityId`, kind, pose in cm, HP 60, speed 4.5 m/s, and a path cursor along a `RoutePath`. `EnemyTable` owns spawn and step. Organizing structure is a table plus path cursor, not scattered booleans.
 - U1.1 state machine is Spawned, then Marching, then Arrived. No Attack state.
 - Add `EntityClass.Enemy = 4` so agents get `EntityId`s.
