@@ -84,10 +84,12 @@ public partial class Main : Node3D
     private int _hotbarSlot = InputSampler.DefaultHotbarSlot;
     private BuildBar _buildBar = null!;
     private BuildGhost _buildGhost = null!;
+    private FilterPanel _filterPanel = null!;
     private bool _buildHeld;
     private bool _rotateHeld;
     private bool _pipetteHeld;
     private bool _placeHeld;
+    private bool _filterHeld;
     private bool _dragging;
     private TileCoord _dragFrom;
     private TileCoord _dragTo;
@@ -105,6 +107,7 @@ public partial class Main : Node3D
         BuildPhaseOverlays();
         BuildPause();
         BuildBuildMode();
+        BuildFilterPanel();
         ApplyArgs(OS.GetCmdlineUserArgs());
         if (_inspectHud)
         {
@@ -200,7 +203,7 @@ public partial class Main : Node3D
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (_pause.IsOpen || _menuChrome.Visible || _overlay.IsOpen || _map.IsOpen || _shop.IsOpen)
+        if (_pause.IsOpen || _menuChrome.Visible || _overlay.IsOpen || _map.IsOpen || _shop.IsOpen || _filterPanel.IsOpen)
             return;
         if (@event is not InputEventMouseMotion motion)
             return;
@@ -227,11 +230,12 @@ public partial class Main : Node3D
         PollPause(state);
         PollDebugToggle();
         PollBuild(state);
+        PollFilter(state);
         if (_debug is { IsOpen: true })
             BindDebug(_session.Inspect());
         MaybeApplyDebugHelper(state);
         if (state is PlaySession.Playing)
-            SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen && !_shop.IsOpen);
+            SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen && !_shop.IsOpen && !_filterPanel.IsOpen);
         MaybeFinish(state);
     }
 
@@ -254,7 +258,7 @@ public partial class Main : Node3D
                 break;
             case PlaySession.Playing playing:
                 ShowMenuChrome(false);
-                SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen && !_shop.IsOpen);
+                SetMouseCaptured(!_pause.IsOpen && !_overlay.IsOpen && !_map.IsOpen && !_shop.IsOpen && !_filterPanel.IsOpen);
                 _usingMenuCamera = false;
                 _pawns.Sync(playing.Pawns, _look.PitchRadians, HeldMailKind(playing), HeldMailDistrict(playing));
                 _pawns.SyncVehicles(playing.Vehicles);
@@ -309,8 +313,10 @@ public partial class Main : Node3D
         _shop.Close();
         _shopPhaseSeen = default;
         _session.CloseBuild();
+        _session.CloseFilter();
         _buildBar.Visible = false;
         _buildGhost.Visible = false;
+        _filterPanel.Visible = false;
     }
 
     private void UseMenuCamera()
@@ -618,6 +624,37 @@ public partial class Main : Node3D
         _buildBar.ChoicePicked = id => _session.Build?.Select(id);
         _buildGhost = new BuildGhost();
         AddChild(_buildGhost);
+    }
+
+    private void BuildFilterPanel()
+    {
+        _filterPanel = new FilterPanel();
+        var layer = new CanvasLayer { Layer = 14 };
+        AddChild(layer);
+        layer.AddChild(_filterPanel);
+        _filterPanel.ChipPicked = id => _session.Filter?.Select(id);
+    }
+
+    private void PollFilter(PlaySession state)
+    {
+        bool held = Input.IsPhysicalKeyPressed(Key.E);
+        bool edge = held && !_filterHeld;
+        _filterHeld = held;
+
+        if (state is not PlaySession.Playing playing)
+        {
+            _session.CloseFilter();
+            _filterPanel.Visible = false;
+            return;
+        }
+
+        bool blocked = _pause.IsOpen || _overlay.IsOpen || _map.IsOpen || _shop.IsOpen;
+        if (blocked)
+            _session.CloseFilter();
+        else if (edge && TryAimTile(playing, out var tile))
+            _session.TryOpenSorterFilter(tile);
+
+        _filterPanel.Bind(_session.FilterFrame());
     }
 
     private void PollBuild(PlaySession state)

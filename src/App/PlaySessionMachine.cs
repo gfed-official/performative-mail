@@ -35,6 +35,7 @@ public sealed class PlaySessionMachine : IDisposable
     private bool _shopRolled;
     private ContentBundle? _bundle;
     private BuildModeState? _build;
+    private FilterPanelState? _filter;
     private uint _placeReq;
 
     public int PlaceLineRequests { get; private set; }
@@ -57,6 +58,8 @@ public sealed class PlaySessionMachine : IDisposable
     }
 
     public BuildModeState? Build => _build;
+
+    public FilterPanelState? Filter => _filter;
 
     public bool ClockPaused { get; private set; }
 
@@ -130,6 +133,7 @@ public sealed class PlaySessionMachine : IDisposable
         ClockPaused = false;
         ResetShop();
         _build?.Close();
+        _filter?.Close();
         _live.Dispose();
         _live = Live.None.Instance;
         _pawns.Clear();
@@ -354,6 +358,35 @@ public sealed class PlaySessionMachine : IDisposable
     }
 
     public void CloseBuild() => _build?.Close();
+
+    public void CloseFilter() => _filter?.Close();
+
+    public bool TryOpenSorterFilter(TileCoord tile)
+    {
+        if (_state is not PlaySession.Playing)
+            return false;
+        if (_live.Server?.World.Constructs is not ConstructRegistry host ||
+            !host.TryGetAt(tile, out var placed))
+            return false;
+        _filter ??= new FilterPanelState();
+        return _filter.TryOpen(placed.DefId);
+    }
+
+    public FilterPanelFrame FilterFrame()
+    {
+        if (_filter is null)
+            return new FilterPanelFrame(false, Array.Empty<FilterChip>(), 0);
+
+        var streets = _live.Server?.Tables?.Streets ?? Array.Empty<StreetRecord>();
+        IReadOnlyList<AddressId> unlocked =
+            _live.Server?.World.Atlas?.DeliverableAddresses ?? Array.Empty<AddressId>();
+        GridContainer? intake = null;
+        if (_live.Server is { } server &&
+            server.World.Inventory is InventorySystem inventory &&
+            server.World.Intake.Value != 0)
+            inventory.TryGetContainer(server.World.Intake, out intake);
+        return _filter.Frame(streets, unlocked, intake);
+    }
 
     public IReadOnlyList<ConstructRecord> PlacedConstructs()
     {
@@ -1153,6 +1186,7 @@ public sealed class PlaySessionMachine : IDisposable
         ClockPaused = false;
         ResetShop();
         _build?.Close();
+        _filter?.Close();
         _live.Dispose();
         _live = Live.None.Instance;
         _pawns.Clear();
