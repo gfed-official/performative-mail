@@ -108,14 +108,12 @@ public sealed class LaneChecksumTests
         fx.World.Belts.Compile(new[] { EastBelt(new TileCoord(1, 1)) });
         var segment = Assert.Single(fx.World.Belts.Segments);
         Assert.True(segment.TryInsert(0, 11, 0f, MailKinds.Letter, new AddressId(2, 3, 1, 0)));
-        fx.Server.TickOnce();
-        fx.First.Receive();
-        fx.Second.Receive();
+        TickReceiveAdvance(fx, segment);
 
         Assert.True(fx.First.Lanes.Matches(segment.Checksum(0)));
         Assert.True(fx.Second.Lanes.Matches(segment.Checksum(0)));
 
-        WaitChecksum(fx);
+        WaitChecksum(fx, segment);
         Assert.True(fx.First.LaneChecksumCount >= 2);
         Assert.Equal(0, fx.First.LaneStateCount);
         Assert.Equal(0, fx.Second.LaneStateCount);
@@ -130,11 +128,9 @@ public sealed class LaneChecksumTests
         fx.World.Belts.Compile(new[] { EastBelt(new TileCoord(1, 1)) });
         var segment = Assert.Single(fx.World.Belts.Segments);
         Assert.True(segment.TryInsert(0, 11, 0f, MailKinds.Letter, new AddressId(2, 3, 1, 0)));
-        fx.Server.TickOnce();
-        fx.First.Receive();
-        fx.Second.Receive();
+        TickReceiveAdvance(fx, segment);
 
-        WaitChecksum(fx);
+        WaitChecksum(fx, segment);
         Assert.Equal(0, fx.First.LaneStateCount);
         Assert.True(fx.First.Lanes.Matches(segment.Checksum(0)));
 
@@ -151,7 +147,7 @@ public sealed class LaneChecksumTests
         Assert.True(fx.First.Lanes.Matches(segment.Checksum(0)));
         Assert.Equal(1, fx.First.Lanes.Count(segment.Id, 0));
 
-        WaitChecksum(fx);
+        WaitChecksum(fx, segment);
         Assert.Equal(1, fx.First.LaneStateCount);
         Assert.True(fx.First.Lanes.Matches(segment.Checksum(0)));
     }
@@ -163,15 +159,13 @@ public sealed class LaneChecksumTests
         fx.World.Belts.Compile(new[] { EastBelt(new TileCoord(1, 1)) });
         var segment = Assert.Single(fx.World.Belts.Segments);
         Assert.True(segment.TryInsert(0, 11, 0f, MailKinds.Letter, new AddressId(2, 3, 1, 0)));
-        fx.Server.TickOnce();
-        fx.First.Receive();
-        fx.Second.Receive();
+        TickReceiveAdvance(fx, segment);
 
-        WaitChecksum(fx);
+        WaitChecksum(fx, segment);
         Assert.True(fx.First.Lanes.TryPlantDrift(segment.Id, 0, LaneHash.QuantumCm));
 
         var queued = new List<LaneChecksum>();
-        WaitChecksum(fx);
+        WaitChecksum(fx, segment, advanceVisual: false);
         Assert.True(fx.First.DrainChecksumMismatches(queued) >= 1);
         Assert.Contains(queued, row => row.Segment.Equals(segment.Id) && row.Lane == 0);
 
@@ -181,15 +175,37 @@ public sealed class LaneChecksumTests
         Assert.True(fx.First.Lanes.Matches(segment.Checksum(0)));
     }
 
-    private static void WaitChecksum(Fixture fx)
+    private static void TickReceiveAdvance(Fixture fx, BeltSegment segment)
+    {
+        fx.Server.TickOnce();
+        fx.First.Receive();
+        fx.Second.Receive();
+        AdvanceLanes(fx, segment);
+    }
+
+    private static void AdvanceLanes(Fixture fx, BeltSegment segment)
+    {
+        float dt = (float)TickClock.TickDurationSeconds;
+        int lengthCm = BeltNetwork.PositionAtTickCm(segment.LengthMetres);
+        fx.First.Lanes.Advance(segment.Id, dt, BeltNetwork.Mk1MetresPerSecond, lengthCm);
+        fx.Second.Lanes.Advance(segment.Id, dt, BeltNetwork.Mk1MetresPerSecond, lengthCm);
+    }
+
+    private static void WaitChecksum(Fixture fx, BeltSegment segment, bool advanceVisual = true)
     {
         int before = fx.First.LaneChecksumCount;
         int period = TickClock.TicksFromSeconds(2);
         for (int i = 0; i < period; i++)
         {
-            fx.Server.TickOnce();
-            fx.First.Receive();
-            fx.Second.Receive();
+            if (advanceVisual)
+                TickReceiveAdvance(fx, segment);
+            else
+            {
+                fx.Server.TickOnce();
+                fx.First.Receive();
+                fx.Second.Receive();
+            }
+
             if (fx.First.LaneChecksumCount > before)
                 return;
         }

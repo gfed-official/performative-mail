@@ -63,6 +63,7 @@ public sealed class SimWorld
     public void Tick(uint tick, bool spawnMail = true)
     {
         CurrentTick = tick;
+        Belts.Step((float)TickClock.TickDurationSeconds);
         if (spawnMail)
             MailSpawner?.Step(tick);
     }

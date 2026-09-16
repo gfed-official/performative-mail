@@ -91,8 +91,8 @@ public sealed class FactoryDesyncSession
         for (int i = 0; i < bound; i++)
         {
             InsertReady();
-            StepFactory();
             TickNet();
+            DrainHeads();
             if (AllLive())
                 return;
         }
@@ -106,8 +106,8 @@ public sealed class FactoryDesyncSession
         for (uint t = 0; t < ticks; t++)
         {
             InsertReady();
-            StepFactory();
             TickNet();
+            DrainHeads();
             AdvanceVisual(dt);
             CountEarlyRenders();
         }
@@ -146,9 +146,8 @@ public sealed class FactoryDesyncSession
         }
     }
 
-    private void StepFactory()
+    private void DrainHeads()
     {
-        _server.World.Belts.Step((float)TickClock.TickDurationSeconds);
         var segments = _server.World.Belts.Segments;
         for (int i = 0; i < segments.Count; i++)
         {

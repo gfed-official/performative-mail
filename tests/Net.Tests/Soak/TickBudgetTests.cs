@@ -42,7 +42,23 @@ public sealed class TickBudgetTests
         Assert.Equal(3u, report.SampleCount);
         Assert.Equal(1.5, report.MaxCpuMs);
         Assert.Equal(1.0, report.MeanCpuMs);
+        Assert.Equal(1.5, report.P99CpuMs);
         Assert.True(report.Pass);
+    }
+
+    [Fact]
+    public void TickLog_Close_P99_IsNinetyNinthOfOneToOneHundred()
+    {
+        var log = new TickLog();
+        for (uint i = 1; i <= 100; i++)
+            log.Add(new TickSample(i, i));
+
+        var report = log.Close(0);
+
+        Assert.Equal(100u, report.SampleCount);
+        Assert.Equal(100.0, report.MaxCpuMs);
+        Assert.Equal(50.5, report.MeanCpuMs);
+        Assert.Equal(99.0, report.P99CpuMs);
     }
 
     [Fact]
