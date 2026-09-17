@@ -204,7 +204,7 @@ Parent: [#15](https://github.com/gfed-official/performative-mail/issues/15).
 | Unit | Issue |
 | --- | ---: |
 | U1 | TBD |
-| U1.1 | TBD |
+| U1.1 | #345 |
 | U1.2 | TBD |
 | U1.3 | TBD |
 | U1.4 | TBD |
