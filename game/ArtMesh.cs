@@ -1,6 +1,7 @@
 using Godot;
 using PerformativeMail.App;
 using PerformativeMail.Client;
+using PerformativeMail.Sim.Combat;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
 using PerformativeMail.Sim.Vehicles;
@@ -49,6 +50,7 @@ public static class ArtMesh
     public const string ResourceIronOre = "res://art/world/resource_iron_ore_01.glb";
     public const string ResourceSand = "res://art/world/resource_sand_01.glb";
     public const string ResourceBerries = "res://art/world/resource_berries_01.glb";
+    public const string Barbarian = "res://art/enemies/barbarian_01.glb";
 
     public const string PawnVestMaterial = "mat_pawn_vest";
     public const string PawnHatMaterial = "mat_pawn_hat";
@@ -166,6 +168,20 @@ public static class ArtMesh
     }
 
     public static string PathForVehicle(VehicleKind kind) => VehicleArt.PathForVehicle(kind);
+
+    public static string PathForEnemy(EnemyKind kind)
+    {
+        switch (kind)
+        {
+            case EnemyKind.Barbarian:
+                return Barbarian;
+            default:
+            {
+                EnemyKind unseen = kind;
+                throw new ArgumentOutOfRangeException(nameof(kind), unseen, null);
+            }
+        }
+    }
 
     public static bool TryPathForConstruct(string defId, out string path)
     {

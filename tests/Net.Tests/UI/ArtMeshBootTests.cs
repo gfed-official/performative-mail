@@ -84,6 +84,24 @@ public sealed class ArtMeshBootTests
     }
 
     [Fact]
+    public void PathForEnemy_MapsBarbarianToLo0Glb()
+    {
+        var source = ReadGame("ArtMesh.cs");
+        Assert.Contains("PathForEnemy", source);
+        Assert.Contains("EnemyKind.Barbarian", source);
+        Assert.Contains("res://art/enemies/barbarian_01.glb", source);
+    }
+
+    [Fact]
+    public void BarbarianLodGlbs_ArePresentOnDisk()
+    {
+        string art = FindArtRoot();
+        AssertNonEmptyGlb(Path.Combine(art, "enemies", "barbarian_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "enemies", "barbarian_01_lo1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "enemies", "barbarian_01_lo2.glb"));
+    }
+
+    [Fact]
     public void WorldStage_FallsBackToBoxesWithoutDoubleFlag()
     {
         var source = ReadGame("WorldStage.cs");
