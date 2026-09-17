@@ -77,12 +77,6 @@ res://art/enemies/barbarian_01.glb
 
 Map from sim enemy kind Barbarian → that path (new `ArtMesh.PathForEnemy` or equivalent). LOD via existing `TryInstantiateLod` if lo1/lo2 ship.
 
----
-
-## Shots / AD
-
-Blender exports + orthographic shots after kick; AD PASS before eng wire.
-
 ## Acceptance (style check)
 
 - [ ] Path under `enemies/`; height ~1.75 m; +Z forward; ground origin  
