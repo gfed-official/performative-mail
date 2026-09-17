@@ -96,6 +96,7 @@ public static class ArtLod
             case "house_c.glb":
             case "cart_01.glb":
             case "street_pole_01.glb":
+            case "barbarian_01.glb":
                 return true;
             default:
                 return false;

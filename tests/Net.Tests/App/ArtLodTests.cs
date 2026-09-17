@@ -48,6 +48,25 @@ public sealed class ArtLodTests
     }
 
     [Fact]
+    public void MaxLevel_BarbarianHasLo2()
+    {
+        const string barbarian = "res://art/enemies/barbarian_01.glb";
+        Assert.Equal(ArtLodLevel.Lo2, ArtLod.MaxLevel(barbarian));
+        Assert.Equal(ArtLodLevel.Lo0, ArtLod.Resolve(10f, barbarian));
+        Assert.Equal(ArtLodLevel.Lo1, ArtLod.Resolve(45f, barbarian));
+        Assert.Equal(ArtLodLevel.Lo2, ArtLod.Resolve(90f, barbarian));
+    }
+
+    [Fact]
+    public void Path_InsertsBarbarianLodSuffixes()
+    {
+        const string barbarian = "res://art/enemies/barbarian_01.glb";
+        Assert.Equal(barbarian, ArtLod.Path(barbarian, ArtLodLevel.Lo0));
+        Assert.Equal("res://art/enemies/barbarian_01_lo1.glb", ArtLod.Path(barbarian, ArtLodLevel.Lo1));
+        Assert.Equal("res://art/enemies/barbarian_01_lo2.glb", ArtLod.Path(barbarian, ArtLodLevel.Lo2));
+    }
+
+    [Fact]
     public void Resolve_ClampsCrateToLo1PastSixty()
     {
         const string crate = "res://art/props/crate_01.glb";

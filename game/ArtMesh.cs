@@ -3,6 +3,7 @@ using PerformativeMail.App;
 using PerformativeMail.Client;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Mail;
+using PerformativeMail.Sim.Combat;
 using PerformativeMail.Sim.Vehicles;
 using PerformativeMail.Sim.World;
 
@@ -42,6 +43,7 @@ public static class ArtMesh
     public const string Merger = "res://art/world/merger_01.glb";
     public const string Chest = "res://art/world/chest_01.glb";
     public const string WallWood = "res://art/world/wall_wood_01.glb";
+    public const string Barbarian = "res://art/enemies/barbarian_01.glb";
     public const string ResourceWood = "res://art/world/resource_wood_01.glb";
     public const string ResourceWoodStump = "res://art/world/resource_wood_stump_01.glb";
     public const string ResourceFiber = "res://art/world/resource_fiber_01.glb";
@@ -166,6 +168,17 @@ public static class ArtMesh
     }
 
     public static string PathForVehicle(VehicleKind kind) => VehicleArt.PathForVehicle(kind);
+
+    public static string PathForEnemy(EnemyKind kind)
+    {
+        switch (kind)
+        {
+            case EnemyKind.Barbarian:
+                return Barbarian;
+            default:
+                throw new System.ArgumentOutOfRangeException(nameof(kind), kind, null);
+        }
+    }
 
     public static bool TryPathForConstruct(string defId, out string path)
     {
