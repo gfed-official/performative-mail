@@ -70,6 +70,9 @@ public sealed class ArtMeshBootTests
         Assert.Contains("EnvPropKind.StreetPole", source);
         Assert.Contains("PathForVehicle", source);
         Assert.Contains("VehicleArt.PathForVehicle", source);
+        Assert.Contains("PathForEnemy", source);
+        Assert.Contains("EnemyKind.Barbarian", source);
+        Assert.Contains("res://art/enemies/barbarian_01.glb", source);
         Assert.Contains("PathForResource", source);
         Assert.Contains("mat_pawn_vest", source);
         Assert.Contains("mat_pawn_hat", source);
@@ -177,6 +180,16 @@ public sealed class ArtMeshBootTests
         }
 
         throw new FileNotFoundException("game/" + fileName);
+    }
+
+
+    [Fact]
+    public void BarbarianGlbs_ArePresentOnDisk()
+    {
+        string art = FindArtRoot();
+        AssertNonEmptyGlb(Path.Combine(art, "enemies", "barbarian_01.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "enemies", "barbarian_01_lo1.glb"));
+        AssertNonEmptyGlb(Path.Combine(art, "enemies", "barbarian_01_lo2.glb"));
     }
 
     private static string FindArtRoot()
