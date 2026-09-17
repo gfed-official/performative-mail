@@ -1,6 +1,7 @@
 using System;
 using PerformativeMail.Sim.Automation;
 using PerformativeMail.Sim.Building;
+using PerformativeMail.Sim.Combat;
 using PerformativeMail.Sim.Core;
 using PerformativeMail.Sim.Inventory;
 using PerformativeMail.Sim.Mail;
@@ -26,6 +27,8 @@ public sealed class SimWorld
     public ConstructRegistry? Constructs { get; set; }
 
     public HarvestSession? Harvest { get; set; }
+
+    public EnemyTable? Enemies { get; set; }
 
     public BeltNetwork Belts { get; } = new BeltNetwork();
 
@@ -63,7 +66,9 @@ public sealed class SimWorld
     public void Tick(uint tick, bool spawnMail = true)
     {
         CurrentTick = tick;
-        Belts.Step((float)TickClock.TickDurationSeconds);
+        float dt = (float)TickClock.TickDurationSeconds;
+        Belts.Step(dt);
+        Enemies?.Step(dt);
         if (spawnMail)
             MailSpawner?.Step(tick);
     }
