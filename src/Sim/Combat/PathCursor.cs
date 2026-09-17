@@ -23,7 +23,6 @@ internal sealed class PathCursor
             _tiles[i] = tiles[i];
         _tileMetres = tileCm / 100.0;
 
-        // Snap to Tiles[0]. LengthMetres is the Manhattan polyline, not RoutePath.LengthTiles.
         _metresAt = new double[_tiles.Length];
         _metresAt[0] = 0;
         for (int i = 1; i < _tiles.Length; i++)
@@ -35,16 +34,16 @@ internal sealed class PathCursor
 
     public double MetresAlong { get; private set; }
 
-    public double LengthMetres => _metresAt[_metresAt.Length - 1];
+    public double PolylineMetres => _metresAt[_metresAt.Length - 1];
 
-    public bool AtEnd => MetresAlong >= LengthMetres;
+    public bool AtEnd => MetresAlong >= PolylineMetres;
 
     public void Advance(double metres)
     {
         if (metres < 0 || double.IsNaN(metres))
             throw new ArgumentOutOfRangeException(nameof(metres), metres, null);
 
-        MetresAlong = Math.Min(MetresAlong + metres, LengthMetres);
+        MetresAlong = Math.Min(MetresAlong + metres, PolylineMetres);
         while (_segment < _tiles.Length - 2 && MetresAlong >= _metresAt[_segment + 1])
             _segment++;
     }
